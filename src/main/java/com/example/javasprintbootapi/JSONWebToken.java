@@ -2,6 +2,7 @@ package com.example.javasprintbootapi;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -9,7 +10,7 @@ import java.util.Base64;
 import java.util.Random;
 
 public class JSONWebToken {
-    private static String SECRET_KEY = "";
+    private static String SECRET_KEY;
 
     public static void setSecretKey(String secretKey){
         SECRET_KEY = secretKey;
@@ -35,17 +36,30 @@ public class JSONWebToken {
         }
 
         String headerPayload = parts[0] + "." + parts[1];
-        String signatureRecieved = parts[2];
+        String signatureReceived = parts[2];
 
         String computedSignature = HmacSHA256(headerPayload,SECRET_KEY);
 
-        return computedSignature.equals(signatureRecieved);
+        return computedSignature.equals(signatureReceived);
     }
 
     public static String SecureKeyGenerator(){
         byte[] key = new byte[new Random().nextInt(32,65)];
         new SecureRandom().nextBytes(key);
-        return Base64.getEncoder().encodeToString(key);
+        return Base64.getEncoder().withoutPadding().encodeToString(key);
+    }
+
+    public static String Base64Encoding(String input){
+        return Base64.getEncoder().withoutPadding().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String GenerateJWToken(String login, String password, String role) throws NoSuchAlgorithmException, InvalidKeyException {
+        String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
+        String encodedHeader = Base64Encoding(header);
+        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"role\":\"%s\"}",login,password,role);
+        String encodedPayload = Base64Encoding(payload);
+        String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,SECRET_KEY);
+        return encodedHeader + "." + encodedPayload + "." + signature;
     }
 
 
