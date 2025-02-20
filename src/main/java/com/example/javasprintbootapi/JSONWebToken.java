@@ -9,8 +9,29 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Random;
 
+
+
+///User logs in → Sends username & password to the server.
+///Server verifies credentials → If correct, it creates a JWT.
+///JWT is sent back to the user → User includes it in every request (Authorization: Bearer <JWT>).
+///When a request is received, the server verifies the JWT signature to check if it was tampered with.
+
+
+
+
+
+
 public class JSONWebToken {
     private static String SECRET_KEY;
+    private static String JWT;
+
+    public static void setJWT(String jwt){
+        JWT = jwt;
+    }
+
+    public static String getJWT(){
+        return JWT;
+    }
 
     public static void setSecretKey(String secretKey){
         SECRET_KEY = secretKey;

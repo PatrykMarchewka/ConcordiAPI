@@ -1,6 +1,5 @@
 package com.example.javasprintbootapi;
 
-import com.example.javasprintbootapi.DatabaseModel.User;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
@@ -37,6 +36,8 @@ public class JavaSprintBootApiApplication {
 		System.out.println("Welcome to Java Sprint Boot API");
 		System.out.println("Type quit at any time to close application");
 
+
+
 		//Logowanie
 		//
 		String[] userCredentials = LoggingIn();
@@ -44,18 +45,35 @@ public class JavaSprintBootApiApplication {
 		//TODO: Query the database
 		if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2])) && true){
 			System.out.println("Identity validated");
+			JSONWebToken.setJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]));
 		}
 		else{
 			System.out.println("Cant validate identity");
 			System.exit(0);
 		}
+		MenuOptions.Menu();
 
-//		System.out.println("SECRET KEY:");
-//		System.out.println(JSONWebToken.getSecretKey());
-//		System.out.println("TOKEN:");
-//		System.out.println(JSONWebToken.GenerateJWToken(login,password,"admin"));
-//		System.out.println("Verification:");
-//		System.out.println(JSONWebToken.VerifyJWT("eyJhbGciOiJIUzI1NiIsInR5cGUiOiJKV1QifQ.eyJsb2dpbiI6ImIiLCJwYXNzd29yZCI6ImEiLCJyb2xlIjoiYWRtaW4ifQ.KoKlLTZEPzzV3fTalqYBSzJLEVB0iNX92qSs7srssII"));
+
+
+
+
+
+	}
+
+
+
+
+	private static void CheckDatabaseConnection(){
+		//TODO: Check DB connection
+		System.out.println("Checking DB connection...");
+		if (true){
+			System.out.println("Connected!");
+		}else{
+			System.out.println("Cant connect to database");
+			System.out.println("Press ENTER to quit application");
+			System.console().readLine();
+			System.exit(0);
+		}
 	}
 
 	private static String[] LoggingIn(){
@@ -76,19 +94,22 @@ public class JavaSprintBootApiApplication {
 			System.out.println("Logging in as admin.....");
 		}
 		else{
-			System.out.println("Cant understand what you meant, resetting");
+			System.out.println("Can't understand what you meant, resetting");
 			System.out.println("");
 			LoggingIn();
 		}
 		return new String[]{login, password, role};
 	}
 
-	private static String AskUser(){
+	public static String AskUser(){
 		String ans = System.console().readLine();
 		if (ans.equalsIgnoreCase("quit")){
 			System.exit(0);
 		}
 		return ans;
 	}
+
+
+
 
 }
