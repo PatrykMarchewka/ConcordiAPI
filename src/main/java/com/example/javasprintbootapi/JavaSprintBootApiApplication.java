@@ -1,5 +1,6 @@
 package com.example.javasprintbootapi;
 
+import com.example.javasprintbootapi.DatabaseModel.UserRepository;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
@@ -11,6 +12,8 @@ import java.security.NoSuchAlgorithmException;
 
 @SpringBootApplication
 public class JavaSprintBootApiApplication {
+
+
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 
@@ -41,6 +44,8 @@ public class JavaSprintBootApiApplication {
 		//Logowanie
 		//
 		String[] userCredentials = LoggingIn();
+
+
 
 		//TODO: Query the database
 		if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2])) && true){
@@ -83,21 +88,26 @@ public class JavaSprintBootApiApplication {
 		login = AskUser();
 		System.out.println("Now enter password:");
 		password = AskUser();
-		System.out.println("Now type 1 for user or 2 for admin access");
+		System.out.println("Now type your role. 1 for Admin, 2 for employee, 3 for user access");
 		char answerRole = AskUser().charAt(0);
 		if (answerRole == '1'){
-			role = "user";
-			System.out.println("Logging in as user....");
+			PublicVariables.loggedUserRole = PublicVariables.UserStatus.ADMIN;
+			System.out.println("Logging in as admin....");
 		}
 		else if(answerRole == '2'){
-			role = "admin";
-			System.out.println("Logging in as admin.....");
+			PublicVariables.loggedUserRole = PublicVariables.UserStatus.EMPLOYEE;
+			System.out.println("Logging in as employee.....");
+		}
+		else if(answerRole == '3'){
+			PublicVariables.loggedUserRole = PublicVariables.UserStatus.USER;
+			System.out.println("Logging in as user....");
 		}
 		else{
 			System.out.println("Can't understand what you meant, resetting");
 			System.out.println("");
 			LoggingIn();
 		}
+		role = PublicVariables.loggedUserRole.name();
 		return new String[]{login, password, role};
 	}
 

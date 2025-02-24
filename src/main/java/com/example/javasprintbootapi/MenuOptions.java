@@ -4,20 +4,20 @@ package com.example.javasprintbootapi;
 public class MenuOptions {
     public static void MenuTasks(){
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
-        System.out.println("Type the number to get into spefic option:");
+        System.out.println("Type the number to get into specific option:");
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
 
     }
     public static void MenuSubstasks(){
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
-        System.out.println("Type the number to get into spefic option:");
+        System.out.println("Type the number to get into specific option:");
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
 
     }
 
     public static void Menu(){
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
-        System.out.println("Type the number to get into spefic option:");
+        System.out.println("Type the number to get into specific option:");
         System.out.println("1. Users");
         System.out.println("2. Tasks");
         System.out.println("3. Subtasks");
@@ -41,7 +41,7 @@ public class MenuOptions {
 
     public static void MenuUsers(){
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
-        System.out.println("Type the number to get into spefic option:");
+        System.out.println("Type the number to get into specific option:");
         System.out.println("1. View users");
         System.out.println("2. Add user");
         System.out.println("3. Remove user");
@@ -53,8 +53,18 @@ public class MenuOptions {
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
         String answer = JavaSprintBootApiApplication.AskUser();
         if (answer.contains("1")){
+            if (PublicVariables.loggedUserRole == PublicVariables.UserStatus.ADMIN){
+
+            }
+            else if(PublicVariables.loggedUserRole == PublicVariables.UserStatus.EMPLOYEE){
+
+            }
+            else if(PublicVariables.loggedUserRole == PublicVariables.UserStatus.USER){
+
+            }
 
         } else if(answer.contains("2")){
+
 
         } else if(answer.contains("3")){
 

@@ -1,6 +1,8 @@
 package com.example.javasprintbootapi.DatabaseModel;
 
+import com.example.javasprintbootapi.PublicVariables;
 import jakarta.persistence.*;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 @Entity
 @Table(name = "Users")
@@ -17,17 +19,14 @@ public class User {
     private String LastName;
 
     @Enumerated(value = EnumType.STRING)
-    private UserStatus Status;
+    private PublicVariables.UserStatus Status;
 
-    private enum UserStatus{
-        ADMIN,
-        EMPLOYEE,
-        USER,
-        BANNED
-    }
+
 
 
     public User(){
 
     }
 }
+
+
