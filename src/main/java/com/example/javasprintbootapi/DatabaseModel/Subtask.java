@@ -17,4 +17,25 @@ public class Subtask {
 
     @Enumerated(value = EnumType.STRING)
     private PublicVariables.TaskStatus taskStatus;
+
+
+    public long getID() {
+        return ID;
+    }
+
+    public Task getTask() {
+        return task;
+    }
+
+    public void setTask(Task task) {
+        this.task = task;
+    }
+
+    public PublicVariables.TaskStatus getTaskStatus() {
+        return taskStatus;
+    }
+
+    public void setTaskStatus(PublicVariables.TaskStatus taskStatus) {
+        this.taskStatus = taskStatus;
+    }
 }

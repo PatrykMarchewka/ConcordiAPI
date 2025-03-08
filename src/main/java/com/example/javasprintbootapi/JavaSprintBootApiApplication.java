@@ -1,6 +1,8 @@
 package com.example.javasprintbootapi;
 
+import com.example.javasprintbootapi.DatabaseModel.User;
 import com.example.javasprintbootapi.DatabaseModel.UserRepository;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.File;
@@ -13,11 +15,12 @@ import java.security.NoSuchAlgorithmException;
 @SpringBootApplication
 public class JavaSprintBootApiApplication {
 
+	public static UserService userService = new UserService();
 
 
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
 
-		//SpringApplication.run(JavaSprintBootApiApplication.class, args);
+
 		File keyFile = new File(System.getProperty("user.dir") + "\\SECRET_KEY.txt");
 		if (keyFile.exists() && keyFile.isFile()){
 			FileReader reader = new FileReader(keyFile);
@@ -39,16 +42,23 @@ public class JavaSprintBootApiApplication {
 		System.out.println("Welcome to Java Sprint Boot API");
 		System.out.println("Type quit at any time to close application");
 
+		CheckDatabaseConnection();
+
+		if (!userService.checkIfAdminExists()){
+			userService.createUser("admin","admin","admin","admin", PublicVariables.UserStatus.ADMIN);
+			System.out.println("Created admin account with these credentials:");
+			System.out.println("Login: admin");
+			System.out.println("Password: admin");
+			System.out.println("Status:" + PublicVariables.UserStatus.ADMIN.toString());
+			System.out.println("It's advised to change these values as soon as possible!");
+		}
 
 
-		//Logowanie
-		//
 		String[] userCredentials = LoggingIn();
 
 
 
-		//TODO: Query the database
-		if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2])) && true){
+		if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]))){
 			System.out.println("Identity validated");
 			JSONWebToken.setJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]));
 		}
@@ -69,16 +79,18 @@ public class JavaSprintBootApiApplication {
 
 
 	private static void CheckDatabaseConnection(){
-		//TODO: Check DB connection
 		System.out.println("Checking DB connection...");
-		if (true){
+		try{
+			SpringApplication.run(JavaSprintBootApiApplication.class);
 			System.out.println("Connected!");
-		}else{
+		} catch (Exception e) {
 			System.out.println("Cant connect to database");
+			System.out.println("Verify the connection properties. Make sure that an instance of SQL Server is running on the host and accepting TCP/IP connections at the port. Make sure that TCP connections to the port are not blocked by a firewall");
 			System.out.println("Press ENTER to quit application");
 			System.console().readLine();
 			System.exit(0);
 		}
+
 	}
 
 	private static String[] LoggingIn(){
