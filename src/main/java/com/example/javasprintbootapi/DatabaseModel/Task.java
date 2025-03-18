@@ -1,8 +1,7 @@
 package com.example.javasprintbootapi.DatabaseModel;
 import com.example.javasprintbootapi.PublicVariables;
 import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Set;
 
 @Entity
@@ -18,10 +17,10 @@ public class Task {
 
 
     @Temporal(TemporalType.DATE)
-    private LocalDateTime creationDate;
+    private Date creationDate;
 
     @Temporal(TemporalType.DATE)
-    private LocalDateTime updateDate;
+    private Date updateDate;
 
     @OneToMany
     private Set<Subtask> subtasks;
@@ -60,19 +59,19 @@ public class Task {
         this.taskStatus = taskStatus;
     }
 
-    public LocalDateTime getCreationDate() {
+    public Date getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(LocalDateTime creationDate) {
+    public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
 
-    public LocalDateTime getUpdateDate() {
+    public Date getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDate(LocalDateTime updateDate) {
+    public void setUpdateDate(Date updateDate) {
         this.updateDate = updateDate;
     }
 

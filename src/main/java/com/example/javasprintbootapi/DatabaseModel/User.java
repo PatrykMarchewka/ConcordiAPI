@@ -2,7 +2,6 @@ package com.example.javasprintbootapi.DatabaseModel;
 
 import com.example.javasprintbootapi.PublicVariables;
 import jakarta.persistence.*;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Set;
 
@@ -12,16 +11,16 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long ID;
+    private long id;
 
-    private String Login;
-    private String Password;
+    private String login;
+    private String password;
 
-    private String Name;
-    private String LastName;
+    private String name;
+    private String lastName;
 
     @Enumerated(value = EnumType.STRING)
-    private PublicVariables.UserStatus Status;
+    private PublicVariables.UserStatus status;
 
     @ManyToMany
     private Set<Task> tasks;
@@ -31,47 +30,47 @@ public class User {
 
 
     public long getID() {
-        return ID;
+        return id;
     }
 
     public String getLogin(){
-        return this.Login;
+        return this.login;
     }
 
     public void setLogin(String login) {
-        Login = login;
+        this.login = login;
     }
 
     public String getPassword() {
-        return Password;
+        return password;
     }
 
     public void setPassword(String password) {
-        Password = password;
+        this.password = password;
     }
 
     public String getName() {
-        return Name;
+        return name;
     }
 
     public void setName(String name) {
-        Name = name;
+        this.name = name;
     }
 
     public String getLastName() {
-        return LastName;
+        return lastName;
     }
 
     public void setLastName(String lastName) {
-        LastName = lastName;
+        this.lastName = lastName;
     }
 
     public PublicVariables.UserStatus getStatus() {
-        return Status;
+        return status;
     }
 
     public void setStatus(PublicVariables.UserStatus status) {
-        Status = status;
+        this.status = status;
     }
 
     public Set<Task> getTasks() {

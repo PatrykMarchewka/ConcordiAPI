@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -79,7 +81,7 @@ public class TaskService {
             List<Task> temp = new ArrayList<>();
 
             for (Task task : taskRepository.findAll()){
-                if (ChronoUnit.DAYS.between(task.getUpdateDate(), LocalDateTime.now()) > days){
+                if (ChronoUnit.DAYS.between(task.getUpdateDate().toInstant(), LocalDateTime.now()) > days){
                     temp.add(task);
                 }
             }
@@ -88,11 +90,11 @@ public class TaskService {
     }
 
     public Task setUpdateToNow(Task task){
-        task.setUpdateDate(LocalDateTime.now());
+        task.setUpdateDate(new Date());
         return taskRepository.save(task);
     }
 
-    public Task setUpdateToTime(Task task, LocalDateTime date){
+    public Task setUpdateToTime(Task task, Date date){
         task.setUpdateDate(date);
         return taskRepository.save(task);
     }
