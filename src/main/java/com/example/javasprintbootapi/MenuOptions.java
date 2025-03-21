@@ -53,13 +53,13 @@ public class MenuOptions {
         System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
         String answer = JavaSprintBootApiApplication.AskUser();
         if (answer.contains("1")){
-            if (PublicVariables.loggedUserRole == PublicVariables.UserStatus.ADMIN){
+            if (PublicVariables.loggedUserRole == PublicVariables.UserRole.ADMIN){
 
             }
-            else if(PublicVariables.loggedUserRole == PublicVariables.UserStatus.EMPLOYEE){
+            else if(PublicVariables.loggedUserRole == PublicVariables.UserRole.EMPLOYEE){
 
             }
-            else if(PublicVariables.loggedUserRole == PublicVariables.UserStatus.USER){
+            else if(PublicVariables.loggedUserRole == PublicVariables.UserRole.USER){
 
             }
 

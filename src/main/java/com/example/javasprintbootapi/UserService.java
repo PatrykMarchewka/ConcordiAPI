@@ -27,6 +27,10 @@ public class UserService {
         }
     }
 
+    public User getUserByLogin(String Login){
+        return userRepository.findByLogin(Login);
+    }
+
     public List<User> getAllUsers(){
         return userRepository.findAll();
     }
@@ -47,17 +51,17 @@ public class UserService {
 
     }
 
-    public boolean checkIfAdminExists(){
-        return userRepository.existsByLogin("admin");
+    public boolean checkIfUserExistsByLogin(String login){
+        return userRepository.existsByLogin(login);
     }
 
-    public User createUser(String login, String password, String name, String lastName, PublicVariables.UserStatus status){
+    public User createUser(String login, String password, String name, String lastName, PublicVariables.UserRole status){
         User user = new User();
         user.setLogin(login);
         user.setPassword(password);
         user.setName(name);
         user.setLastName(lastName);
-        user.setStatus(status);
+        user.setRole(status);
 
         return userRepository.save(user);
     }

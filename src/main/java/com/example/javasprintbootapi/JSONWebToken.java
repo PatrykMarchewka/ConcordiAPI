@@ -1,5 +1,8 @@
 package com.example.javasprintbootapi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +10,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -82,6 +86,18 @@ public class JSONWebToken {
         String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,SECRET_KEY);
         return encodedHeader + "." + encodedPayload + "." + signature;
     }
+
+    public static Map<String,Object> ExtractJWTTokenPayload(String jwt) throws JsonProcessingException {
+        String[] parts = jwt.split("\\.");
+        if (parts.length != 3){
+            return null;
+        }
+
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(payload,Map.class);
+    }
+
 
 
 }

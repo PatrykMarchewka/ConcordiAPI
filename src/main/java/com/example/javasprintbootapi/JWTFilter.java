@@ -1,0 +1,55 @@
+package com.example.javasprintbootapi;
+
+import com.example.javasprintbootapi.DatabaseModel.User;
+import com.example.javasprintbootapi.DatabaseModel.UserRepository;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class JWTFilter extends OncePerRequestFilter {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain){
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")){
+            String token = authHeader.substring(7);
+            try {
+                if (JSONWebToken.VerifyJWT(token)) {
+                    Map<String,Object> payload = JSONWebToken.ExtractJWTTokenPayload(token);
+                    String login = (String)payload.get("login");
+
+                    if (login != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                        User user = userRepository.findByLogin(login);
+                        String password = (String) payload.get("password");
+                        String role = (String) payload.get("role");
+                        if (user != null && password.equals(user.getPassword()) && role.equalsIgnoreCase(user.getRole().name())){
+                            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user,null, List.of());
+                            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        try {
+            filterChain.doFilter(request,response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+}

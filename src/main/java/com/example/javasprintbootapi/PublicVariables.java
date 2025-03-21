@@ -2,7 +2,7 @@ package com.example.javasprintbootapi;
 
 public class PublicVariables {
 
-    public static UserStatus loggedUserRole;
+    public static UserRole loggedUserRole;
 
     public enum TaskStatus{
         NEW,
@@ -12,12 +12,26 @@ public class PublicVariables {
         FINISHED
     }
 
-    public enum UserStatus{
+    public enum UserRole{
         ADMIN,
         EMPLOYEE,
         USER,
-        BANNED
+        BANNED;
+
+        public static UserRole fromString(String name){
+            for (UserRole role : UserRole.values() ){
+                if (role.name().equalsIgnoreCase(name)){
+                    return role;
+                }
+            }
+            throw new IllegalArgumentException("Unknown value: " + name);
+        }
+
+
+
     }
+
+
 
 
 

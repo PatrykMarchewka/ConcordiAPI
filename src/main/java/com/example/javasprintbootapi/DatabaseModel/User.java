@@ -20,7 +20,7 @@ public class User {
     private String lastName;
 
     @Enumerated(value = EnumType.STRING)
-    private PublicVariables.UserStatus status;
+    private PublicVariables.UserRole role;
 
     @ManyToMany
     private Set<Task> tasks;
@@ -65,12 +65,12 @@ public class User {
         this.lastName = lastName;
     }
 
-    public PublicVariables.UserStatus getStatus() {
-        return status;
+    public PublicVariables.UserRole getRole() {
+        return role;
     }
 
-    public void setStatus(PublicVariables.UserStatus status) {
-        this.status = status;
+    public void setRole(PublicVariables.UserRole role) {
+        this.role = role;
     }
 
     public Set<Task> getTasks() {
