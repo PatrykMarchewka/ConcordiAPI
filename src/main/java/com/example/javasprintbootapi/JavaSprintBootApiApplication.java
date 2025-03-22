@@ -70,15 +70,14 @@ public class JavaSprintBootApiApplication {
             String[] userCredentials = LoggingIn();
 
 
-            if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]))){
+            if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]))&& userService.getUserByLogin(userCredentials[0]) != null && userService.getUserByLogin(userCredentials[0]).getPassword().equals(userCredentials[1]) && userService.getUserByLogin(userCredentials[0]).getRole().name().equalsIgnoreCase(userCredentials[2])){
                 System.out.println("Identity validated");
                 JSONWebToken.setJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]));
             }
             else{
-                System.out.println("Cant validate identity");
+                System.out.println("Cant validate identity, closing the application");
                 System.exit(0);
             }
-            //TODO: Check if user exists in database
             while (true){
                 MenuOptions.Menu();
             }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 public class UserController {
 
     @Autowired
@@ -22,7 +22,7 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    private Map<String,String> userInfo(Authentication authentication){
+    public static Map<String,String> userInfo(Authentication authentication){
         Object user = authentication.getPrincipal();
         if (user instanceof User){
             Map<String,String> ret = new HashMap<>();
@@ -36,7 +36,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/all")
+    @GetMapping("/users")
     public List<User> getAllUsers(Authentication authentication){
         if (authentication == null){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
@@ -48,13 +48,11 @@ public class UserController {
         else{
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"This action requires admin access");
         }
-
-
     }
 
 
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     public User getMyProfile(Authentication authentication){
         if (authentication == null){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
@@ -74,7 +72,7 @@ public class UserController {
         return ResponseEntity.ok(authentication.getName());
     }
 
-    @PostMapping("/createUser")
+    @PostMapping("/users")
     public ResponseEntity<?> createUser(@RequestBody Map<String,String> body){
         String login = body.get("login");
         String password = body.get("password");
@@ -96,13 +94,35 @@ public class UserController {
         }
     }
 
-    @PostMapping("/deleteUserByID")
-    public ResponseEntity<?> deleteUser(@RequestBody Map<String,Long> body, Authentication authentication){
+    @DeleteMapping("/users")
+    public ResponseEntity<?> deleteUser(@RequestBody Map<String,String> body, Authentication authentication){
         if (authentication == null){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
         }
-        Long ID = body.get("id");
+        long ID = Long.parseLong(body.get("id"));
 
+        Map<String,String> user = userInfo(authentication);
+        if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
+            try {
+                if (userService.getUserByID(ID).getRole().equals(PublicVariables.UserRole.ADMIN) && !(((User)authentication.getPrincipal()).getID() == ID)){
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Can't delete other admins");
+                }
+                userService.deleteUserByID(ID);
+                return ResponseEntity.ok("User deleted");
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cant delete user:" + e);
+            }
+        }
+        else{
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"This action requires admin access");
+        }
+    }
+
+    @DeleteMapping("/users/{ID}")
+    public ResponseEntity<?> deleteUser(@PathVariable long ID, Authentication authentication){
+        if (authentication == null){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
+        }
         Map<String,String> user = userInfo(authentication);
         if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
             try {
