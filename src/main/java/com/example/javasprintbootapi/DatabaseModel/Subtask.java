@@ -1,6 +1,7 @@
 package com.example.javasprintbootapi.DatabaseModel;
 
 import com.example.javasprintbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 import java.util.Set;
@@ -10,17 +11,35 @@ import java.util.Set;
 public class Subtask {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long ID;
+    private long id;
+    private String name;
+    private String description;
 
-    @OneToOne
+    @ManyToOne
+    @JsonBackReference
     private Task task;
 
     @Enumerated(value = EnumType.STRING)
     private PublicVariables.TaskStatus taskStatus;
 
 
-    public long getID() {
-        return ID;
+    public long getId() {
+        return id;
+    }
+
+    public String getName(){
+        return name;
+    }
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public String getDescription(){
+        return description;
+    }
+
+    public void setDescription(String description){
+        this.description = description;
     }
 
     public Task getTask() {

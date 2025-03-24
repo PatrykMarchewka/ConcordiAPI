@@ -9,7 +9,16 @@ public class PublicVariables {
         CANCELLED,
         INPROGRESS,
         HALTED,
-        FINISHED
+        FINISHED;
+        public static TaskStatus fromString(String name){
+            for (TaskStatus status : TaskStatus.values()){
+                if (status.name().equalsIgnoreCase(name)){
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("Unknown value: " + name);
+
+        }
     }
 
     public enum UserRole{
@@ -26,6 +35,8 @@ public class PublicVariables {
             }
             throw new IllegalArgumentException("Unknown value: " + name);
         }
+
+
 
 
 

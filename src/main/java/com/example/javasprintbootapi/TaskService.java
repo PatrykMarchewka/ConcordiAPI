@@ -1,11 +1,9 @@
 package com.example.javasprintbootapi;
 
-import com.example.javasprintbootapi.DatabaseModel.Subtask;
-import com.example.javasprintbootapi.DatabaseModel.Task;
-import com.example.javasprintbootapi.DatabaseModel.TaskRepository;
-import com.example.javasprintbootapi.DatabaseModel.User;
+import com.example.javasprintbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +18,8 @@ public class TaskService {
 
     @Autowired
     private TaskRepository taskRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public List<Task> getAllTasks(){
         return taskRepository.findAll();
@@ -52,6 +52,16 @@ public class TaskService {
         List<Task> temp = new ArrayList<>();
         for (Task task : taskRepository.findAll()){
             if (task.getUsers().contains(user)){
+                temp.add(task);
+            }
+        }
+        return temp;
+    }
+
+    public List<Task> getAllTasksUserOwns(User user){
+        List<Task> temp = new ArrayList<>();
+        for (Task task : taskRepository.findAll()){
+            if (task.getOwner().equals(user)){
                 temp.add(task);
             }
         }
@@ -130,6 +140,22 @@ public class TaskService {
         task.setUsers(users);
         task.setSubtasks(subtasks);
         return taskRepository.save(task);
+    }
+
+    @Transactional
+    public void deleteTaskByID(long ID){
+        Task task = taskRepository.findById(ID);
+        User user = task.getOwner();
+        user.getOwnership().remove(task);
+        userRepository.save(user);
+        Set<User> assignedUsers = task.getUsers();
+        for (User user1 : assignedUsers){
+            user1.getTasks().remove(task);
+            userRepository.save(user1);
+        }
+        task.setOwner(null);
+        taskRepository.save(task);
+        taskRepository.deleteById(ID);
     }
 
 

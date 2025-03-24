@@ -1,6 +1,7 @@
 package com.example.javasprintbootapi.DatabaseModel;
 
 import com.example.javasprintbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.Set;
@@ -23,9 +24,11 @@ public class User {
     private PublicVariables.UserRole role;
 
     @ManyToMany
+    @JsonManagedReference
     private Set<Task> tasks;
 
     @OneToMany
+    @JsonManagedReference
     private Set<Task> ownership;
 
 

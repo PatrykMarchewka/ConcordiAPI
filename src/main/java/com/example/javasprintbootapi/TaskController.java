@@ -1,9 +1,6 @@
 package com.example.javasprintbootapi;
 
-import com.example.javasprintbootapi.DatabaseModel.Subtask;
-import com.example.javasprintbootapi.DatabaseModel.Task;
-import com.example.javasprintbootapi.DatabaseModel.TaskRepository;
-import com.example.javasprintbootapi.DatabaseModel.User;
+import com.example.javasprintbootapi.DatabaseModel.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -28,6 +26,8 @@ public class TaskController {
     private TaskRepository taskRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
 
     @GetMapping("/tasks")
@@ -50,10 +50,17 @@ public class TaskController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
         }
         return taskService.getAllTasksForUser((User)authentication.getPrincipal());
-
     }
 
-    @GetMapping("tasks/{ID}")
+    @GetMapping("/tasks/me/owner")
+    public List<Task> getAllTasksIOwn(Authentication authentication){
+        if (authentication == null){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
+        }
+        return taskService.getAllTasksUserOwns((User)authentication.getPrincipal());
+    }
+
+    @GetMapping("/tasks/{ID}")
     public Task getTaskByID(@PathVariable long ID, Authentication authentication){
         Task task = taskRepository.findById(ID);
 
@@ -76,25 +83,27 @@ public class TaskController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required fields");
         }
         String name = body.get("name");
-        User owner = userService.getUserByLogin(body.get("owner"));
-
+        User owner = userService.getUserByID(Long.valueOf(body.get("owner").toString()));
+        Task task;
         if (body.containsKey("description") && body.containsKey("users") && body.containsKey("subtasks")){
             String description = body.get("description");
             ObjectMapper objectMapper = new ObjectMapper();
             Set<User> users = objectMapper.readValue(body.get("users"), new TypeReference<Set<User>>() {});
             Set<Subtask> subtasks = objectMapper.readValue(body.get("subtasks"), new TypeReference<Set<Subtask>>() {});
-            taskService.createTask(name,description,owner,users,subtasks);
+            task = taskService.createTask(name,description,owner,users,subtasks);
         }
         else{
-            taskService.createTask(name,owner);
+            task = taskService.createTask(name,owner);
         }
+        owner.getOwnership().add(task);
+        userRepository.save(owner);
         return ResponseEntity.status(HttpStatus.CREATED).body("Task created!");
     }
 
     @PatchMapping("/tasks/{ID}")
-    public ResponseEntity<?> updateTask(@PathVariable long ID, @RequestBody Map<String,String> body, Authentication authentication){
+    public ResponseEntity<?> updateTask(@PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
         Task task = taskRepository.findById(ID);
-        if (task != null){
+        if (task != null && (task.getOwner().getID() == ((User)authentication.getPrincipal()).getID() || ((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin"))){
             body.forEach((key,value) -> {
                 Field field = ReflectionUtils.findField(Task.class, key);
                 if (List.of("id","creationDate").contains(key)){
@@ -105,7 +114,34 @@ public class TaskController {
                 }
                 if (field != null){
                     field.setAccessible(true);
-                    ReflectionUtils.setField(field, task,value);
+                    if (field.getType().isEnum()){
+                        Object enumValue = Enum.valueOf((Class<Enum>)field.getType(),value.toString() );
+                        try {
+                            field.set(task,enumValue);
+                            ReflectionUtils.setField(field, task,value);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    else if(field.getType().equals(User.class)){
+                        long userID = Long.valueOf(value.toString());
+                        User user = userRepository.findById(userID).orElseThrow();
+                        ReflectionUtils.setField(field,task,user);
+                        user.getOwnership().add(task);
+                        userRepository.save(user);
+
+                    }
+                    else if(Set.class.isAssignableFrom(field.getType())){
+                        List<?> ids = (List<?>)value;
+                        Set<User> users = ids.stream().map(id -> userRepository.findById(Long.valueOf(id.toString())).orElse(null)).filter(Objects::nonNull).collect(Collectors.toSet());
+                        try {
+                            field.set(task,users);
+                            ReflectionUtils.setField(field, task,value);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
                 }
             });
             task.setUpdateDate(new Date());
@@ -113,8 +149,17 @@ public class TaskController {
             return  ResponseEntity.ok("Task updated!");
         }
         else{
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found!");
+            return ResponseEntity.status(HttpStatus.MULTI_STATUS).body("Task not found or you are not owner of it!");
         }
+    }
+
+    @DeleteMapping("/tasks/{ID}")
+    public ResponseEntity<?> deleteTask(@PathVariable long ID, Authentication authentication){
+        if (((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin")){
+            taskService.deleteTaskByID(ID);
+            return  ResponseEntity.ok("Task deleted");
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("This action requires admin or ownership");
     }
 
 }

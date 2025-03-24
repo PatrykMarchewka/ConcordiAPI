@@ -1,6 +1,10 @@
 package com.example.javasprintbootapi.DatabaseModel;
 import com.example.javasprintbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import org.springframework.lang.Nullable;
+
 import java.util.Date;
 import java.util.Set;
 
@@ -22,13 +26,17 @@ public class Task {
     @Temporal(TemporalType.DATE)
     private Date updateDate;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<Subtask> subtasks;
 
     @ManyToOne
+    @JsonBackReference
+    @Nullable
     private User owner;
 
     @ManyToMany
+    @JsonBackReference
     private Set<User> users;
 
     public long getId() {

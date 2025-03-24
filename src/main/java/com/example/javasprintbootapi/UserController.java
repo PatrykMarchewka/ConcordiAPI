@@ -42,7 +42,7 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
         }
         Map<String,String> user = userInfo(authentication);
-        if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
+        if (user.get("role").equalsIgnoreCase(PublicVariables.UserRole.ADMIN.name())){
             return userService.getAllUsers();
         }
         else{
@@ -63,6 +63,18 @@ public class UserController {
             login = ((User)user).getLogin();
         }
         return userService.getUserByLogin(login);
+    }
+
+    @GetMapping("/users/{ID}")
+    public ResponseEntity<?> getUser(@PathVariable long ID, Authentication authentication){
+        if (((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin")){
+            User user = userService.getUserByID(ID);
+            return ResponseEntity.ok(user);
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You require admin for that action");
+        }
+
     }
 
 
