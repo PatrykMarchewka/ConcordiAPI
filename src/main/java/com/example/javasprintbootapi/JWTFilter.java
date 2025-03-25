@@ -28,17 +28,24 @@ public class JWTFilter extends OncePerRequestFilter {
             try {
                 if (JSONWebToken.VerifyJWT(token)) {
                     Map<String,Object> payload = JSONWebToken.ExtractJWTTokenPayload(token);
-                    String login = (String)payload.get("login");
-
-                    if (login != null && SecurityContextHolder.getContext().getAuthentication() == null){
-                        User user = userRepository.findByLogin(login);
-                        String password = (String) payload.get("password");
-                        String role = (String) payload.get("role");
-                        if (user != null && password.equals(user.getPassword()) && role.equalsIgnoreCase(user.getRole().name())){
-                            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user,null, List.of());
-                            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    long exp = Long.valueOf(payload.get("exp").toString());
+                    long now = System.currentTimeMillis()/1000;
+                    if (now > exp){
+                        throw new RuntimeException("Token expired");
+                    }
+                    else {
+                        String login = (String)payload.get("login");
+                        if (login != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                            User user = userRepository.findByLogin(login);
+                            String password = (String) payload.get("password");
+                            String role = (String) payload.get("role");
+                            if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword()) && role.equalsIgnoreCase(user.getRole().name())){
+                                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user,null, List.of());
+                                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                            }
                         }
                     }
+
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);

@@ -26,6 +26,7 @@ public class JavaSprintBootApiApplication {
 
 	public static void main(String[] args) {
 
+		//TODO: Fix bug, console displays "Connected! Cant connect to database" sometimes when closing application
 		System.out.println("Checking DB connection...");
 		try{
 			SpringApplication.run(JavaSprintBootApiApplication.class);
@@ -43,58 +44,19 @@ public class JavaSprintBootApiApplication {
 
 	@EventListener(ApplicationReadyEvent.class)
 	private void ToRun(){
-        try {
-            File keyFile = new File(System.getProperty("user.dir") + "\\SECRET_KEY.txt");
-            if (keyFile.exists() && keyFile.isFile()){
-                FileReader reader = new FileReader(keyFile);
-                String temp = "";
-                int ch;
-                while ((ch=reader.read()) != -1){
-                    temp += ((char) ch);
-                }
-                reader.close();
-                JSONWebToken.setSecretKey(temp);
-            }
-            else{
-                keyFile.createNewFile();
-                FileWriter writer = new FileWriter(keyFile);
-
-                writer.write(JSONWebToken.SecureKeyGenerator()); //SECRET KEY
-                writer.close();
-            }
-            System.out.println("Welcome to Java Sprint Boot API");
-            System.out.println("Type quit at any time to close application");
-
-            CheckUsers();
-
-            String[] userCredentials = LoggingIn();
-
-
-            if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]))&& userService.getUserByLogin(userCredentials[0]) != null && userService.getUserByLogin(userCredentials[0]).getPassword().equals(userCredentials[1]) && userService.getUserByLogin(userCredentials[0]).getRole().name().equalsIgnoreCase(userCredentials[2])){
-                System.out.println("Identity validated");
-                JSONWebToken.setJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]));
-            }
-            else{
-                System.out.println("Cant validate identity, closing the application");
-                System.exit(0);
-            }
-            while (true){
-                MenuOptions.Menu();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
+		System.out.println("Welcome to Java Sprint Boot API");
+		System.out.println("Type quit at any time to close application");
+		CheckUsers();
+		LoggingIn(userService);
     }
 
-	private String[] LoggingIn(){
+	public static void LoggingIn(UserService userService){
 		System.out.println("You need to log in first");
 		System.out.println("Please enter your login");
-		String login,password,role = "";
-		login = AskUser();
+		String[]userCredentials = new String[3];
+		userCredentials[0] = AskUser();
 		System.out.println("Now enter password:");
-		password = AskUser();
+		userCredentials[1] = AskUser();
 		System.out.println("Now type your role. 1 for Admin, 2 for employee, 3 for user access");
 		char answerRole = AskUser().charAt(0);
 		if (answerRole == '1'){
@@ -111,11 +73,24 @@ public class JavaSprintBootApiApplication {
 		}
 		else{
 			System.out.println("Can't understand what you meant, resetting");
-			System.out.println("");
-			LoggingIn();
+			System.out.println();
+			LoggingIn(userService);
 		}
-		role = PublicVariables.loggedUserRole.name();
-		return new String[]{login, password, role};
+		userCredentials[2] = PublicVariables.loggedUserRole.name();
+		try{
+			if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0],userCredentials[1],userCredentials[2]))&& userService.getUserByLogin(userCredentials[0]) != null && Passwords.CheckPasswordBCrypt(userCredentials[1],userService.getUserByLogin(userCredentials[0]).getPassword()) && userService.getUserByLogin(userCredentials[0]).getRole().equals(PublicVariables.UserRole.fromString(userCredentials[2]))){
+				System.out.println("Identity validated");
+			}
+			else{
+				System.out.println("Cant validate identity, closing the application");
+				System.exit(0);
+			}
+			MenuOptions.Menu();
+		}
+		catch (Exception ex){
+			System.out.println("Cant validate identity, is JWT set up properly?");
+			System.exit(0);
+		}
 	}
 
 	public static String AskUser(){

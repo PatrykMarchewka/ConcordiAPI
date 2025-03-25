@@ -17,14 +17,7 @@ public class UserService {
     private UserRepository userRepository;
 
     public User getUserByID(Long id){
-        Optional<User> user = userRepository.findById(id);
-
-        if (user.isPresent()){
-            return user.get();
-        }
-        else{
-            return null;
-        }
+        return userRepository.findById(id).orElse(null);
     }
 
     public User getUserByLogin(String Login){
@@ -58,7 +51,7 @@ public class UserService {
     public User createUser(String login, String password, String name, String lastName, PublicVariables.UserRole status){
         User user = new User();
         user.setLogin(login);
-        user.setPassword(password);
+        user.setPassword(Passwords.HashPasswordBCrypt(password));
         user.setName(name);
         user.setLastName(lastName);
         user.setRole(status);

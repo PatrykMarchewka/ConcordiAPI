@@ -27,7 +27,7 @@ public class LoginController {
         String role = body.get("role");
 
         User user = userRepository.findByLogin(login);
-        if (user != null && user.getPassword().equals(password) && user.getRole().name().equalsIgnoreCase(role)){
+        if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword()) && user.getRole().name().equalsIgnoreCase(role)){
             String token = null;
             try {
                 token = JSONWebToken.GenerateJWToken(login,password,role);

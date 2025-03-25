@@ -30,13 +30,8 @@ public class Passwords {
     }
 
     public static boolean CheckPasswordBCrypt(String password,String hash){
-        String newHash = HashPasswordBCrypt(password);
-        if (hash.equals(newHash)){
-            return true;
-        }
-        else{
-            return false;
-        }
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(13);
+        return encoder.matches(password,hash);
     }
 
 

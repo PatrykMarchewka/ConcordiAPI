@@ -28,28 +28,16 @@ public class SubtaskController {
     public ResponseEntity<?> getSubtasks(@PathVariable long taskID, Authentication authentication){
         User user = ((User)authentication.getPrincipal());
         Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
         }
         return ResponseEntity.ok(task.getSubtasks());
     }
-
-    @GetMapping("/subtasks/{ID}")
-    public ResponseEntity<?> getSubtaskByID(@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
-        User user = ((User)authentication.getPrincipal());
-        Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
-        }
-        Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(subtask);
-    }
-
     @PostMapping("/subtasks")
     public ResponseEntity<?> createSubtask(@PathVariable long taskID, @RequestBody Map<String,String> body, Authentication authentication){
         User user = ((User)authentication.getPrincipal());
         Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
         }
         Subtask subtask = subtaskService.createSubtask(taskID,body.get("name"),body.get("description"));
@@ -58,11 +46,22 @@ public class SubtaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Subtask created");
     }
 
+    @GetMapping("/subtasks/{ID}")
+    public ResponseEntity<?> getSubtaskByID(@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
+        User user = ((User)authentication.getPrincipal());
+        Task task = taskRepository.findById(taskID);
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
+        }
+        Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
+        return ResponseEntity.ok(subtask);
+    }
+
     @PutMapping("/subtasks/{ID}")
     public ResponseEntity<?> putSubtask(@PathVariable long taskID, @PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
         User user = ((User)authentication.getPrincipal());
         Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
         }
 
@@ -81,7 +80,7 @@ public class SubtaskController {
     public ResponseEntity<?> patchSubtask(@PathVariable long taskID, @PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
         User user = ((User)authentication.getPrincipal());
         Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
         }
 
@@ -108,12 +107,9 @@ public class SubtaskController {
     public ResponseEntity<?> deleteSubtask(@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         User user = ((User)authentication.getPrincipal());
         Task task = taskRepository.findById(taskID);
-        if (!(user.getRole().name().equalsIgnoreCase("admin")) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
+        if (!(user.getRole().equals(PublicVariables.UserRole.ADMIN)) && !(task.getOwner().equals(user)) && !(task.getUsers().contains(user))){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to do this action");
         }
-
-
-
         subtaskService.deleteSubtask(taskID,ID);
         return ResponseEntity.ok("Subtask deleted");
     }

@@ -2,6 +2,11 @@ package com.example.javasprintbootapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,25 +29,21 @@ import java.util.Random;
 
 
 
-
+@Component
 public class JSONWebToken {
-    private static String SECRET_KEY;
-    private static String JWT;
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
+    private static String secret_key;
 
-    public static void setJWT(String jwt){
-        JWT = jwt;
-    }
+    @PostConstruct
+    private void swapSecret(){
+        if (SECRET_KEY.isBlank()){
+            secret_key = SecureSecretKeyGenerator();
+        }
+        else{
+            secret_key = SECRET_KEY;
+        }
 
-    public static String getJWT(){
-        return JWT;
-    }
-
-    public static void setSecretKey(String secretKey){
-        SECRET_KEY = secretKey;
-    }
-
-    public static String getSecretKey(){
-        return SECRET_KEY;
     }
 
     private static String HmacSHA256(String data, String secret) throws NoSuchAlgorithmException, InvalidKeyException {
@@ -63,12 +64,12 @@ public class JSONWebToken {
         String headerPayload = parts[0] + "." + parts[1];
         String signatureReceived = parts[2];
 
-        String computedSignature = HmacSHA256(headerPayload,SECRET_KEY);
+        String computedSignature = HmacSHA256(headerPayload,secret_key);
 
         return computedSignature.equals(signatureReceived);
     }
 
-    public static String SecureKeyGenerator(){
+    public static String SecureSecretKeyGenerator(){
         byte[] key = new byte[new Random().nextInt(32,65)];
         new SecureRandom().nextBytes(key);
         return Base64.getEncoder().withoutPadding().encodeToString(key);
@@ -81,9 +82,11 @@ public class JSONWebToken {
     public static String GenerateJWToken(String login, String password, String role) throws NoSuchAlgorithmException, InvalidKeyException {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
-        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"role\":\"%s\"}",login,password,role);
+        long issuedAt = System.currentTimeMillis()/1000;
+        long expiry = issuedAt + 3600; //60 = 1 minute, 3600 = 1 hour,
+        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"role\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",login,password,role,issuedAt,expiry);
         String encodedPayload = Base64Encoding(payload);
-        String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,SECRET_KEY);
+        String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,secret_key);
         return encodedHeader + "." + encodedPayload + "." + signature;
     }
 

@@ -9,9 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -22,66 +22,14 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    public static Map<String,String> userInfo(Authentication authentication){
-        Object user = authentication.getPrincipal();
-        if (user instanceof User){
-            Map<String,String> ret = new HashMap<>();
-            ret.put("login",((User) user).getLogin());
-            ret.put("password",((User)user).getPassword());
-            ret.put("role",((User)user).getRole().name());
-            return ret;
-        }
-        else{
-            return null;
-        }
-    }
-
     @GetMapping("/users")
-    public List<User> getAllUsers(Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        Map<String,String> user = userInfo(authentication);
-        if (user.get("role").equalsIgnoreCase(PublicVariables.UserRole.ADMIN.name())){
-            return userService.getAllUsers();
+    public ResponseEntity<?> getAllUsers(Authentication authentication){
+        if(((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN)){
+            return ResponseEntity.ok(userService.getAllUsers());
         }
         else{
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"This action requires admin access");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("This action requires admin access");
         }
-    }
-
-
-
-    @GetMapping("/users/me")
-    public User getMyProfile(Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        Object user = authentication.getPrincipal();
-        String login = "";
-        if (user instanceof User ){
-            login = ((User)user).getLogin();
-        }
-        return userService.getUserByLogin(login);
-    }
-
-    @GetMapping("/users/{ID}")
-    public ResponseEntity<?> getUser(@PathVariable long ID, Authentication authentication){
-        if (((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin")){
-            User user = userService.getUserByID(ID);
-            return ResponseEntity.ok(user);
-        }
-        else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You require admin for that action");
-        }
-
-    }
-
-
-    //For testing purposes only
-    @GetMapping("/test")
-    public ResponseEntity<String> getData(Authentication authentication){
-        return ResponseEntity.ok(authentication.getName());
     }
 
     @PostMapping("/users")
@@ -105,16 +53,12 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User with that login already exists");
         }
     }
-
     @DeleteMapping("/users")
     public ResponseEntity<?> deleteUser(@RequestBody Map<String,String> body, Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
         long ID = Long.parseLong(body.get("id"));
 
-        Map<String,String> user = userInfo(authentication);
-        if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
+        User user = (User)authentication.getPrincipal();
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
             try {
                 if (userService.getUserByID(ID).getRole().equals(PublicVariables.UserRole.ADMIN) && !(((User)authentication.getPrincipal()).getID() == ID)){
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Can't delete other admins");
@@ -130,13 +74,88 @@ public class UserController {
         }
     }
 
+    @GetMapping("/users/me")
+    public ResponseEntity<?> getMyProfile(Authentication authentication){
+        Object user = authentication.getPrincipal();
+        Long id = null;
+        if (user instanceof User ){
+            id = ((User)user).getID();
+        }
+        return userRepository.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/users/me/refresh")
+    public ResponseEntity<?> refreshToken(Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        String response;
+        try {
+            response = JSONWebToken.GenerateJWToken(user.getLogin(),user.getPassword(),user.getRole().name());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Cant generate JSON Token");
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users/{ID}")
+    public ResponseEntity<?> getUser(@PathVariable long ID, Authentication authentication){
+        if (((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN)){
+            User user = userService.getUserByID(ID);
+            return ResponseEntity.ok(user);
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You require admin for that action");
+        }
+
+    }
+
+    @PutMapping("/users/{ID}")
+    public ResponseEntity<?> putUser(@PathVariable long ID,@RequestBody Map<String,String> body, Authentication authentication){
+        if (((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN) && userRepository.existsById(ID)){
+            User user = userService.getUserByID(ID);
+            String login = body.get("login");
+            user.setLogin(login);
+            String password = body.get("password");
+            user.setPassword(Passwords.HashPasswordBCrypt(password));
+            String name = body.get("name");
+            user.setName(name);
+            String lastName = body.get("lastname");
+            user.setLastName(lastName);
+            String role = body.get("role");
+            user.setRole(PublicVariables.UserRole.fromString(role));
+            userRepository.save(user);
+            return ResponseEntity.ok("User fully changed");
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.MULTI_STATUS).body("User not found or insufficient privileges");
+        }
+    }
+
+    @PatchMapping("/users/{ID}")
+    public ResponseEntity<?> patchUser(@PathVariable long ID, @RequestBody Map<String,String> body, Authentication authentication){
+        if (((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN) && userRepository.existsById(ID)){
+            User user = userService.getUserByID(ID);
+            if (body.containsKey("login"))
+                user.setLogin(body.get("login"));
+            if (body.containsKey("password"))
+                user.setPassword(Passwords.HashPasswordBCrypt(body.get("password")));
+            if (body.containsKey("name"))
+                user.setName(body.get("name"));
+            if (body.containsKey("lastname"))
+                user.setLastName(body.get("lastname"));
+            if (body.containsKey("role"))
+                user.setRole(PublicVariables.UserRole.fromString(body.get("role")));
+            userRepository.save(user);
+            return ResponseEntity.ok("User changed");
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.MULTI_STATUS).body("User not found or insufficent priviledges");
+        }
+    }
+
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<?> deleteUser(@PathVariable long ID, Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        Map<String,String> user = userInfo(authentication);
-        if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
+        User user = (User)authentication.getPrincipal();
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
             try {
                 if (userService.getUserByID(ID).getRole().equals(PublicVariables.UserRole.ADMIN) && !(((User)authentication.getPrincipal()).getID() == ID)){
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Can't delete other admins");
@@ -148,7 +167,37 @@ public class UserController {
             }
         }
         else{
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"This action requires admin access");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("This action requires admin access");
+        }
+    }
+
+    @GetMapping("/users/ban")
+    public ResponseEntity<?> getBannedUsers(Authentication authentication){
+        User user = (User)authentication.getPrincipal();
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
+            Set<User> temp = new HashSet<>();
+            for (User users : userService.getAllUsers()){
+                if (users.getRole().equals(PublicVariables.UserRole.BANNED))
+                    temp.add(users);
+            }
+            return ResponseEntity.ok(temp);
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("That action requires admin access");
+        }
+    }
+
+    @PostMapping("/users/ban/{ID}")
+    public ResponseEntity<?> postBanUser(@PathVariable long ID, Authentication authentication){
+        User user = (User)authentication.getPrincipal();
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
+            User ban = userService.getUserByID(ID);
+            ban.setRole(PublicVariables.UserRole.BANNED);
+            userRepository.save(ban);
+            return ResponseEntity.ok("User banned!");
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("That action requires admin access");
         }
     }
 

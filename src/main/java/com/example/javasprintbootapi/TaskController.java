@@ -28,50 +28,19 @@ public class TaskController {
     private UserService userService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private SubtaskRepository subtaskRepository;
 
 
     @GetMapping("/tasks")
-    public List<Task> getAllTasks(Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        Map<String,String> user = UserController.userInfo(authentication);
-        if (user.get("role").equals(PublicVariables.UserRole.ADMIN.name())){
-            return taskService.getAllTasks();
-        }
-        else{
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"This action requires admin access");
-        }
-    }
-
-    @GetMapping("/tasks/me")
-    public List<Task> getAllTasksAssignedToMe(Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        return taskService.getAllTasksForUser((User)authentication.getPrincipal());
-    }
-
-    @GetMapping("/tasks/me/owner")
-    public List<Task> getAllTasksIOwn(Authentication authentication){
-        if (authentication == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"No authentication!");
-        }
-        return taskService.getAllTasksUserOwns((User)authentication.getPrincipal());
-    }
-
-    @GetMapping("/tasks/{ID}")
-    public Task getTaskByID(@PathVariable long ID, Authentication authentication){
-        Task task = taskRepository.findById(ID);
-
+    public ResponseEntity<?> getAllTasks(Authentication authentication){
         User user = (User)authentication.getPrincipal();
-        if (task.getUsers().contains(user) || task.getOwner().equals(user) || user.getRole().equals(PublicVariables.UserRole.ADMIN)){
-            return task;
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
+            return ResponseEntity.ok(taskService.getAllTasks());
         }
         else{
-            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You cant view this task");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("This action requires admin access");
         }
-        return null;
     }
 
     @PostMapping("/tasks")
@@ -100,16 +69,62 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Task created!");
     }
 
-    @PatchMapping("/tasks/{ID}")
-    public ResponseEntity<?> updateTask(@PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
+    @GetMapping("/tasks/me")
+    public ResponseEntity<List<Task>> getAllTasksAssignedToMe(Authentication authentication){
+        return ResponseEntity.ok(taskService.getAllTasksForUser((User)authentication.getPrincipal()));
+    }
+
+    @GetMapping("/tasks/me/owner")
+    public ResponseEntity<List<Task>> getAllTasksIOwn(Authentication authentication){
+        return ResponseEntity.ok(taskService.getAllTasksUserOwns((User)authentication.getPrincipal()));
+    }
+
+    @GetMapping("/tasks/{ID}")
+    public ResponseEntity<?> getTaskByID(@PathVariable long ID, Authentication authentication){
         Task task = taskRepository.findById(ID);
-        if (task != null && (task.getOwner().getID() == ((User)authentication.getPrincipal()).getID() || ((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin"))){
+        User user = (User)authentication.getPrincipal();
+        if (task.getUsers().contains(user) || task.getOwner().equals(user) || user.getRole().equals(PublicVariables.UserRole.ADMIN)){
+            return ResponseEntity.ok(task);
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You cant view this task");
+        }
+    }
+
+    @PutMapping("/tasks/{ID}")
+    public ResponseEntity<?> putTask(@PathVariable long ID, @RequestBody Map <String, Object> body, Authentication authentication){
+        User user = (User)authentication.getPrincipal();
+        Task task = taskRepository.findById(ID);
+        if (user.getRole().equals(PublicVariables.UserRole.ADMIN)){
+            task.setName(body.get("name").toString());
+            task.setDescription(body.get("description").toString());
+            task.setOwner(userRepository.findById(Long.valueOf(body.get("owner").toString())).orElseThrow());
+            task.setTaskStatus(PublicVariables.TaskStatus.fromString(body.get("taskStatus").toString()));
+            List<Long> userIDs = (List<Long>)body.get("users");
+            Set<User> users = userIDs.stream().map(id -> userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found:" + id))).collect(Collectors.toSet());
+            task.setUsers(users);
+            List<Long> subtaskIDs = (List<Long>)body.get("subtasks");
+            Set<Subtask> subtasks = subtaskIDs.stream().map(id -> subtaskRepository.findSubtaskByIdAndTaskId(id,task.getId()).orElseThrow(() -> new RuntimeException("Subtask not found:" + id))).collect(Collectors.toSet());
+            task.setSubtasks(subtasks);
+            task.setUpdateDate(new Date());
+            taskRepository.save(task);
+            return ResponseEntity.ok("Task fully changed");
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You require admin privileges to do that");
+        }
+    }
+
+    @PatchMapping("/tasks/{ID}")
+    public ResponseEntity<?> patchTask(@PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
+        Task task = taskRepository.findById(ID);
+        if (task != null && (task.getOwner().getID() == ((User)authentication.getPrincipal()).getID() || ((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN))){
             body.forEach((key,value) -> {
                 Field field = ReflectionUtils.findField(Task.class, key);
                 if (List.of("id","creationDate").contains(key)){
                     throw new IllegalArgumentException("You cannot patch sensitive fieleds: " + key);
                 }
-                if (List.of("owner").contains(key) && !((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin")){
+                if (List.of("owner").contains(key) && !((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN)){
                     throw new IllegalArgumentException("You cannot modify admin field as non-admin:" + key);
                 }
                 if (field != null){
@@ -155,7 +170,7 @@ public class TaskController {
 
     @DeleteMapping("/tasks/{ID}")
     public ResponseEntity<?> deleteTask(@PathVariable long ID, Authentication authentication){
-        if (((User)authentication.getPrincipal()).getRole().name().equalsIgnoreCase("admin")){
+        if (((User)authentication.getPrincipal()).getRole().equals(PublicVariables.UserRole.ADMIN)){
             taskService.deleteTaskByID(ID);
             return  ResponseEntity.ok("Task deleted");
         }
