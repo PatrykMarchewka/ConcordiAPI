@@ -38,8 +38,7 @@ public class JWTFilter extends OncePerRequestFilter {
                         if (login != null && SecurityContextHolder.getContext().getAuthentication() == null){
                             User user = userRepository.findByLogin(login);
                             String password = (String) payload.get("password");
-                            String role = (String) payload.get("role");
-                            if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword()) && role.equalsIgnoreCase(user.getRole().name())){
+                            if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword())){
                                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user,null, List.of());
                                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                             }

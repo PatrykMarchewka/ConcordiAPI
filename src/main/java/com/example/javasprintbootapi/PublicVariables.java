@@ -2,8 +2,6 @@ package com.example.javasprintbootapi;
 
 public class PublicVariables {
 
-    public static UserRole loggedUserRole;
-
     public enum TaskStatus{
         NEW,
         CANCELLED,
@@ -23,8 +21,8 @@ public class PublicVariables {
 
     public enum UserRole{
         ADMIN,
-        EMPLOYEE,
-        USER,
+        MANAGER,
+        MEMBER,
         BANNED;
 
         public static UserRole fromString(String name){

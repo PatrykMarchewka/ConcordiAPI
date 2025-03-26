@@ -18,19 +18,18 @@ import java.util.Optional;
 public class LoginController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String,String> body){
         String login = body.get("login");
         String password = body.get("password");
-        String role = body.get("role");
 
-        User user = userRepository.findByLogin(login);
-        if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword()) && user.getRole().name().equalsIgnoreCase(role)){
+        User user = userService.getUserByLogin(login);
+        if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword())){
             String token = null;
             try {
-                token = JSONWebToken.GenerateJWToken(login,password,role);
+                token = JSONWebToken.GenerateJWToken(login,password);
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RuntimeException(e);
             }
@@ -42,6 +41,14 @@ public class LoginController {
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong credentials!");
+    }
 
+    @PostMapping("/create")
+    public ResponseEntity<?> create(@RequestBody Map<String,String> body){
+        if (userService.checkIfUserExistsByLogin(body.get("login"))){
+            ResponseEntity.status(HttpStatus.CONFLICT).body("Login already in use, please choose a different one");
+        }
+        userService.createUser(body.get("login"),body.get("password"),body.get("name"),body.get("lastName"));
+        return ResponseEntity.status(HttpStatus.CREATED).body("User created!");
     }
 }

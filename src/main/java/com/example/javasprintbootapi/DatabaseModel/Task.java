@@ -30,14 +30,13 @@ public class Task {
     @JsonManagedReference
     private Set<Subtask> subtasks;
 
-    @ManyToOne
-    @JsonBackReference
-    @Nullable
-    private User owner;
-
     @ManyToMany
     @JsonBackReference
     private Set<User> users;
+
+    @ManyToOne
+    @JsonBackReference
+    private Team team;
 
     public long getId() {
         return id;
@@ -91,18 +90,12 @@ public class Task {
         this.subtasks = subtasks;
     }
 
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
     public Set<User> getUsers() {
         return users;
     }
     public void setUsers(Set<User> users){
         this.users = users;
     }
+
+    public Team getTeam(){ return this.team; }
 }

@@ -79,12 +79,12 @@ public class JSONWebToken {
         return Base64.getEncoder().withoutPadding().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String GenerateJWToken(String login, String password, String role) throws NoSuchAlgorithmException, InvalidKeyException {
+    public static String GenerateJWToken(String login, String password) throws NoSuchAlgorithmException, InvalidKeyException {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
         long issuedAt = System.currentTimeMillis()/1000;
         long expiry = issuedAt + 3600; //60 = 1 minute, 3600 = 1 hour,
-        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"role\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",login,password,role,issuedAt,expiry);
+        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",login,password,issuedAt,expiry);
         String encodedPayload = Base64Encoding(payload);
         String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,secret_key);
         return encodedHeader + "." + encodedPayload + "." + signature;

@@ -12,10 +12,17 @@ public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByName(String Name);
 
     boolean existsByLogin(String Login);
-
+    
     User findByLogin(String login);
 
+    boolean existsByLoginAndTeam_Name(String login, String teamName);
 
-    //@Query("SELECT u.Name, u.LastName FROM User u WHERE u.ID NOT IN (SELECT DISTINCT user FROM User user JOIN Task t)")
-    //List<User> findUsersWithoutTasks();
+    User findByLoginAndTeam_Name(String login, String teamName);
+
+    boolean existsByLoginAndTeam_Id(String login, long teamId);
+
+    User findByLoginAndTeam_Id(String login, long teamId);
+
+    //@Query("SELECT u.Name, u.LastName FROM Users u;")
+    //List<User> allUsers();
 }

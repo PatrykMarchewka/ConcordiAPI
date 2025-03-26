@@ -1,9 +1,6 @@
 package com.example.javasprintbootapi;
 
-import com.example.javasprintbootapi.DatabaseModel.Task;
-import com.example.javasprintbootapi.DatabaseModel.TaskRepository;
-import com.example.javasprintbootapi.DatabaseModel.User;
-import com.example.javasprintbootapi.DatabaseModel.UserRepository;
+import com.example.javasprintbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +12,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private TeamUserRoleService teamUserRoleService;
+
 
     public User getUserByID(Long id){
         return userRepository.findById(id).orElse(null);
@@ -22,6 +22,16 @@ public class UserService {
 
     public User getUserByLogin(String Login){
         return userRepository.findByLogin(Login);
+    }
+
+    public User getUserByLoginAndPassword(String login, String password){
+        User user = userRepository.findByLogin(login);
+        if (Passwords.CheckPasswordBCrypt(password,user.getPassword())){
+            return user;
+        }
+        else{
+            return null;
+        }
     }
 
     public List<User> getAllUsers(){
@@ -48,17 +58,21 @@ public class UserService {
         return userRepository.existsByLogin(login);
     }
 
-    public User createUser(String login, String password, String name, String lastName, PublicVariables.UserRole status){
+    public User createUser(String login, String password, String name, String lastName){
         User user = new User();
         user.setLogin(login);
         user.setPassword(Passwords.HashPasswordBCrypt(password));
         user.setName(name);
         user.setLastName(lastName);
-        user.setRole(status);
-
         return userRepository.save(user);
     }
 
+    public void banUserByID(long id, Team team){
+        User user = userRepository.findById(id).orElseThrow();
+        teamUserRoleService.setRole(user,team, PublicVariables.UserRole.BANNED);
+    }
+
+    //TODO: change so it only delets from the team
     public void deleteUser(User user){
         userRepository.delete(user);
     }
