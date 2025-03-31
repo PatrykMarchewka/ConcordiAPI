@@ -1,0 +1,667 @@
+package com.example.javaspringbootapi;
+
+
+import com.example.javaspringbootapi.DTO.TaskManagerDTO;
+import com.example.javaspringbootapi.DTO.TaskMemberDTO;
+import com.example.javaspringbootapi.DTO.UserMemberDTO;
+import com.example.javaspringbootapi.DatabaseModel.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
+
+@Component
+public class MenuOptions {
+
+    @Autowired
+    private TeamService teamService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private TaskService taskService;
+    @Autowired
+    private SubtaskService subtaskService;
+    @Autowired
+    private TeamUserRoleService teamUserRoleService;
+    private static Team loggedUserTeam;
+    private static User loggedUser;
+
+
+    public void Start() {
+        System.out.println("Choose whether to login or create a new account");
+        System.out.println("1. Log in");
+        System.out.println("2. Create new account");
+        try {
+            String ans = AskUser();
+            if (ans.contains("1")) {
+                LoggingIn();
+            } else if (ans.contains("2")) {
+                CreatingUser();
+            } else {
+                System.out.println(CouldntUnderstand());
+                System.out.println();
+                Start();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void CreatingUser() {
+        System.out.println("Creating new account");
+        System.out.println("Please enter your login");
+        String[] userCredentials = new String[4];
+        userCredentials[0] = AskUser();
+        System.out.println("Now enter password:");
+        userCredentials[1] = AskUser();
+        if (userService.checkIfUserExistsByLogin(userCredentials[0])) {
+            System.out.println("Sorry login is already taken");
+            CreatingUser();
+        } else {
+            System.out.println("Type your name");
+            userCredentials[2] = AskUser();
+            System.out.println("Type your lastname");
+            userCredentials[3] = AskUser();
+            userService.createUser(userCredentials[0], userCredentials[1], userCredentials[2], userCredentials[3]);
+            System.out.println("User created!");
+            System.out.println("Now try to log in!");
+            LoggingIn();
+        }
+
+    }
+
+    private void LoggingIn() {
+        System.out.println("Logging in");
+        System.out.println("Please enter your login");
+        String[] userCredentials = new String[2];
+        userCredentials[0] = AskUser();
+        System.out.println("Now enter password:");
+        userCredentials[1] = AskUser();
+        User user = userService.getUserByLoginAndPassword(userCredentials[0], userCredentials[1]);
+        try {
+            if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0], userCredentials[1])) && userService.getUserByLogin(userCredentials[0]) != null && Passwords.CheckPasswordBCrypt(userCredentials[1], userService.getUserByLogin(userCredentials[0]).getPassword())) {
+                System.out.println("Identity validated");
+                loggedUser = userService.getUserByLogin(userCredentials[0]);
+            } else {
+                System.out.println("Cant validate identity, closing the application");
+                System.exit(0);
+            }
+
+        } catch (Exception ex) {
+            System.out.println("Cant validate identity, is JWT set up properly?");
+            System.exit(0);
+        }
+        List<Team> list = new ArrayList<>();
+        list.add(null);
+        if (user != null) {
+            System.out.println("0. CREATE NEW TEAM ");
+            int i = 1;
+            for (Team team : user.getTeams()) {
+                System.out.println(i + ". " + team.getName() + " - " + teamUserRoleService.getRole(user, team).name());
+                list.add(team);
+                i++;
+            }
+            System.out.println(i+1 + ". JOIN TEAM USING INVITATION CODE" );
+        }
+
+        if (list.size() == 1){
+            System.out.println("You have no teams, you need to create one now or join already existing one");
+            System.out.println("Choose whether to create new team or join existing one");
+            System.out.println("1. Create new team");
+            System.out.println("2. Join existing one (requires valid invitation)");
+            String ans = AskUser();
+            if (ans.contains("1")){
+                CreateTeam();
+            }
+            else if(ans.contains("2")){
+                //TODO: INVITATIONS
+            }
+            else{
+                System.out.println(CouldntUnderstand());
+                System.out.println();
+                LoggingIn();
+            }
+        }
+        else{
+            try {
+                System.out.println("Type option number to choose it");
+                int choice = Integer.valueOf(AskUser());
+                if (choice == 0){
+                    CreateTeam();
+                }
+                else if(choice == list.size()+1){
+                    //TODO: INVITATIONS
+                }
+                else{
+                    loggedUserTeam = (list.get(choice));
+                }
+            } catch (Exception ex) {
+                System.out.println(CouldntUnderstand());
+                System.out.println();
+                LoggingIn();
+            }
+        }
+
+        if (loggedUserTeam == null) {
+            LoggingIn();
+        } else {
+            Menu();
+        }
+
+    }
+
+    private String AskUser() {
+        String ans = System.console().readLine();
+        if (ans.equalsIgnoreCase("quit")) {
+            System.exit(0);
+        }
+        if (ans.equalsIgnoreCase("start") || ans.equalsIgnoreCase("logout")) {
+            Start();
+        }
+        return ans;
+    }
+
+
+    private void Menu() {
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        System.out.println("Type the number to get into specific option:");
+        System.out.println("0. Teams");
+        System.out.println("1. Users");
+        System.out.println("2. Tasks and subtasks");
+        System.out.println("3. Logout");
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        String answer = AskUser();
+        if (answer.contains("0")) {
+            MenuTeams();
+        } else if (answer.contains("1")) {
+            MenuUsers();
+        } else if (answer.contains("2")) {
+            MenuTasks();
+        } else if (answer.contains("3")) {
+            LoggingIn();
+        } else {
+            System.out.println(CouldntUnderstand());
+            System.out.println();
+            Menu();
+        }
+    }
+
+    private void MenuTeams() {
+        System.out.println("1. Create team");
+        System.out.println("2. Change team name");
+        System.out.println("3. Leave team");
+        System.out.println("4. Disband team");
+        System.out.println("5. Manage invitations");
+        System.out.println("0. Go back");
+        String ans = AskUser();
+        if (ans.contains("1")) {
+            CreateTeam();
+        } else if (ans.contains("2")) {
+            ChangeTeamName();
+
+        } else if (ans.contains("3")) {
+            LeaveTeam();
+        } else if (ans.contains("4")) {
+            DisbandTeam();
+        } else if (ans.contains("5")) {
+            //TODO: finish, invitations
+        }
+        else if(ans.contains("0")){
+            Menu();
+        }
+        else{
+            System.out.println(CouldntUnderstand());
+            System.out.println();
+            MenuTeams();
+        }
+
+        Menu();
+    }
+
+    private void MenuUsers() {
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        System.out.println("Type the number to get into specific option:");
+        System.out.println("1. View users");
+        System.out.println("2. Remove user from team");
+        System.out.println("3. Elevate user to administrator");
+        System.out.println("4. Set user as manager");
+        System.out.println("5. Demote user to member");
+        System.out.println("6. Ban user");
+        System.out.println("0. Go back");
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        String answer = AskUser();
+        if (answer.contains("1")) {
+            ViewUsers();
+        } else if (answer.contains("2")) {
+            RemoveUserFromTeam();
+        } else if (answer.contains("3")) {
+            SetAsAdmin();
+        } else if (answer.contains("4")) {
+            SetAsManager();
+        } else if (answer.contains("5")) {
+            SetAsUser();
+        } else if (answer.contains("6")) {
+            BanUser();
+        } else if (answer.contains("0")) {
+            Menu();
+
+        } else {
+            System.out.println(CouldntUnderstand());
+            System.out.println();
+            MenuUsers();
+        }
+
+    }
+
+    private void MenuTasks() {
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        System.out.println("Type the number to get into specific option:");
+        System.out.println("1. View tasks");
+        System.out.println("2. Create new task");
+        System.out.println("3. Edit task");
+        System.out.println("4. Delete task");
+        System.out.println("0. Go back");
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        String answer = AskUser();
+        if (answer.contains("1")){
+            ViewTasks();
+        }
+        else if(answer.contains("2")){
+            CreateTask();
+        }
+        else if(answer.contains("3")){
+            EditTask();
+        }
+        else if(answer.contains("4")){
+
+        }
+        else if (answer.contains("0")){
+            Menu();
+        }
+        else{
+            System.out.println(CouldntUnderstand());
+            System.out.println();
+            MenuTasks();
+        }
+
+    }
+
+
+    //TODO: Add for later. User getUserByID for now
+//    private static User getUserByNameOrID(){
+//        String res = AskUser();
+//        Long id = null;
+//        User user = null;
+//        try {
+//            id = Long.parseLong(res);
+//        } finally {
+//            if (id == null && userService.checkIfUserExistsByNameAndLastName(res)) {
+//                user = userService.getUserByNameAndLastName(res);
+//            } else if (id != null && userService.checkIfUserExistsByID(id)) {
+//                user = userService.getUserByID(id);
+//            } else {
+//                System.out.println("Can't parse the input, resetting");
+//                System.out.println();
+//            }
+//        }
+//        return user;
+//    }
+    
+    public static String NoPermissionsMessage(){
+        return "You do not have permissions to do this action";
+    }
+
+    public static String CouldntCompleteOperation(){
+        return "Couldnt complete operation, check for errors and try again";
+    }
+
+    public static String CouldntUnderstand(){
+        return "Couldnt understand what you meant, resetting!";
+    }
+
+
+
+
+    //TEAMS
+    //TODO: Add JavaDocs(///)
+    private void CreateTeam(){
+        System.out.println("Give a name to your new team");
+        String answer = AskUser();
+        loggedUserTeam = teamService.createTeam(answer, loggedUser);
+    }
+
+    private void ChangeTeamName(){
+        System.out.println("Type new name of your team:");
+        String answer = AskUser();
+        loggedUserTeam.setName(answer);
+        teamService.saveTeam(loggedUserTeam);
+    }
+
+    private void LeaveTeam(){
+        System.out.println("Are you sure you want to leave team " + loggedUserTeam.getName() + "?");
+        System.out.println("Type YES to leave");
+        String answer = AskUser();
+        if (answer.contains("YES")) {
+            //TODO test it
+            teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(loggedUser, loggedUserTeam));
+            teamService.removeUser(loggedUserTeam, loggedUser);
+            System.out.println("Successfully left the team!");
+            loggedUserTeam = null;
+            LoggingIn();
+        } else {
+            System.out.println("Going back");
+            MenuTeams();
+        }
+    }
+
+    private void DisbandTeam(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println("Are you sure you want to permanently disband team " + loggedUserTeam.getName() + "?");
+            System.out.println("Type YES to disband");
+            String answer = AskUser();
+            if (answer.contains("YES")) {
+                //TODO: test it
+                teamService.deleteTeam(loggedUserTeam);
+                loggedUserTeam = null;
+                LoggingIn();
+            } else {
+                System.out.println("Going back");
+                MenuTeams();
+            }
+        } else {
+            System.out.println("You can't disband that team!");
+        }
+    }
+
+
+
+    //Users
+    private void ViewUsers(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)) {
+            Set<UserMemberDTO> users = new HashSet<>();
+            for (User user : loggedUserTeam.getTeammates()) {
+                users.add(new UserMemberDTO(user));
+            }
+
+            for (UserMemberDTO user : users) {
+                System.out.println(user);
+            }
+        } else if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MEMBER)) {
+            System.out.println("Member count: " + loggedUserTeam.getTeammates().size());
+        }
+        MenuUsers();
+    }
+
+    private void RemoveUserFromTeam(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)) {
+            System.out.println("Type ID of the user you want to delete");
+            try {
+                User user = userService.getUserByID(Long.valueOf(AskUser()));
+                if (user != null){
+                    PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser, loggedUserTeam);
+                    PublicVariables.UserRole role = teamUserRoleService.getRole(user, loggedUserTeam);
+                    if (role.compareTo(myRole) > 0) {
+                        for (Task task : loggedUserTeam.getTasks()) {
+                            if (task.getUsers().contains(user)) {
+                                task.getUsers().remove(user);
+                                taskService.saveTask(task);
+                            }
+                        }
+                        loggedUserTeam.getTeammates().remove(user);
+                        teamService.saveTeam(loggedUserTeam);
+                        teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(user, loggedUserTeam));
+                        System.out.println("User deleted from the team");
+                    } else {
+                        System.out.println(NoPermissionsMessage());
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+            }
+        } else if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuUsers();
+    }
+
+    private void SetAsAdmin(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println("Type ID of the user you want to promote to admin role");
+            try {
+                User user = userService.getUserByID(Long.valueOf(AskUser()));
+                if (user != null){
+                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.ADMIN);
+                    System.out.println("User " + user.getName() + " is now ADMIN on your team!");
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+            }
+        } else {
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuUsers();
+    }
+
+    private void SetAsManager(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println("Type ID of the user you want to set as manager role");
+            try {
+                User user = userService.getUserByID(Long.valueOf(AskUser()));
+                if (user!= null){
+                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.MANAGER);
+                    System.out.println("User " + user.getName() + " is now MANAGER on your team!");
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+            }
+        } else {
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuUsers();
+    }
+
+    private void SetAsUser(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println("Type ID of the user you want to set as member role");
+            try {
+                User user = userService.getUserByID(Long.valueOf(AskUser()));
+                if (user!= null){
+                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.MEMBER);
+                    System.out.println("User " + user.getName() + " is now MEMBER on your team!");
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuUsers();
+    }
+
+    private void BanUser(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+            System.out.println("Type ID user you want to ban on your team");
+            try{
+                User user = userService.getUserByID(Long.valueOf(AskUser()));
+                if (user != null){
+                    PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+                    PublicVariables.UserRole role = teamUserRoleService.getRole(user,loggedUserTeam);
+                    if (role.compareTo(myRole) > 0){
+                        teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.BANNED);
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+            }
+
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuUsers();
+    }
+
+    //TASKS
+    private void ViewTasks(){
+        if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)) {
+            Set<TaskManagerDTO> tasks = new HashSet<>();
+            for (Task task : loggedUserTeam.getTasks()) {
+                tasks.add(new TaskManagerDTO(task));
+            }
+
+            for (TaskManagerDTO task : tasks) {
+                System.out.println(task);
+            }
+        } else if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MEMBER)) {
+            Set<TaskMemberDTO> tasks = new HashSet<>();
+            for (Task task : loggedUser.getTasks()){
+                tasks.add(new TaskMemberDTO(task));
+            }
+
+            for (TaskMemberDTO task : tasks){
+                System.out.println(task);
+            }
+        }
+        MenuTasks();
+    }
+
+    private void CreateTask(){
+
+        Task task = new Task();
+        System.out.println("Give name for the new task");
+        task.setName(AskUser());
+        System.out.println("Give description for your task");
+        task.setDescription(AskUser());
+        task.setCreationDate(new Date());
+        task.setTaskStatus(PublicVariables.TaskStatus.NEW);
+        task.getUsers().add(loggedUser);
+        taskService.saveTask(task);
+
+        loggedUser.getTasks().add(task);
+        userService.saveUser(loggedUser);
+
+        System.out.println("Task successfully created");
+        System.out.println("Use edit task function to add users, subtasks and edit more information");
+        MenuTasks();
+    }
+
+    private void EditTask(){
+        System.out.println("Type ID of the task you want to edit");
+        try {
+            long id = Long.valueOf(AskUser());
+            Task task = taskService.getTaskByID(id,loggedUserTeam);
+            if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains(loggedUser)){
+                System.out.println("Choose what you want to edit");
+                System.out.println("1. Task Name");
+                System.out.println("2. Task Description");
+                System.out.println("3. Task Status");
+                System.out.println("4. Users assigned to task");
+                System.out.println("5. Subtasks assigned to task");
+                System.out.println("0. DONE EDITING");
+                String ans = AskUser();
+                if (ans.contains("1")){
+                    System.out.println("Type new name for the task");
+                    String name = AskUser();
+                    task.setName(name);
+                    taskService.saveTask(task);
+                }
+                else if(ans.contains("2")){
+                    System.out.println("Type new description for the task");
+                    String desc = AskUser();
+                    task.setDescription(desc);
+                }
+                else if(ans.contains("3")){
+                    System.out.println("Type number of new task status for the task");
+                    for (PublicVariables.TaskStatus ts : PublicVariables.TaskStatus.values()){
+                        System.out.println(ts.ordinal() + " " + ts.name());
+                    }
+                    int choice = Integer.valueOf(AskUser());
+                    task.setTaskStatus(PublicVariables.TaskStatus.values()[choice]);
+                    taskService.saveTask(task);
+                }
+                else if(ans.contains("4")){
+                    //Users assigned
+                    System.out.println("Do you want to add new user or remove existing one?");
+                    //TODO: Have to think about it, we don't want users deleting their managers or admins
+
+                }
+                else if(ans.contains("5")){
+                    //Subtasks
+                    System.out.println("Do you want to add or remove subtasks?");
+                    System.out.println("1. Add new subtask");
+                    System.out.println("2. Remove subtask");
+                    String answer = AskUser();
+                    if (answer.contains("1")){
+                        CreateSubtask(task);
+                    }
+                    if (answer.contains("2")){
+                        DeleteSubtask(task);
+                    }
+                }
+                else if(ans.contains("0")){
+                    MenuTasks();
+                }
+                else{
+                    System.out.println(CouldntUnderstand());
+                    MenuTasks();
+                }
+            }
+            else{
+                System.out.println(NoPermissionsMessage());
+            }
+
+        } catch (Exception e) {
+            System.out.println(CouldntCompleteOperation());
+        }
+        MenuTasks();
+
+    }
+
+
+
+
+
+
+
+
+
+    //Subtasks
+    private void CreateSubtask(Task task){
+        Subtask subtask = new Subtask();
+        subtask.setTask(task);
+        subtask.setTaskStatus(PublicVariables.TaskStatus.NEW);
+        System.out.println("Type name for the subtask");
+        subtask.setName(AskUser());
+        System.out.println("Type description for the subtask");
+        subtask.setDescription(AskUser());
+        subtaskService.saveSubtask(subtask);
+        task.getSubtasks().add(subtask);
+        taskService.saveTask(task);
+    }
+
+    private void DeleteSubtask(Task task){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)){
+            System.out.println("Type ID of the subtask you want to delete");
+            for (Subtask sub : task.getSubtasks()){
+                System.out.println(sub.getId() + ". " + sub.getName() + ", " + sub.getDescription() + " - " + sub.getTaskStatus().name());
+            }
+            try{
+                long choice = Long.valueOf(AskUser());
+                subtaskService.deleteSubtask(task.getId(),choice);
+                System.out.println("Subtask deleted");
+            } catch (Exception e) {
+                System.out.println(CouldntUnderstand());
+                MenuTasks();
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+        MenuTasks();
+    }
+
+
+
+}
