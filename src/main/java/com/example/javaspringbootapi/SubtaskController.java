@@ -115,7 +115,6 @@ public class SubtaskController {
     @DeleteMapping("/subtasks/{ID}")
     public ResponseEntity<?> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
-        Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (myRole.equals(PublicVariables.UserRole.ADMIN)){
             subtaskService.deleteSubtask(taskID,ID);

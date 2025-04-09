@@ -71,8 +71,6 @@ public class User {
 
     public Set<Team> getTeams(){ return this.teams; }
 
-    public void addToTeam(Team team){ this.teams.add(team); }
-
 
 }
 

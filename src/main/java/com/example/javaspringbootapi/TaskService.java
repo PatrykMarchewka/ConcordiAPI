@@ -16,6 +16,12 @@ public class TaskService {
     private TaskRepository taskRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private SubtaskService subtaskService;
+    @Autowired
+    private TeamService teamService;
+    @Autowired
+    private UserService userService;
 
     public List<Task> getAllTasks(){
         return taskRepository.findAll();
@@ -102,11 +108,14 @@ public class TaskService {
         task.setTeam(team);
         task.setTaskStatus(PublicVariables.TaskStatus.NEW);
         task.setCreationDate(new Date());
-        return taskRepository.save(task);
+        taskRepository.save(task);
+        team.getTasks().add(task);
+        teamService.saveTeam(team);
+        return task;
     }
 
     @Transactional
-    public Task createTask(String name, String description, Team team, Set<User> users, Set<Subtask> subtasks){
+    public Task createTask(String name, String description, Team team, Set<User> users){
         Task task = new Task();
         task.setTeam(team);
         task.setName(name);
@@ -114,8 +123,14 @@ public class TaskService {
         task.setTaskStatus(PublicVariables.TaskStatus.NEW);
         task.setCreationDate(new Date());
         task.setUsers(users);
-        task.setSubtasks(subtasks);
-        return taskRepository.save(task);
+        taskRepository.save(task);
+        for (User user : task.getUsers()){
+            user.getTasks().add(task);
+            userService.saveUser(user);
+        }
+        team.getTasks().add(task);
+        teamService.saveTeam(team);
+        return task;
     }
 
     @Transactional
@@ -125,14 +140,56 @@ public class TaskService {
             user.getTasks().remove(task);
             userRepository.save(user);
         }
-        taskRepository.save(task);
-        taskRepository.delete(task);
+        team.getTasks().remove(task);
+        teamService.saveTeam(team);
     }
 
     public Task saveTask(Task task){
         task.setUpdateDate(new Date());
         return taskRepository.save(task);
     }
+
+
+    @Transactional
+    public void addUserToTask(Team team, long taskID, User user){
+        Task task = taskRepository.findByIdAndTeam(taskID,team);
+        task.getUsers().add(user);
+        taskRepository.save(task);
+        user.getTasks().add(task);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void removeUserFromTask(Team team, long taskID, User user){
+        Task task = taskRepository.findByIdAndTeam(taskID,team);
+        task.getUsers().remove(user);
+        taskRepository.save(task);
+        user.getTasks().remove(task);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void addSubtaskToTask(Team team, long taskID, Subtask subtask){
+        Task task = taskRepository.findByIdAndTeam(taskID,team);
+        task.getSubtasks().add(subtask);
+        taskRepository.save(task);
+        subtask.setTask(task);
+        subtaskService.saveSubtask(subtask);
+    }
+
+    @Transactional
+    public void removeSubtaskFromTask(Team team, long taskID, Subtask subtask){
+        Task task = taskRepository.findByIdAndTeam(taskID,team);
+        task.getSubtasks().remove(subtask);
+        taskRepository.save(task);
+        subtaskService.deleteSubtask(taskID, subtask.getId());
+    }
+
+    public Subtask getSubtaskByID(long taskID,long subtaskID){
+        return subtaskService.getSubtaskByID(taskID,subtaskID);
+    }
+
+
 
 
 

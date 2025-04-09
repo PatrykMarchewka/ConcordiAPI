@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -20,6 +22,25 @@ public class TeamController {
     private TeamService teamService;
     @Autowired
     private TeamUserRoleService teamUserRoleService;
+
+    @GetMapping("/teams")
+    public ResponseEntity<?> myTeams(Authentication authentication){
+        User user = (User) authentication.getPrincipal();
+        Set<Object> teams = new HashSet<>();
+        for (Team team : user.getTeams()){
+            PublicVariables.UserRole role = teamUserRoleService.getRole(user,team);
+            if (role.equals(PublicVariables.UserRole.ADMIN)){
+                teams.add(new TeamAdminDTO(team,teamUserRoleService));
+            }
+            else if(role.equals(PublicVariables.UserRole.MANAGER)){
+                teams.add(new TeamManagerDTO(team,teamUserRoleService));
+            }
+            else if(role.equals(PublicVariables.UserRole.MEMBER)){
+                teams.add(new TeamMemberDTO(team,user));
+            }
+        }
+        return ResponseEntity.ok(teams);
+    }
 
     @PostMapping("/teams")
     public ResponseEntity<?> createTeam(@RequestBody Map<String,String> body, Authentication authentication){

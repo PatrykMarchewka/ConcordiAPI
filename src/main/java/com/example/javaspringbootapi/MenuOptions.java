@@ -43,7 +43,9 @@ public class MenuOptions {
                 Start();
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.println("Found problem:");
+            System.out.println(e.toString());
+            Start();
         }
 
     }
@@ -274,7 +276,7 @@ public class MenuOptions {
             EditTask();
         }
         else if(answer.contains("4")){
-
+            DeleteTask();
         }
         else if (answer.contains("0")){
             Menu();
@@ -284,6 +286,7 @@ public class MenuOptions {
             System.out.println();
             MenuTasks();
         }
+        MenuTasks();
 
     }
 
@@ -524,27 +527,30 @@ public class MenuOptions {
                 System.out.println(task);
             }
         }
-        MenuTasks();
     }
 
     private void CreateTask(){
 
-        Task task = new Task();
-        System.out.println("Give name for the new task");
-        task.setName(AskUser());
-        System.out.println("Give description for your task");
-        task.setDescription(AskUser());
-        task.setCreationDate(new Date());
-        task.setTaskStatus(PublicVariables.TaskStatus.NEW);
-        task.getUsers().add(loggedUser);
-        taskService.saveTask(task);
+        try {
+            Task task = new Task();
+            System.out.println("Give name for the new task");
+            task.setName(AskUser());
+            System.out.println("Give description for your task");
+            task.setDescription(AskUser());
+            task.setCreationDate(new Date());
+            task.setTaskStatus(PublicVariables.TaskStatus.NEW);
+            task.getUsers().add(loggedUser);
+            taskService.saveTask(task);
 
-        loggedUser.getTasks().add(task);
-        userService.saveUser(loggedUser);
+            loggedUser.getTasks().add(task);
+            userService.saveUser(loggedUser);
 
-        System.out.println("Task successfully created");
-        System.out.println("Use edit task function to add users, subtasks and edit more information");
-        MenuTasks();
+            System.out.println("Task successfully created");
+            System.out.println("Use edit task function to add users, subtasks and edit more information");
+        } catch (Exception e) {
+            System.out.println(CouldntCompleteOperation());
+            System.out.println();
+        }
     }
 
     private void EditTask(){
@@ -584,7 +590,62 @@ public class MenuOptions {
                 else if(ans.contains("4")){
                     //Users assigned
                     System.out.println("Do you want to add new user or remove existing one?");
-                    //TODO: Have to think about it, we don't want users deleting their managers or admins
+                    System.out.println("1. Add users");
+                    System.out.println("2. Remove users");
+                    String answer = AskUser();
+                    if (answer.contains("1")){
+                        System.out.println("Type the ID of user you want to add to this task");
+                        String userid = AskUser();
+                        try{
+                            long userID = Long.valueOf(userid);
+                            if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER) || loggedUser.getTasks().contains(task)){
+                                User potentialNewUser = userService.getUserByID(userID);
+                                PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+                                PublicVariables.UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
+                                if (role.compareTo(myRole) >= 0){
+                                    taskService.addUserToTask(loggedUserTeam, task.getId(), potentialNewUser);
+                                    System.out.println("User added to task");
+                                }
+                                else{
+                                    System.out.println(NoPermissionsMessage());
+                                    System.out.println();
+                                    MenuTasks();
+                                }
+                            }
+                            else{
+                                throw new IllegalArgumentException();
+                            }
+                        } catch (Exception e) {
+                            System.out.println(CouldntCompleteOperation());
+                            System.out.println();
+                        }
+                    }
+                    else if(answer.contains("2")){
+                        System.out.println("Type the ID of user you want to remove from this task");
+                        String userid = AskUser();
+                        try{
+                            long userID = Long.valueOf(userid);
+                            User todelete = userService.getUserByID(userID);
+                            PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+                            PublicVariables.UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
+                            if (role.compareTo(myRole) >= 0){
+                                taskService.removeUserFromTask(loggedUserTeam,task.getId(),todelete);
+                                System.out.println("User removed from task");
+                            }
+                            else{
+                                System.out.println(NoPermissionsMessage());
+                                System.out.println();
+                            }
+
+                        } catch (Exception e) {
+                            System.out.println(CouldntCompleteOperation());
+                            System.out.println();
+                        }
+                    }
+                    else{
+                        System.out.println(CouldntUnderstand());
+                        System.out.println();
+                    }
 
                 }
                 else if(ans.contains("5")){
@@ -596,8 +657,12 @@ public class MenuOptions {
                     if (answer.contains("1")){
                         CreateSubtask(task);
                     }
-                    if (answer.contains("2")){
+                    else if (answer.contains("2")){
                         DeleteSubtask(task);
+                    }
+                    else{
+                        System.out.println(CouldntUnderstand());
+                        System.out.println();
                     }
                 }
                 else if(ans.contains("0")){
@@ -605,18 +670,39 @@ public class MenuOptions {
                 }
                 else{
                     System.out.println(CouldntUnderstand());
-                    MenuTasks();
+                    System.out.println();
                 }
             }
             else{
                 System.out.println(NoPermissionsMessage());
+                System.out.println();
             }
 
         } catch (Exception e) {
             System.out.println(CouldntCompleteOperation());
+            System.out.println();
         }
-        MenuTasks();
 
+    }
+
+    private void DeleteTask(){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)){
+            System.out.println("Type the ID of the task you want to delete");
+            try{
+                long taskID = Long.valueOf(AskUser());
+                taskService.deleteTaskByID(taskID,loggedUserTeam);
+                System.out.println("Task deleted!");
+                System.out.println();
+                MenuTasks();
+            } catch (Exception e) {
+                System.out.println(CouldntCompleteOperation());
+                System.out.println();
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+            System.out.println();
+        }
     }
 
 
@@ -629,16 +715,21 @@ public class MenuOptions {
 
     //Subtasks
     private void CreateSubtask(Task task){
-        Subtask subtask = new Subtask();
-        subtask.setTask(task);
-        subtask.setTaskStatus(PublicVariables.TaskStatus.NEW);
-        System.out.println("Type name for the subtask");
-        subtask.setName(AskUser());
-        System.out.println("Type description for the subtask");
-        subtask.setDescription(AskUser());
-        subtaskService.saveSubtask(subtask);
-        task.getSubtasks().add(subtask);
-        taskService.saveTask(task);
+        try {
+            Subtask subtask = new Subtask();
+            subtask.setTask(task);
+            subtask.setTaskStatus(PublicVariables.TaskStatus.NEW);
+            System.out.println("Type name for the subtask");
+            subtask.setName(AskUser());
+            System.out.println("Type description for the subtask");
+            subtask.setDescription(AskUser());
+            subtaskService.saveSubtask(subtask);
+            task.getSubtasks().add(subtask);
+            taskService.saveTask(task);
+        } catch (Exception e) {
+            System.out.println(CouldntCompleteOperation());
+            System.out.println();
+        }
     }
 
     private void DeleteSubtask(Task task){
@@ -653,13 +744,11 @@ public class MenuOptions {
                 System.out.println("Subtask deleted");
             } catch (Exception e) {
                 System.out.println(CouldntUnderstand());
-                MenuTasks();
             }
         }
         else{
             System.out.println(NoPermissionsMessage());
         }
-        MenuTasks();
     }
 
 

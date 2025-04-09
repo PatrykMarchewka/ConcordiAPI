@@ -24,8 +24,6 @@ public class TaskController {
     @Autowired
     private UserService userService;
     @Autowired
-    private SubtaskService subtaskService;
-    @Autowired
     private TeamService teamService;
     @Autowired
     private TeamUserRoleService teamUserRoleService;
@@ -78,7 +76,7 @@ public class TaskController {
         User user = (User)authentication.getPrincipal();
         user.getTasks().add(task);
         userService.saveUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Task created!");
+        return ResponseEntity.status(HttpStatus.CREATED).body("Task created with ID of " + task.getId());
     }
 
     @GetMapping("/tasks/me")
@@ -127,17 +125,27 @@ public class TaskController {
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
         if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
-            task.setName(body.get("name").toString());
-            task.setDescription(body.get("description").toString());
-            task.setTaskStatus(PublicVariables.TaskStatus.fromString(body.get("taskStatus").toString()));
-            Set<Long> userIDs = (Set<Long>)body.get("users");
-            Set<User> users = userIDs.stream().map(id -> userService.getUserByID(id)).collect(Collectors.toSet());
-            task.setUsers(users);
-            Set<Long> subtaskIDs = (Set<Long>)body.get("subtasks");
-            Set<Subtask> subtasks = subtaskIDs.stream().map(id -> subtaskService.getSubtaskByID(task.getId(), id)).collect(Collectors.toSet());
-            task.setSubtasks(subtasks);
-            taskService.saveTask(task);
-            return ResponseEntity.ok("Task fully changed");
+            try{
+                task.setName(body.get("name").toString());
+                task.setDescription(body.get("description").toString());
+                task.setTaskStatus(PublicVariables.TaskStatus.fromString(body.get("taskStatus").toString()));
+                Set<Long> userIDs = (Set<Long>)body.get("users");
+                Set<User> users = userIDs.stream().map(id -> userService.getUserByID(id)).collect(Collectors.toSet());
+                task.getUsers().clear();
+                for (User user : users){
+                    taskService.addUserToTask(team, task.getId(), user);
+                }
+                Set<Long> subtaskIDs = (Set<Long>)body.get("subtasks");
+                Set<Subtask> subtasks = subtaskIDs.stream().map(id -> taskService.getSubtaskByID(task.getId(), id)).collect(Collectors.toSet());
+                task.getSubtasks().clear();
+                for (Subtask sub : subtasks){
+                    taskService.addSubtaskToTask(team, task.getId(), sub);
+                }
+                taskService.saveTask(task);
+                return ResponseEntity.ok("Task fully changed");
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+            }
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

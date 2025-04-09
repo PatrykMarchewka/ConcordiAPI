@@ -18,9 +18,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception{
     httpSecurity.csrf().disable()
+            .formLogin().disable() //Disables default login
+            .httpBasic().disable() //Disables basic auth
             .authorizeHttpRequests()
             .requestMatchers("/login").permitAll()
             .requestMatchers("/create").permitAll()
+            .requestMatchers("/teams/**","/tasks/**","/subtasks/**","/invitations/**","/users/**").denyAll()
             .anyRequest().authenticated()
             .and().httpBasic()
             .and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

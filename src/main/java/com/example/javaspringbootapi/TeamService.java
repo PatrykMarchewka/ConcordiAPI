@@ -20,13 +20,7 @@ public class TeamService {
         Team team = new Team();
         team.setName(name);
         team = teamRepository.save(team);
-        TeamUserRole tmr = new TeamUserRole();
-        tmr.setTeam(team);
-        tmr.setUser(user);
-        tmr.setUserRole(PublicVariables.UserRole.ADMIN);
-        teamUserRoleRepository.save(tmr);
-        user.addToTeam(team);
-        userService.saveUser(user);
+        addUser(team,user, PublicVariables.UserRole.ADMIN);
         return team;
     }
 
@@ -55,5 +49,19 @@ public class TeamService {
         if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
             teamRepository.delete(team);
         }
+    }
+
+    @Transactional
+    public void addUser(Team team, User user, PublicVariables.UserRole role){
+        team.getTeammates().add(user);
+        teamRepository.save(team);
+        user.getTeams().add(team);
+        userService.saveUser(user);
+        TeamUserRole tmr = new TeamUserRole();
+        tmr.setTeam(team);
+        tmr.setUser(user);
+        tmr.setUserRole(role);
+        teamUserRoleRepository.save(tmr);
+
     }
 }

@@ -18,7 +18,7 @@ import java.util.Map;
 public class JWTFilter extends OncePerRequestFilter {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain){
@@ -36,9 +36,9 @@ public class JWTFilter extends OncePerRequestFilter {
                     else {
                         String login = (String)payload.get("login");
                         if (login != null && SecurityContextHolder.getContext().getAuthentication() == null){
-                            User user = userRepository.findByLogin(login);
+                            User user = userService.getUserByLogin(login);
                             String password = (String) payload.get("password");
-                            if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword())){
+                            if (user != null && (Passwords.CheckPasswordBCrypt(password,user.getPassword()) || user.getPassword().equals(password))){
                                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user,null, List.of());
                                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                             }

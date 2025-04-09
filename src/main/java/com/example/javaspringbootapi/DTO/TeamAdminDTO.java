@@ -6,16 +6,17 @@ import com.example.javaspringbootapi.DatabaseModel.User;
 import com.example.javaspringbootapi.PublicVariables;
 import com.example.javaspringbootapi.TeamUserRoleService;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class TeamAdminDTO {
 
     private long id;
     private String name;
-    private Set<UserMemberDTO> teammates;
-    private Set<TaskManagerDTO> tasks;
-    private Set<UserMemberDTO> admins;
-    private Set<UserMemberDTO> managers;
+    private Set<UserMemberDTO> teammates = new HashSet<>();
+    private Set<TaskManagerDTO> tasks = new HashSet<>();
+    private Set<UserMemberDTO> admins = new HashSet<>();
+    private Set<UserMemberDTO> managers = new HashSet<>();
 
     public TeamAdminDTO(Team team, TeamUserRoleService service){
         this.id = team.getId();
@@ -32,6 +33,25 @@ public class TeamAdminDTO {
         for (User manager : service.getAllRole(team, PublicVariables.UserRole.MANAGER)){
             managers.add(new UserMemberDTO(manager));
         }
-
     }
+
+    public TeamAdminDTO(){};
+
+    public long getId() {return id;}
+    public void setId(long id){this.id = id;}
+
+    public String getName(){return name;}
+    public void setName(String name){this.name = name;}
+
+    public Set<UserMemberDTO> getTeammates(){return teammates;}
+    public void setTeammates(Set<UserMemberDTO> teammates){this.teammates = teammates;}
+
+    public Set<TaskManagerDTO> getTasks(){return tasks;}
+    public void setTasks(Set<TaskManagerDTO> tasks){this.tasks = tasks;}
+
+    public Set<UserMemberDTO> getAdmins(){return admins;}
+    public void setAdmins(Set<UserMemberDTO> admins){this.admins = admins;}
+
+    public Set<UserMemberDTO> getManagers(){return managers;}
+    public void setManagers(Set<UserMemberDTO> managers){this.managers = managers;}
 }
