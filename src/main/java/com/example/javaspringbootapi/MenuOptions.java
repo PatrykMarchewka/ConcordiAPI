@@ -356,7 +356,6 @@ public class MenuOptions {
             System.out.println("Type YES to disband");
             String answer = AskUser();
             if (answer.contains("YES")) {
-                //TODO: test it
                 teamService.deleteTeam(loggedUserTeam);
                 loggedUserTeam = null;
                 LoggingIn();

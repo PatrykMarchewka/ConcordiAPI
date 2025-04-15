@@ -88,21 +88,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users/ban")
-    public ResponseEntity<?> getBannedUsers(@PathVariable long teamID,Authentication authentication){
-        Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if ( myRole.equals(PublicVariables.UserRole.ADMIN)|| myRole.equals(PublicVariables.UserRole.MANAGER)){
-            Set<UserMemberDTO> usersDTO = new HashSet<>();
-            for (User user : teamUserRoleService.getAllRole(team, PublicVariables.UserRole.BANNED)){
-                usersDTO.add(new UserMemberDTO(user));
-            }
-            return ResponseEntity.ok(usersDTO);
-        }
-        else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
-        }
-
 
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody PublicVariables.UserRole newRole, Authentication authentication){
