@@ -1,6 +1,5 @@
 package com.example.javaspringbootapi;
-
-import com.example.javaspringbootapi.DTO.InvitationManagerDTO;
+import com.example.javaspringbootapi.DTO.InvitationRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
 import com.example.javaspringbootapi.DatabaseModel.InvitationRepository;
 import com.example.javaspringbootapi.DatabaseModel.Team;
@@ -9,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @Service
@@ -21,7 +20,7 @@ public class InvitationService {
     private TeamService teamService;
 
     @Transactional
-    public Invitation createInvitation(Team team, PublicVariables.UserRole role, short uses, ZonedDateTime dueTime){
+    public Invitation createInvitation(Team team, PublicVariables.UserRole role, short uses, OffsetDateTime dueTime){
         Invitation invitation = new Invitation();
         invitation.setTeam(team);
         invitation.setRole(role);
@@ -31,13 +30,12 @@ public class InvitationService {
     }
 
     @Transactional
-    public Invitation createInvitation(InvitationManagerDTO dto){
+    public Invitation createInvitation(Team team,InvitationRequestBody body){
         Invitation invitation = new Invitation();
-        invitation.setUUID(dto.getUUID());
-        invitation.setTeam(dto.getTeam());
-        invitation.setRole(dto.getRole());
-        invitation.setUses(dto.getUses());
-        invitation.setDueTime(dto.getDueTime());
+        invitation.setTeam(team);
+        invitation.setRole(body.getRole());
+        invitation.setUses(body.getUses());
+        invitation.setDueTime(body.getDueDate());
         return invitationRepository.save(invitation);
     }
 

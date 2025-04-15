@@ -66,6 +66,10 @@ public class UserService {
         return userRepository.existsByLogin(login);
     }
 
+    public boolean checkIfUserExistsInATeam(User user, Team team){
+        return user.getTeams().contains(team) && team.getTeammates().contains(user);
+    }
+
     public boolean checkIfUserExistsByID(long ID){
         return userRepository.existsById(ID);
     }

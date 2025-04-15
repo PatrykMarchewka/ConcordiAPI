@@ -2,10 +2,13 @@ package com.example.javaspringbootapi;
 
 import com.example.javaspringbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -19,6 +22,7 @@ public class TaskService {
     @Autowired
     private SubtaskService subtaskService;
     @Autowired
+    @Lazy
     private TeamService teamService;
     @Autowired
     private UserService userService;
@@ -86,9 +90,8 @@ public class TaskService {
         }
         else{
             Set<Task> temp = new HashSet<>();
-
             for (Task task : taskRepository.findAll()){
-                if (ChronoUnit.DAYS.between(task.getUpdateDate().toInstant(), LocalDateTime.now()) > days){
+                if (ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTime.now()) > days){
                     temp.add(task);
                 }
             }
@@ -96,40 +99,29 @@ public class TaskService {
         }
     }
 
-    public Task setUpdateToTime(Task task, Date date){
+    public Task setUpdateToTime(Task task, OffsetDateTime date){
         task.setUpdateDate(date);
         return taskRepository.save(task);
     }
 
     @Transactional
-    public Task createTask(String name, Team team){
-        Task task = new Task();
-        task.setName(name);
-        task.setTeam(team);
-        task.setTaskStatus(PublicVariables.TaskStatus.NEW);
-        task.setCreationDate(new Date());
-        taskRepository.save(task);
-        team.getTasks().add(task);
-        teamService.saveTeam(team);
-        return task;
-    }
-
-    @Transactional
-    public Task createTask(String name, String description, Team team, Set<User> users){
+    public Task createTask(String name, @Nullable String description, Team team, @Nullable Set<User> users, PublicVariables.TaskStatus status){
         Task task = new Task();
         task.setTeam(team);
         task.setName(name);
-        task.setDescription(description);
-        task.setTaskStatus(PublicVariables.TaskStatus.NEW);
-        task.setCreationDate(new Date());
-        task.setUsers(users);
-        taskRepository.save(task);
-        for (User user : task.getUsers()){
-            user.getTasks().add(task);
-            userService.saveUser(user);
+        if (description != null){
+            task.setDescription(description);
         }
+        task.setTaskStatus((status == null) ? PublicVariables.TaskStatus.NEW : status);
+        task.setCreationDate(OffsetDateTime.now());
+        taskRepository.save(task);
         team.getTasks().add(task);
         teamService.saveTeam(team);
+        for (User user : users){
+            addUserToTask(team, task.getID(), user);
+        }
+
+
         return task;
     }
 
@@ -145,7 +137,7 @@ public class TaskService {
     }
 
     public Task saveTask(Task task){
-        task.setUpdateDate(new Date());
+        task.setUpdateDate(OffsetDateTime.now());
         return taskRepository.save(task);
     }
 
@@ -182,7 +174,7 @@ public class TaskService {
         Task task = taskRepository.findByIdAndTeam(taskID,team);
         task.getSubtasks().remove(subtask);
         taskRepository.save(task);
-        subtaskService.deleteSubtask(taskID, subtask.getId());
+        subtaskService.deleteSubtask(taskID, subtask.getID());
     }
 
     public Subtask getSubtaskByID(long taskID,long subtaskID){

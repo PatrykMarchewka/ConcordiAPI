@@ -2,6 +2,7 @@ package com.example.javaspringbootapi;
 
 import com.example.javaspringbootapi.DTO.TaskManagerDTO;
 import com.example.javaspringbootapi.DTO.TaskMemberDTO;
+import com.example.javaspringbootapi.DTO.TaskRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +28,8 @@ public class TaskController {
     private TeamService teamService;
     @Autowired
     private TeamUserRoleService teamUserRoleService;
+    @Autowired
+    private SubtaskService subtaskService;
 
 
     @GetMapping("/tasks")
@@ -55,28 +58,28 @@ public class TaskController {
     }
 
     @PostMapping("/tasks")
-    public ResponseEntity<?> createTask(@PathVariable long teamID,@RequestBody Map<String,String> body, Authentication authentication) throws JsonProcessingException {
-        if (!body.containsKey("name")){
+    public ResponseEntity<?> createTask(@PathVariable long teamID, @RequestBody TaskRequestBody body, Authentication authentication) throws JsonProcessingException {
+
+
+        if (body.getName() == null){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required fields");
         }
-        String name = body.get("name");
         Team team = teamService.getTeamByID(teamID);
-        //TODO: Test this
-        Task task = new Task();
-        if (body.containsKey("description") && body.containsKey("users") && body.containsKey("subtasks")){
-            String description = body.get("description");
-            ObjectMapper objectMapper = new ObjectMapper();
-            Set<User> users = objectMapper.readValue(body.get("users"), new TypeReference<Set<User>>() {});
-            Set<Subtask> subtasks = objectMapper.readValue(body.get("subtasks"), new TypeReference<Set<Subtask>>() {});
-            task = taskService.createTask(name,description,team,users,subtasks);
+        Set<User> userSet = null;
+        if (body.getUsers() != null){
+            userSet = new HashSet<>();
+            for (int id : body.getUsers()){
+                if (userService.checkIfUserExistsInATeam(userService.getUserByID((long)id), team)){
+                    userSet.add(userService.getUserByID((long)id));
+                }
+                else{
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                }
+
+            }
         }
-        else{
-            task = taskService.createTask(name,team);
-        }
-        User user = (User)authentication.getPrincipal();
-        user.getTasks().add(task);
-        userService.saveUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Task created with ID of " + task.getId());
+        Task task = taskService.createTask(body.getName(), body.getDescription(),team,userSet,body.getTaskStatus());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new task",new TaskMemberDTO(task)));
     }
 
     @GetMapping("/tasks/me")
@@ -88,14 +91,14 @@ public class TaskController {
             for (Task task : ((User) authentication.getPrincipal()).getTasks()){
                 tasks.add(new TaskManagerDTO(task));
             }
-            return ResponseEntity.ok(tasks);
+            return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",tasks));
         }
         else if(myRole.equals(PublicVariables.UserRole.MEMBER)){
             Set<TaskMemberDTO> tasks = new HashSet<>();
             for (Task task : ((User) authentication.getPrincipal()).getTasks()){
                 tasks.add(new TaskMemberDTO(task));
             }
-            return ResponseEntity.ok(tasks);
+            return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",tasks));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -108,10 +111,10 @@ public class TaskController {
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
-            return ResponseEntity.ok(new TaskManagerDTO(task));
+            return ResponseEntity.ok(new APIResponse<>("Task details", new TaskManagerDTO(task)));
         }
         else if(task.getUsers().contains((User)authentication.getPrincipal())){
-            return ResponseEntity.ok(new TaskMemberDTO(task));
+            return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(task)));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -119,30 +122,36 @@ public class TaskController {
     }
 
     @PutMapping("/tasks/{ID}")
-    public ResponseEntity<?> putTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody Map <String, Object> body, Authentication authentication){
+    public ResponseEntity<?> putTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
         if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
             try{
-                task.setName(body.get("name").toString());
-                task.setDescription(body.get("description").toString());
-                task.setTaskStatus(PublicVariables.TaskStatus.fromString(body.get("taskStatus").toString()));
-                Set<Long> userIDs = (Set<Long>)body.get("users");
-                Set<User> users = userIDs.stream().map(id -> userService.getUserByID(id)).collect(Collectors.toSet());
-                task.getUsers().clear();
-                for (User user : users){
-                    taskService.addUserToTask(team, task.getId(), user);
+                task.setName(body.getName());
+                task.setDescription(body.getDescription());
+                task.setTaskStatus(body.getTaskStatus());
+                for (User user : task.getUsers()){
+                    taskService.removeUserFromTask(team,ID,user);
                 }
-                Set<Long> subtaskIDs = (Set<Long>)body.get("subtasks");
-                Set<Subtask> subtasks = subtaskIDs.stream().map(id -> taskService.getSubtaskByID(task.getId(), id)).collect(Collectors.toSet());
-                task.getSubtasks().clear();
-                for (Subtask sub : subtasks){
-                    taskService.addSubtaskToTask(team, task.getId(), sub);
+                for (int id : body.getUsers()){
+                    if (userService.checkIfUserExistsInATeam(userService.getUserByID((long)id), team)){
+                        taskService.addUserToTask(team,ID, userService.getUserByID((long)id));
+                    }
+                    else{
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                    }
+                }
+
+                for (Subtask subtask : task.getSubtasks()){
+                    taskService.removeSubtaskFromTask(team,ID,subtask);
+                }
+                for (int id : body.getSubtasks()){
+                    taskService.addSubtaskToTask(team,ID, subtaskService.getSubtaskByID(ID,id));
                 }
                 taskService.saveTask(task);
-                return ResponseEntity.ok("Task fully changed");
+                return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(task)));
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
             }
@@ -153,37 +162,49 @@ public class TaskController {
     }
 
     @PatchMapping("/tasks/{ID}")
-    public ResponseEntity<?> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody Map<String,Object> body, Authentication authentication){
+    public ResponseEntity<?> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
-            if (body.containsKey("id") || body.containsKey("creationDate")){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Can't patch sensitive fields!");
+        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+            try{
+                if (body.getName() != null){
+                    task.setName(body.getName());
+                }
+                if (body.getDescription() != null){
+                    task.setDescription(body.getDescription());
+                }
+                if (body.getTaskStatus() != null){
+                    task.setTaskStatus(body.getTaskStatus());
+                }
+                if (body.getUsers() != null){
+                    for (User user : task.getUsers()){
+                        taskService.removeUserFromTask(team,ID,user);
+                    }
+                    for (int id : body.getUsers()){
+                        if (userService.checkIfUserExistsInATeam(userService.getUserByID((long)id), team)){
+                            taskService.addUserToTask(team,ID, userService.getUserByID((long)id));
+                        }
+                        else{
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                        }
+                    }
+
+                }
+                if (body.getSubtasks() != null){
+                    for (Subtask subtask : task.getSubtasks()){
+                        taskService.removeSubtaskFromTask(team,ID,subtask);
+                    }
+                    for (int id : body.getSubtasks()){
+                        taskService.addSubtaskToTask(team,ID, subtaskService.getSubtaskByID(ID,id));
+                    }
+                }
+                taskService.saveTask(task);
+                return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(task)));
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
             }
-            if (body.containsKey("name")){
-                task.setName(body.get("name").toString());
-            }
-            if (body.containsKey("description")){
-                task.setDescription(body.get("description").toString());
-            }
-            if (body.containsKey("taskStatus")){
-                task.setTaskStatus(PublicVariables.TaskStatus.fromString(body.get("taskStatus").toString()));
-            }
-            //TODO: Have to think about it, we don't want users deleting their managers or admins
-            if (body.containsKey("users")){
-                Set<Long> userIDs = (Set<Long>)body.get("users");
-                Set<User> users = userIDs.stream().map(id -> userService.getUserByID(id)).collect(Collectors.toSet());
-                task.setUsers(users);
-            }
-            if (body.containsKey("subtasks")){
-                Set<Long> subtaskIDs = (Set<Long>)body.get("subtasks");
-                Set<Subtask> subtasks = subtaskIDs.stream().map(id -> subtaskService.getSubtaskByID(task.getId(), id)).collect(Collectors.toSet());
-                task.setSubtasks(subtasks);
-            }
-            taskService.saveTask(task);
-            return ResponseEntity.ok("Task updated");
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -196,10 +217,49 @@ public class TaskController {
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (myRole.equals(PublicVariables.UserRole.ADMIN)){
             taskService.deleteTaskByID(ID,team);
-            return ResponseEntity.ok("Task deleted");
+            return ResponseEntity.ok(new APIResponse<>("Task deleted",null));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+        }
+    }
+
+    @PostMapping("/tasks/{ID}/users/{userID}")
+    public ResponseEntity<?> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
+        Team team = teamService.getTeamByID(teamID);
+        try {
+            User user = userService.getUserByID(userID);
+            PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
+            PublicVariables.UserRole role = teamUserRoleService.getRole(user,team);
+            if (role.compareTo(myRole) >= 0){
+                taskService.addUserToTask(team, ID, user);
+                return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskByID(ID,team))));
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+        }
+
+    }
+
+    @DeleteMapping("/tasks/{ID}/users/{userID}")
+    public ResponseEntity<?> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
+        Team team = teamService.getTeamByID(teamID);
+        try {
+            User user = userService.getUserByID(userID);
+            PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
+            PublicVariables.UserRole role = teamUserRoleService.getRole(user,team);
+            if (role.compareTo(myRole) >= 0){
+                taskService.removeUserFromTask(team, ID, user);
+                return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskByID(ID,team))));
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
         }
     }
 

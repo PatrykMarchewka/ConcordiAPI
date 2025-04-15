@@ -17,7 +17,7 @@ public class TaskMemberDTO {
     private Set<UserMemberDTO> users = new HashSet<>();
 
     public TaskMemberDTO(Task task){
-        this.id = task.getId();
+        this.id = task.getID();
         this.name = task.getName();
         this.description = task.getDescription();
         this.taskStatus = task.getTaskStatus();
@@ -31,8 +31,8 @@ public class TaskMemberDTO {
 
     public TaskMemberDTO(){}
 
-    public long getId() {return id;}
-    public void setId(long id) {this.id = id;}
+    public long getID() {return id;}
+    public void setID(long id) {this.id = id;}
 
     public String getName(){return name;}
     public void setName(String name) {this.name = name;}

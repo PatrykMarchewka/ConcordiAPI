@@ -43,4 +43,8 @@ public class TeamUserRoleService {
         }
         return temp;
     }
+
+    public TeamUserRole saveTMR(TeamUserRole tmr){
+        return teamUserRoleRepository.save(tmr);
+    }
 }

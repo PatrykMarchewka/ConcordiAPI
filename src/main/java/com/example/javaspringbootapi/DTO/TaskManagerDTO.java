@@ -5,6 +5,7 @@ import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.DatabaseModel.User;
 import com.example.javaspringbootapi.PublicVariables;
 
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,16 +17,16 @@ public class TaskManagerDTO {
     private PublicVariables.TaskStatus taskStatus;
     private Set<SubtaskMemberDTO> subtasks = new HashSet<>();
     private Set<UserMemberDTO> users = new HashSet<>();
-    private Date creationDate;
-    private Date updateDate;
+    private String creationDate;
+    private String updateDate;
 
     public TaskManagerDTO(Task task){
-        this.id = task.getId();
+        this.id = task.getID();
         this.name = task.getName();
         this.description = task.getDescription();
         this.taskStatus = task.getTaskStatus();
-        this.creationDate = task.getCreationDate();
-        this.updateDate = task.getUpdateDate();
+        this.creationDate = task.getCreationDate().toString();
+        this.updateDate = task.getUpdateDate().toString();
         for (User user : task.getUsers()){
             users.add(new UserMemberDTO(user));
         }
@@ -36,8 +37,8 @@ public class TaskManagerDTO {
 
     public TaskManagerDTO(){}
 
-    public long getId() {return id;}
-    public void setId(long id) {this.id = id;}
+    public long getID() {return id;}
+    public void setID(long id) {this.id = id;}
 
     public String getName(){return name;}
     public void setName(String name){this.name = name;}
@@ -54,9 +55,9 @@ public class TaskManagerDTO {
     public Set<UserMemberDTO> getUsers(){return users;}
     public void setUsers(Set<UserMemberDTO> users){this.users = users;}
 
-    public Date getCreationDate(){return creationDate;}
-    public void setCreationDate(Date creationDate){this.creationDate = creationDate;}
+    public String getCreationDate(){return creationDate;}
+    public void setCreationDate(OffsetDateTime creationDate){this.creationDate = creationDate.toString();}
 
-    public Date getUpdateDate(){return updateDate;}
-    public void setUpdateDate(Date updateDate){this.updateDate = updateDate;}
+    public String getUpdateDate(){return updateDate;}
+    public void setUpdateDate(OffsetDateTime updateDate){this.updateDate = updateDate.toString();}
 }

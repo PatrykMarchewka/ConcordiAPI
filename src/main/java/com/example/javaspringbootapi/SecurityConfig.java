@@ -21,11 +21,13 @@ public class SecurityConfig {
             .formLogin().disable() //Disables default login
             .httpBasic().disable() //Disables basic auth
             .authorizeHttpRequests()
+            .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/login").permitAll()
-            .requestMatchers("/create").permitAll()
+            .requestMatchers("/signup").permitAll()
             .requestMatchers("/teams/**","/tasks/**","/subtasks/**","/invitations/**","/users/**").denyAll()
             .anyRequest().authenticated()
-            .and().httpBasic()
+            //.and().httpBasic()
             .and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     return httpSecurity.build();
     }

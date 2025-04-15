@@ -1,6 +1,7 @@
 package com.example.javaspringbootapi;
 
 import com.example.javaspringbootapi.DatabaseModel.*;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,9 @@ public class TeamService {
     @Autowired
     private UserService userService;
     @Autowired
-    private TeamUserRoleRepository teamUserRoleRepository;
+    private TeamUserRoleService teamUserRoleService;
+    @Autowired
+    private TaskService taskService;
 
     @Transactional
     public Team createTeam(String name, User user){
@@ -32,9 +35,7 @@ public class TeamService {
         return teamRepository.getTeamById(id);
     }
 
-    public Team saveTeam(Team team){
-        return teamRepository.save(team);
-    }
+    public Team saveTeam(Team team){return teamRepository.save(team);}
 
     public void deleteTeam(Team team){
         teamRepository.delete(team);
@@ -46,9 +47,16 @@ public class TeamService {
         teamRepository.save(team);
         user.getTeams().remove(team);
         userService.saveUser(user);
+        for (Task task : team.getTasks()){
+            if (task.getUsers().contains(user)){
+                taskService.removeUserFromTask(team, task.getID(), user);
+            }
+        }
+        teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(user,team));
         if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
             teamRepository.delete(team);
         }
+
     }
 
     @Transactional
@@ -61,7 +69,7 @@ public class TeamService {
         tmr.setTeam(team);
         tmr.setUser(user);
         tmr.setUserRole(role);
-        teamUserRoleRepository.save(tmr);
+        teamUserRoleService.saveTMR(tmr);
 
     }
 }

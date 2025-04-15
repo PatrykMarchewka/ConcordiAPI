@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -12,20 +14,20 @@ public class Team {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     private String name;
     @ManyToMany
     @JsonManagedReference
-    private Set<User> teammates;
+    private Set<User> teammates = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Set<Task> tasks;
+    private Set<Task> tasks = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Set<Invitation> invitations;
+    private Set<Invitation> invitations = new HashSet<>();
 
     public long getId(){ return this.id; }
 
@@ -34,8 +36,7 @@ public class Team {
     public void setName(String name){ this.name = name; }
 
     public Set<User> getTeammates(){ return this.teammates; }
-
-    public void addTeammate(User user) { this.teammates.add(user); }
+    public void setTeammates(Set<User> teammates){this.teammates = teammates;}
 
     public Set<Task> getTasks() { return tasks; }
 
@@ -44,9 +45,20 @@ public class Team {
     }
 
     public Set<Invitation> getInvitations(){ return this.invitations; }
+    public void setInvitations(Set<Invitation> invitations){this.invitations = invitations;}
 
-    public void addInvitation(Invitation invitation){ this.invitations.add(invitation); }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Team)) return false;
+        Team team = (Team) o;
+        return id != null && id.equals(team.getId());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
 }

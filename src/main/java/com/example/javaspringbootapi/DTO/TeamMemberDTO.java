@@ -17,13 +17,15 @@ public class TeamMemberDTO {
         this.id = team.getId();
         this.name = team.getName();
         this.teammateCount = team.getTeammates().size();
-        Set<TaskMemberDTO> filteredTasks = new HashSet<>();
-        for (Task task : team.getTasks()){
-            if (task.getUsers().contains(user)){
-                filteredTasks.add(new TaskMemberDTO(task));
+        if (user != null){
+            Set<TaskMemberDTO> filteredTasks = new HashSet<>();
+            for (Task task : team.getTasks()){
+                if (task.getUsers().contains(user)){
+                    filteredTasks.add(new TaskMemberDTO(task));
+                }
             }
+            this.tasks = filteredTasks;
         }
-        this.tasks = filteredTasks;
     }
 
     public TeamMemberDTO(){}

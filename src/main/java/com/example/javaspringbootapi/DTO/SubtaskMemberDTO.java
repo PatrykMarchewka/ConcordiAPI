@@ -11,16 +11,21 @@ public class SubtaskMemberDTO {
 
 
     public SubtaskMemberDTO(Subtask subtask){
-        this.id = subtask.getId();
+        this.id = subtask.getID();
         this.name = subtask.getName();
         this.description = subtask.getDescription();
         this.taskStatus = subtask.getTaskStatus();
     }
 
+    @Override
+    public String toString(){
+        return id + ":" + name + " " + description + " " + taskStatus.name();
+    }
+
     public SubtaskMemberDTO(){}
 
-    public long getId() {return id;}
-    public void setId(long id) {this.id = id;}
+    public long getID() {return id;}
+    public void setID(long id) {this.id = id;}
 
     public String getName(){return name;}
     public void setName(String name){this.name = name;}

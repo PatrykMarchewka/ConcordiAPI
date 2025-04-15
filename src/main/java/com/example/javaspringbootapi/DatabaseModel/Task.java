@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.springframework.lang.Nullable;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -13,32 +15,31 @@ import java.util.Set;
 public class Task {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String name;
     private String description;
     @Enumerated(value = EnumType.STRING)
     private PublicVariables.TaskStatus taskStatus;
 
 
-    @Temporal(TemporalType.DATE)
-    private Date creationDate;
+    private OffsetDateTime creationDate;
 
-    @Temporal(TemporalType.DATE)
-    private Date updateDate;
+
+    private OffsetDateTime updateDate;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Set<Subtask> subtasks;
+    private Set<Subtask> subtasks = new HashSet<>();
 
     @ManyToMany
     @JsonBackReference
-    private Set<User> users;
+    private Set<User> users = new HashSet<>();
 
     @ManyToOne
     @JsonBackReference
     private Team team;
 
-    public long getId() {
+    public long getID() {
         return id;
     }
 
@@ -66,19 +67,17 @@ public class Task {
         this.taskStatus = taskStatus;
     }
 
-    public Date getCreationDate() {
+    public OffsetDateTime getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
+    public void setCreationDate(OffsetDateTime creationDate) {this.creationDate = creationDate;}
 
-    public Date getUpdateDate() {
+    public OffsetDateTime getUpdateDate() {
         return updateDate;
     }
 
-    public void setUpdateDate(Date updateDate) {
+    public void setUpdateDate(OffsetDateTime updateDate) {
         this.updateDate = updateDate;
     }
 
@@ -99,4 +98,28 @@ public class Task {
 
     public Team getTeam(){ return this.team; }
     public void setTeam(Team team){ this.team = team; }
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Task)) return false;
+        Task task = (Task) o;
+        return id != null && id.equals(task.getID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+
+
+
+
+
+
+
+
 }

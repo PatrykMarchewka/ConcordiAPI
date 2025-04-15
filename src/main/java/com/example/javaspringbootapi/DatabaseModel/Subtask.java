@@ -4,6 +4,7 @@ import com.example.javaspringbootapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -11,7 +12,7 @@ import java.util.Set;
 public class Subtask {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String name;
     private String description;
 
@@ -23,7 +24,7 @@ public class Subtask {
     private PublicVariables.TaskStatus taskStatus;
 
 
-    public long getId() {
+    public long getID() {
         return id;
     }
 
@@ -56,5 +57,20 @@ public class Subtask {
 
     public void setTaskStatus(PublicVariables.TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
+    }
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Subtask)) return false;
+        Subtask subtask = (Subtask) o;
+        return id != null && id.equals(subtask.getID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

@@ -3,7 +3,9 @@ package com.example.javaspringbootapi.DatabaseModel;
 import com.example.javaspringbootapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import java.time.ZonedDateTime;
+
+import java.time.OffsetDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Invitations")
@@ -17,9 +19,8 @@ public class Invitation {
     private short uses;
     @Enumerated(EnumType.STRING)
     private PublicVariables.UserRole role;
-    @Column(nullable = true,columnDefinition = "DATETIME2")
-    private ZonedDateTime dueTime;
-    //TODO: Test ZonedDateTime and possibly revert other Dates to it
+    @Column(nullable = true)
+    private OffsetDateTime dueTime;
 
     public String getUUID(){return this.UUID;}
     public void setUUID(String UUID){this.UUID = UUID;}
@@ -33,15 +34,28 @@ public class Invitation {
     public PublicVariables.UserRole getRole() {return role;}
     public void setRole(PublicVariables.UserRole role) {this.role = role;}
 
-    public ZonedDateTime getDueTime() {return dueTime;}
-    public void setDueTime(ZonedDateTime dueTime) {this.dueTime = dueTime;}
+    public OffsetDateTime getDueTime() {return dueTime;}
+    public void setDueTime(OffsetDateTime dueTime) {this.dueTime = dueTime;}
 
     public void useOne() throws Exception {
-        if ((this.getDueTime() != null && ZonedDateTime.now().isAfter(this.getDueTime())) || this.getUses() <= 0){
+        if ((this.getDueTime() != null && OffsetDateTime.now().isAfter(this.getDueTime())) || this.getUses() <= 0){
             throw new Exception("Invitation expired");
         }
         else{
             this.uses -= 1;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Invitation)) return false;
+        Invitation inv = (Invitation) o;
+        return UUID != null && UUID.equals(inv.getUUID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(UUID);
     }
 }

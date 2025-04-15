@@ -3,6 +3,7 @@ package com.example.javaspringbootapi;
 import com.example.javaspringbootapi.DTO.UserMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.DatabaseModel.Team;
+import com.example.javaspringbootapi.DatabaseModel.TeamUserRole;
 import com.example.javaspringbootapi.DatabaseModel.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.awt.*;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -26,36 +29,35 @@ public class UserController {
     @Autowired
     private TaskService taskService;
 
+    //param, ?role=ADMIN
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@PathVariable long teamID,Authentication authentication){
+    public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) PublicVariables.UserRole role){
         Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole role = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
+        PublicVariables.UserRole myrole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         Set<UserMemberDTO> users = new HashSet<>();
-        if (role.equals(PublicVariables.UserRole.ADMIN) || role.equals(PublicVariables.UserRole.MANAGER)){
-            for (User user : team.getTeammates()){
-                users.add(new UserMemberDTO(user));
+        if (myrole.equals(PublicVariables.UserRole.ADMIN) || myrole.equals(PublicVariables.UserRole.MANAGER)){
+            if (role != null){
+                for (User user : teamUserRoleService.getAllRole(team,role)){
+                    users.add(new UserMemberDTO(user));
+                }
+                return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",users));
             }
-            return ResponseEntity.ok(users);
+            else{
+                for (User user : team.getTeammates()){
+                    users.add(new UserMemberDTO(user));
+                }
+                return ResponseEntity.ok(new APIResponse<>("All users in the team",users));
+            }
         }
         else if(role.equals(PublicVariables.UserRole.MEMBER)){
-            return ResponseEntity.ok(team.getTeammates().size());
+            return ResponseEntity.ok(new APIResponse<>("All users in the team",team.getTeammates().size()));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
         }
     }
 
-    @GetMapping("/users/me/refresh")
-    public ResponseEntity<?> refreshToken(Authentication authentication){
-        User user = (User) authentication.getPrincipal();
-        String response;
-        try {
-            response = JSONWebToken.GenerateJWToken(user.getLogin(),user.getPassword());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Cant generate JSON Token");
-        }
-        return ResponseEntity.ok(response);
-    }
+
 
     @GetMapping("/users/{ID}")
     public ResponseEntity<?> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
@@ -63,15 +65,13 @@ public class UserController {
         PublicVariables.UserRole role = teamUserRoleService.getRole(userService.getUserByID(ID),team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (role.compareTo(myRole) >= 0){
-            return ResponseEntity.ok(new UserMemberDTO(userService.getUserByID(ID)));
+            return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
         }
 
     }
-
-    //TODO: Add promote/demote, dont use /users/{ID}/promote
 
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<?> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
@@ -80,15 +80,7 @@ public class UserController {
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (role.compareTo(myRole) > 0){
             User user = userService.getUserByID(ID);
-            for (Task task : team.getTasks()){
-                if (task.getUsers().contains(user)){
-                    task.getUsers().remove(user);
-                    taskService.saveTask(task);
-                }
-            }
-            team.getTeammates().remove(user);
-            teamService.saveTeam(team);
-            teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(user,team));
+            teamService.removeUser(team,user);
             return ResponseEntity.ok("User deleted from team!");
         }
         else{
@@ -111,20 +103,20 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
         }
 
-    }
 
-    @PostMapping("/users/ban/{ID}")
-    public ResponseEntity<?> postBanUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    @PatchMapping("/users/{ID}/role")
+    public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody PublicVariables.UserRole newRole, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole role = teamUserRoleService.getRole(userService.getUserByID(ID),team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (role.compareTo(myRole) > 0){
-            teamUserRoleService.setRole(userService.getUserByID(ID), team, PublicVariables.UserRole.BANNED);
-            return ResponseEntity.ok("User has been banned from team!");
+        if (role.compareTo(myRole) > 0 && newRole.compareTo(myRole) >= 0){
+            teamUserRoleService.setRole(userService.getUserByID(ID), team,newRole);
+            return ResponseEntity.ok("Role changed!");
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
         }
+
     }
 
 

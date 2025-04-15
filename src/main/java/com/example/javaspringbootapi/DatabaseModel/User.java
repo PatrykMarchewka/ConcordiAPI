@@ -3,6 +3,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -11,7 +13,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(unique = true)
     private String login;
@@ -22,11 +24,11 @@ public class User {
 
     @ManyToMany
     @JsonManagedReference
-    private Set<Task> tasks;
+    private Set<Task> tasks = new HashSet<>();
 
     @ManyToMany
     @JsonBackReference
-    private Set<Team> teams;
+    private Set<Team> teams = new HashSet<>();
 
 
     public long getID() {
@@ -65,11 +67,29 @@ public class User {
 
     public Set<Task> getTasks() { return tasks; }
 
-    public void setTasks(Set<Task> tasks) {
-        this.tasks = tasks;
-    }
+    public void setTasks(Set<Task> tasks) {this.tasks = tasks;}
 
     public Set<Team> getTeams(){ return this.teams; }
+    public void setTeams(Set<Team> teams){this.teams = teams;}
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.getID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+
+
+
+
 
 
 }

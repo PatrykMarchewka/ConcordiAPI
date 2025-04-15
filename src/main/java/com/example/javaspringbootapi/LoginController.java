@@ -30,20 +30,18 @@ public class LoginController {
     private InvitationService invitationService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String,String> body){
-        String login = body.get("login");
-        String password = body.get("password");
+    public ResponseEntity<?> login(@RequestBody UserRequestBody body){
 
-        User user = userService.getUserByLogin(login);
-        if (user != null && Passwords.CheckPasswordBCrypt(password,user.getPassword())){
+        User user = userService.getUserByLogin(body.getLogin());
+        if (user != null && Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
             String token = null;
             try {
-                token = JSONWebToken.GenerateJWToken(login,password);
+                token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RuntimeException(e);
             }
             if (token != null) {
-                return ResponseEntity.ok(Map.of("token",token));
+                return ResponseEntity.ok(new APIResponse<>("Token",token));
             }
             else{
                 return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Error! Cant process request");
@@ -52,13 +50,12 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong credentials!");
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<?> create(@RequestBody Map<String,String> body){
-        if (userService.checkIfUserExistsByLogin(body.get("login"))){
-            ResponseEntity.status(HttpStatus.CONFLICT).body("Login already in use, please choose a different one");
+    @PostMapping("/signup")
+    public ResponseEntity<?> create(@RequestBody UserRequestBody body){
+        if (userService.checkIfUserExistsByLogin(body.getLogin())){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Login already in use, please choose a different one");
         }
-        userService.createUser(body.get("login"),body.get("password"),body.get("name"),body.get("lastName"));
-        return ResponseEntity.status(HttpStatus.CREATED).body("User created!");
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body.getLogin(), body.getPassword(), body.getName(), body.getLastName()))));
     }
 
     @GetMapping("/me")
@@ -69,28 +66,27 @@ public class LoginController {
 
     @PatchMapping("/me")
     @Transactional
-    public ResponseEntity<?> changeData(@RequestBody Map<String,String> body,Authentication authentication){
+    public ResponseEntity<?> changeData(@RequestBody UserRequestBody body,Authentication authentication){
         User user = (User)authentication.getPrincipal();
-        String response = "Data changed! ";
-        if (body.containsKey("login")){
-            if (userService.checkIfUserExistsByLogin(body.get("login"))){
-                response += "New login is taken, using old login";
+        if (body.getLogin() != null){
+            if (userService.checkIfUserExistsByLogin(body.getLogin())){
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new APIResponse<>("Login currently in use",null));
             }
             else{
-                user.setLogin(body.get("login"));
+                user.setLogin(body.getLogin());
             }
         }
-        if (body.containsKey("password")){
-            user.setPassword(body.get("password"));
+        if (body.getPassword() != null){
+            user.setPassword(Passwords.HashPasswordBCrypt(body.getPassword()));
         }
-        if (body.containsKey("name")){
-            user.setName(body.get("name"));
+        if (body.getName() != null){
+            user.setName(body.getName());
         }
-        if (body.containsKey("lastname")){
-            user.setLastName(body.get("lastname"));
+        if (body.getLastName() != null){
+            user.setLastName(body.getLastName());
         }
         userService.saveUser(user);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(user)));
 
     }
 
@@ -101,24 +97,31 @@ public class LoginController {
         try {
             response = JSONWebToken.GenerateJWToken(user.getLogin(),user.getPassword());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Cant generate JSON Token");
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Cant generate JSON Web Token");
         }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new APIResponse<>("Your new token",response));
     }
 
-    @PostMapping("/join/{invID}")
+
+    @GetMapping("/invitations/{invID}")
+    public ResponseEntity<?> getInfoAboutInvitation(@PathVariable String invID){
+        Invitation invitation = invitationService.getInvitationByUUID(invID);
+        if (invitation!= null){
+            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(invitation)));
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Couldnt find invitation with provided UUID");
+        }
+    }
+
+
+    @PostMapping("/invitations/{invID}")
     public ResponseEntity<?> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
         User user = (User)authentication.getPrincipal();
         Invitation invitation = invitationService.getInvitationByUUID(invID);
         if (invitation != null && !user.getTeams().contains(invitation.getTeam())){
             invitationService.useInvitation(invitation,user);
-            if (invitation.getRole().equals(PublicVariables.UserRole.ADMIN) || invitation.getRole().equals(PublicVariables.UserRole.MANAGER)){
-                return ResponseEntity.ok(new InvitationManagerDTO(invitation));
-            }
-            else{
-                return ResponseEntity.ok(new InvitationMemberDTO(invitation));
-            }
-
+            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(invitation.getTeam(), user)));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

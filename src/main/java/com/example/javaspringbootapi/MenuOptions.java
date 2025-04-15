@@ -1,13 +1,15 @@
 package com.example.javaspringbootapi;
 
 
-import com.example.javaspringbootapi.DTO.TaskManagerDTO;
-import com.example.javaspringbootapi.DTO.TaskMemberDTO;
-import com.example.javaspringbootapi.DTO.UserMemberDTO;
+import com.example.javaspringbootapi.DTO.*;
 import com.example.javaspringbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Component
@@ -25,6 +27,8 @@ public class MenuOptions {
     private TeamUserRoleService teamUserRoleService;
     private static Team loggedUserTeam;
     private static User loggedUser;
+    @Autowired
+    private InvitationService invitationService;
 
 
     public void Start() {
@@ -117,7 +121,7 @@ public class MenuOptions {
                 CreateTeam();
             }
             else if(ans.contains("2")){
-                //TODO: INVITATIONS
+                JoinTeam();
             }
             else{
                 System.out.println(CouldntUnderstand());
@@ -133,7 +137,7 @@ public class MenuOptions {
                     CreateTeam();
                 }
                 else if(choice == list.size()+1){
-                    //TODO: INVITATIONS
+                    JoinTeam();
                 }
                 else{
                     loggedUserTeam = (list.get(choice));
@@ -207,7 +211,7 @@ public class MenuOptions {
         } else if (ans.contains("4")) {
             DisbandTeam();
         } else if (ans.contains("5")) {
-            //TODO: finish, invitations
+            MenuInvitations();
         }
         else if(ans.contains("0")){
             Menu();
@@ -273,7 +277,7 @@ public class MenuOptions {
             CreateTask();
         }
         else if(answer.contains("3")){
-            EditTask();
+            EditTask(null);
         }
         else if(answer.contains("4")){
             DeleteTask();
@@ -289,27 +293,6 @@ public class MenuOptions {
         MenuTasks();
 
     }
-
-
-    //TODO: Add for later. User getUserByID for now
-//    private static User getUserByNameOrID(){
-//        String res = AskUser();
-//        Long id = null;
-//        User user = null;
-//        try {
-//            id = Long.parseLong(res);
-//        } finally {
-//            if (id == null && userService.checkIfUserExistsByNameAndLastName(res)) {
-//                user = userService.getUserByNameAndLastName(res);
-//            } else if (id != null && userService.checkIfUserExistsByID(id)) {
-//                user = userService.getUserByID(id);
-//            } else {
-//                System.out.println("Can't parse the input, resetting");
-//                System.out.println();
-//            }
-//        }
-//        return user;
-//    }
     
     public static String NoPermissionsMessage(){
         return "You do not have permissions to do this action";
@@ -334,6 +317,17 @@ public class MenuOptions {
         loggedUserTeam = teamService.createTeam(answer, loggedUser);
     }
 
+    private void JoinTeam(){
+        System.out.println("Type your invitation code");
+        String answer = AskUser();
+        try {
+            invitationService.useInvitation(invitationService.getInvitationByUUID(answer),loggedUser);
+            System.out.println("Successfully joined team");
+        } catch (Exception e) {
+            System.out.println(CouldntCompleteOperation());
+        }
+    }
+
     private void ChangeTeamName(){
         System.out.println("Type new name of your team:");
         String answer = AskUser();
@@ -346,8 +340,6 @@ public class MenuOptions {
         System.out.println("Type YES to leave");
         String answer = AskUser();
         if (answer.contains("YES")) {
-            //TODO test it
-            teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(loggedUser, loggedUserTeam));
             teamService.removeUser(loggedUserTeam, loggedUser);
             System.out.println("Successfully left the team!");
             loggedUserTeam = null;
@@ -376,6 +368,7 @@ public class MenuOptions {
             System.out.println("You can't disband that team!");
         }
     }
+
 
 
 
@@ -422,7 +415,7 @@ public class MenuOptions {
             } catch (Exception e) {
                 System.out.println(CouldntCompleteOperation());
             }
-        } else if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)) {
+        } else if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MEMBER)) {
             System.out.println(NoPermissionsMessage());
         }
         MenuUsers();
@@ -537,7 +530,7 @@ public class MenuOptions {
             task.setName(AskUser());
             System.out.println("Give description for your task");
             task.setDescription(AskUser());
-            task.setCreationDate(new Date());
+            task.setCreationDate(OffsetDateTime.now());
             task.setTaskStatus(PublicVariables.TaskStatus.NEW);
             task.getUsers().add(loggedUser);
             taskService.saveTask(task);
@@ -553,11 +546,13 @@ public class MenuOptions {
         }
     }
 
-    private void EditTask(){
-        System.out.println("Type ID of the task you want to edit");
+    private void EditTask(Task task){
         try {
-            long id = Long.valueOf(AskUser());
-            Task task = taskService.getTaskByID(id,loggedUserTeam);
+            if (task == null){
+                System.out.println("Type ID of the task you want to edit");
+                long id = Long.valueOf(AskUser());
+                task = taskService.getTaskByID(id,loggedUserTeam);
+            }
             if (teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser, loggedUserTeam).equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains(loggedUser)){
                 System.out.println("Choose what you want to edit");
                 System.out.println("1. Task Name");
@@ -572,11 +567,13 @@ public class MenuOptions {
                     String name = AskUser();
                     task.setName(name);
                     taskService.saveTask(task);
+                    EditTask(task);
                 }
                 else if(ans.contains("2")){
                     System.out.println("Type new description for the task");
                     String desc = AskUser();
                     task.setDescription(desc);
+                    EditTask(task);
                 }
                 else if(ans.contains("3")){
                     System.out.println("Type number of new task status for the task");
@@ -586,9 +583,9 @@ public class MenuOptions {
                     int choice = Integer.valueOf(AskUser());
                     task.setTaskStatus(PublicVariables.TaskStatus.values()[choice]);
                     taskService.saveTask(task);
+                    EditTask(task);
                 }
                 else if(ans.contains("4")){
-                    //Users assigned
                     System.out.println("Do you want to add new user or remove existing one?");
                     System.out.println("1. Add users");
                     System.out.println("2. Remove users");
@@ -600,17 +597,25 @@ public class MenuOptions {
                             long userID = Long.valueOf(userid);
                             if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER) || loggedUser.getTasks().contains(task)){
                                 User potentialNewUser = userService.getUserByID(userID);
-                                PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
-                                PublicVariables.UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
-                                if (role.compareTo(myRole) >= 0){
-                                    taskService.addUserToTask(loggedUserTeam, task.getId(), potentialNewUser);
-                                    System.out.println("User added to task");
+                                if (loggedUserTeam.getTeammates().contains(potentialNewUser)){
+                                    PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+                                    PublicVariables.UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
+                                    if (role.compareTo(myRole) >= 0){
+                                        taskService.addUserToTask(loggedUserTeam, task.getID(), potentialNewUser);
+                                        System.out.println("User added to task");
+                                    }
+                                    else{
+                                        System.out.println(NoPermissionsMessage());
+                                        System.out.println();
+                                        MenuTasks();
+                                    }
                                 }
                                 else{
                                     System.out.println(NoPermissionsMessage());
                                     System.out.println();
                                     MenuTasks();
                                 }
+
                             }
                             else{
                                 throw new IllegalArgumentException();
@@ -626,16 +631,23 @@ public class MenuOptions {
                         try{
                             long userID = Long.valueOf(userid);
                             User todelete = userService.getUserByID(userID);
-                            PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
-                            PublicVariables.UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
-                            if (role.compareTo(myRole) >= 0){
-                                taskService.removeUserFromTask(loggedUserTeam,task.getId(),todelete);
-                                System.out.println("User removed from task");
+                            if (task.getUsers().contains(todelete)){
+                                PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+                                PublicVariables.UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
+                                if (role.compareTo(myRole) >= 0){
+                                    taskService.removeUserFromTask(loggedUserTeam,task.getID(),todelete);
+                                    System.out.println("User removed from task");
+                                }
+                                else{
+                                    System.out.println(NoPermissionsMessage());
+                                    System.out.println();
+                                }
                             }
                             else{
-                                System.out.println(NoPermissionsMessage());
+                                System.out.println("User is not assigned to this task");
                                 System.out.println();
                             }
+
 
                         } catch (Exception e) {
                             System.out.println(CouldntCompleteOperation());
@@ -646,6 +658,7 @@ public class MenuOptions {
                         System.out.println(CouldntUnderstand());
                         System.out.println();
                     }
+                    EditTask(task);
 
                 }
                 else if(ans.contains("5")){
@@ -664,6 +677,7 @@ public class MenuOptions {
                         System.out.println(CouldntUnderstand());
                         System.out.println();
                     }
+                    EditTask(task);
                 }
                 else if(ans.contains("0")){
                     MenuTasks();
@@ -682,6 +696,7 @@ public class MenuOptions {
             System.out.println(CouldntCompleteOperation());
             System.out.println();
         }
+
 
     }
 
@@ -736,11 +751,11 @@ public class MenuOptions {
         if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN)){
             System.out.println("Type ID of the subtask you want to delete");
             for (Subtask sub : task.getSubtasks()){
-                System.out.println(sub.getId() + ". " + sub.getName() + ", " + sub.getDescription() + " - " + sub.getTaskStatus().name());
+                System.out.println(new SubtaskMemberDTO(sub).toString());
             }
             try{
                 long choice = Long.valueOf(AskUser());
-                subtaskService.deleteSubtask(task.getId(),choice);
+                subtaskService.deleteSubtask(task.getID(),choice);
                 System.out.println("Subtask deleted");
             } catch (Exception e) {
                 System.out.println(CouldntUnderstand());
@@ -751,6 +766,187 @@ public class MenuOptions {
         }
     }
 
+    //Invitations
+    private void MenuInvitations(){
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        System.out.println("Type the number to get into specific option:");
+        System.out.println("1. See all invitations");
+        System.out.println("2. Create new invitation");
+        System.out.println("3. Edit existing invitation");
+        System.out.println("4. Delete invitation");
+        System.out.println("0. Go back");
+        System.out.println("\\\\\\\\\\\\\\\\\\\\\\\\");
+        String answer = AskUser();
+        if (answer.contains("1")){
+            GetInvitations();
+        }
+        else if(answer.contains("2")){
+            CreateInvitation();
+        }
+        else if(answer.contains("3")){
+            EditInvitation(null);
+        }
+        else if(answer.contains("4")){
+            DeleteInvitation();
+        }
+        else if(answer.contains("0")){
+            Menu();
+        }
+        else{
+            System.out.println(CouldntUnderstand());
+            System.out.println();
+            MenuInvitations();
+        }
+        MenuInvitations();
+    }
 
+    private void GetInvitations(){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)){
+            System.out.println("All invitations for the team");
+            for (Invitation invitation : invitationService.getAllInvitations(loggedUserTeam)){
+                System.out.println(new InvitationManagerDTO(invitation));
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+    }
+
+    private void CreateInvitation(){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)){
+            try {
+                Invitation invitation = new Invitation();
+                invitation.setTeam(loggedUserTeam);
+                System.out.println("Type the amount of uses you want to assign to the invitation with the minimum being one or type MAX if you want it to be maximum value (32737)");
+                String usesString = AskUser();
+                if (usesString.toUpperCase().contains("MAX")){
+                    invitation.setUses(Short.MAX_VALUE);
+                }
+                else{
+                    BigInteger uses = new BigInteger(usesString);
+                    if (uses.compareTo(BigInteger.valueOf(Short.MAX_VALUE)) > 0){
+                        invitation.setUses(Short.MAX_VALUE);
+                    }
+                    else if(uses.compareTo(BigInteger.ONE) < 0){
+                        invitation.setUses((short) 1);
+                    }
+                    else{
+                        invitation.setUses(uses.shortValue());
+                    }
+                }
+                System.out.println("Type the role attached to the invitation (ADMIN, MANAGER, MEMBER)");
+                invitation.setRole(PublicVariables.UserRole.fromString(AskUser()));
+                System.out.println("Type the date when the invitation will expire in ISO8601 format (example: 2025-04-15T15:30:00+02:00 for 15th april 2025 15:30+02:00 timezone) or type NULL if you don't want it to expire");
+                String dateString = AskUser();
+                if (!dateString.toUpperCase().contains("NULL")){
+                    invitation.setDueTime(OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+                }
+                invitationService.saveInvitation(invitation);
+                System.out.println("Invitation successfully saved!");
+
+            } catch (Exception e) {
+                System.out.println(CouldntUnderstand());
+                MenuInvitations();
+            }
+
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+    }
+
+    private void EditInvitation(Invitation invitation){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)){
+            try{
+                if (invitation == null){
+                    System.out.println("Type the UUID of the invitation you want to edit");
+                    String uuid = AskUser();
+                    if (invitationService.getInvitationByUUID(uuid) != null) {
+                        invitation = invitationService.getInvitationByUUID(uuid);
+                    }
+                    else{
+                            System.out.println("Couldnt find the invitation with provided UUID");
+                    }
+                }
+                    System.out.println("Choose what you want to edit");
+                    System.out.println("1. Invitation uses");
+                    System.out.println("2. User role");
+                    System.out.println("3. Expiration date");
+                    System.out.println("0. DONE EDITING");
+                    String ans = AskUser();
+                    if (ans.contains("1")){
+                        System.out.println(String.format("Invitation currently has %d uses",invitation.getUses()));
+                        System.out.println("Type the amount of uses you want to assign to the invitation with the minimum being one or type MAX if you want it to be maximum value (32737)");
+                        String usesString = AskUser();
+                        if (usesString.toUpperCase().contains("MAX")){
+                            invitation.setUses(Short.MAX_VALUE);
+                        }
+                        else{
+                            BigInteger uses = new BigInteger(usesString);
+                            if (uses.compareTo(BigInteger.valueOf(Short.MAX_VALUE)) > 0){
+                                invitation.setUses(Short.MAX_VALUE);
+                            }
+                            else if(uses.compareTo(BigInteger.ONE) < 0){
+                                invitation.setUses((short) 1);
+                            }
+                            else{
+                                invitation.setUses(uses.shortValue());
+                            }
+                        }
+                        EditInvitation(invitation);
+                    }
+                    else if(ans.contains("2")){
+                        System.out.println(String.format("Invitation currently has %s role assigned",invitation.getRole().name()));
+                        System.out.println("Type the role attached to the invitation (ADMIN, MANAGER, MEMBER)");
+                        invitation.setRole(PublicVariables.UserRole.fromString(AskUser()));
+                        EditInvitation(invitation);
+                    }
+                    else if(ans.contains("3")){
+                        if (invitation.getDueTime() == null) {
+                            System.out.println("Invitation currently has no expiry date set");
+                        } else {
+                            System.out.println(String.format("Invitation is currently set to expire at %s",invitation.getDueTime()));
+                        }
+                        System.out.println("Type the date when the invitation will expire in ISO8601 format (example: 2025-04-15T15:30:00+02:00 for 15th april 2025 15:30+02:00 timezone) or type NULL if you don't want it to expire");
+                        String dateString = AskUser();
+                        if (!dateString.toUpperCase().contains("NULL")){
+                            invitation.setDueTime(OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+                        }
+                        EditInvitation(invitation);
+                    }
+                    else if(ans.contains("0")){
+                        MenuInvitations();
+                    }
+
+            } catch (Exception e) {
+                System.out.println(CouldntUnderstand());
+                MenuInvitations();
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+    }
+
+    private void DeleteInvitation(){
+        if (teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.ADMIN) || teamUserRoleService.getRole(loggedUser,loggedUserTeam).equals(PublicVariables.UserRole.MANAGER)){
+            try {
+                System.out.println("Type the UUID of the invitation you want to delete");
+                String uuid = AskUser();
+                if (invitationService.getInvitationByUUID(uuid) != null) {
+                   invitationService.deleteInvitation(invitationService.getInvitationByUUID(uuid));
+                }
+                else{
+                    System.out.println("Couldnt find the invitation with provided UUID");
+                }
+            } catch (Exception e) {
+                System.out.println(CouldntUnderstand());
+                MenuInvitations();
+            }
+        }
+        else{
+            System.out.println(NoPermissionsMessage());
+        }
+    }
 
 }
