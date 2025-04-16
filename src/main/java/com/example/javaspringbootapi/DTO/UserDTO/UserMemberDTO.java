@@ -1,4 +1,4 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.UserDTO;
 import com.example.javaspringbootapi.DatabaseModel.User;
 
 public class UserMemberDTO {

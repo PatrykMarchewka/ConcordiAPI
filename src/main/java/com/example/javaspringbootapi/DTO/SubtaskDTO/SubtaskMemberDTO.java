@@ -1,4 +1,4 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.SubtaskDTO;
 
 import com.example.javaspringbootapi.DatabaseModel.Subtask;
 import com.example.javaspringbootapi.PublicVariables;

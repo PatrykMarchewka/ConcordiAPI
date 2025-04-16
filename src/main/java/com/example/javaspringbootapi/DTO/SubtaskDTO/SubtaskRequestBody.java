@@ -1,12 +1,18 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.SubtaskDTO;
 
+import com.example.javaspringbootapi.DTO.OnCreate;
 import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
 
+@JsonIgnoreProperties()
 public class SubtaskRequestBody {
+    @NotBlank(groups = OnCreate.class)
     private String name;
+    @NotBlank(groups = OnCreate.class)
     private String description;
     @NotNull
     private Task task;

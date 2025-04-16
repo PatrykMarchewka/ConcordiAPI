@@ -1,23 +1,25 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.*;
+import com.example.javaspringbootapi.DTO.InvitationDTO.InvitationMemberDTO;
+import com.example.javaspringbootapi.DTO.OnCreate;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMeDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMemberDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserRequestBody;
+import com.example.javaspringbootapi.DTO.UserDTO.UserRequestLogin;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
-import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.DatabaseModel.User;
-import com.example.javaspringbootapi.DatabaseModel.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 @RestController
 public class LoginController {
@@ -30,7 +32,7 @@ public class LoginController {
     private InvitationService invitationService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserRequestBody body){
+    public ResponseEntity<?> login(@RequestBody @Valid UserRequestLogin body){
 
         User user = userService.getUserByLogin(body.getLogin());
         if (user != null && Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
@@ -51,17 +53,16 @@ public class LoginController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> create(@RequestBody UserRequestBody body){
+    public ResponseEntity<?> create(@RequestBody @Validated(OnCreate.class) UserRequestBody body){
         if (userService.checkIfUserExistsByLogin(body.getLogin())){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Login already in use, please choose a different one");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new APIResponse<>("Login already in use, please choose a different one",null));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body.getLogin(), body.getPassword(), body.getName(), body.getLastName()))));
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyData(Authentication authentication){
-        return ResponseEntity.ok(authentication.getPrincipal());
-        //return ResponseEntity.ok(new UserMemberDTO((User)authentication.getPrincipal()));
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO((User)authentication.getPrincipal())));
     }
 
     @PatchMapping("/me")

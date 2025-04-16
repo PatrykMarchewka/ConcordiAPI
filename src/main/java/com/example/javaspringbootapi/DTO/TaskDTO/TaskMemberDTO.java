@@ -1,5 +1,7 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.TaskDTO;
 
+import com.example.javaspringbootapi.DTO.SubtaskDTO.SubtaskMemberDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Subtask;
 import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.DatabaseModel.User;

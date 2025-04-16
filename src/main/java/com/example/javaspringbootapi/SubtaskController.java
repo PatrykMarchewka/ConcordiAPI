@@ -1,12 +1,14 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.SubtaskMemberDTO;
-import com.example.javaspringbootapi.DTO.SubtaskRequestBody;
+import com.example.javaspringbootapi.DTO.OnCreate;
+import com.example.javaspringbootapi.DTO.SubtaskDTO.SubtaskMemberDTO;
+import com.example.javaspringbootapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -41,7 +43,7 @@ public class SubtaskController {
         }
     }
     @PostMapping("/subtasks")
-    public ResponseEntity<?> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<?> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
@@ -71,7 +73,7 @@ public class SubtaskController {
     }
 
     @PutMapping("/subtasks/{ID}")
-    public ResponseEntity<?> putSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<?> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);

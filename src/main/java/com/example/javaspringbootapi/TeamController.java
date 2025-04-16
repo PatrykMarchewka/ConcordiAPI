@@ -1,14 +1,17 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.TeamAdminDTO;
-import com.example.javaspringbootapi.DTO.TeamManagerDTO;
-import com.example.javaspringbootapi.DTO.TeamMemberDTO;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamAdminDTO;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamManagerDTO;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.DatabaseModel.User;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
@@ -39,12 +42,11 @@ public class TeamController {
                 teams.add(new TeamMemberDTO(team,user));
             }
         }
-        return ResponseEntity.ok(teams);
+        return ResponseEntity.ok(new APIResponse<>("Information about all joined teams",teams));
     }
-
     @PostMapping("/teams")
-    public ResponseEntity<?> createTeam(@RequestBody Map<String,String> body, Authentication authentication){
-        Team team = teamService.createTeam(body.get("name"),(User) authentication.getPrincipal());
+    public ResponseEntity<?> createTeam(@RequestBody @Valid TeamRequestBody body, Authentication authentication){
+        Team team = teamService.createTeam(body.getName(),(User) authentication.getPrincipal());
         return ResponseEntity.status(HttpStatus.CREATED).body("Team created with ID of " + teamService.getID(team));
     }
 
@@ -53,19 +55,35 @@ public class TeamController {
         Team team = teamService.getTeamByID(ID);
         PublicVariables.UserRole role = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (role.equals(PublicVariables.UserRole.ADMIN)){
-            return ResponseEntity.ok(new TeamAdminDTO(team,teamUserRoleService));
+            return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamAdminDTO(team,teamUserRoleService)));
         }
         else if(role.equals(PublicVariables.UserRole.MANAGER)){
-            return ResponseEntity.ok(new TeamManagerDTO(team,teamUserRoleService));
+            return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamManagerDTO(team,teamUserRoleService)));
         }
         else if(role.equals(PublicVariables.UserRole.MEMBER)){
-            return ResponseEntity.ok(new TeamMemberDTO(team,(User)authentication.getPrincipal()));
+            return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamMemberDTO(team,(User)authentication.getPrincipal())));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
         }
     }
 
+
+    @DeleteMapping("/teams/{ID}")
+    @Transactional
+    public ResponseEntity<?> disbandTeam(@PathVariable long ID, Authentication authentication){
+        Team team = teamService.getTeamByID(ID);
+        User user = (User)authentication.getPrincipal();
+        if(teamUserRoleService.getRole(user,team).equals(PublicVariables.UserRole.ADMIN) ){
+            for (User user1 : team.getTeammates()){
+                teamService.removeUser(team,user1);
+            }
+            return ResponseEntity.ok(new APIResponse<>("The team has been disbanded",null));
+        }
+        else{
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
+        }
+    }
 
 
 

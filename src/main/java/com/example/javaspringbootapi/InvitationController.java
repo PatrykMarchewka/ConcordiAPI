@@ -1,11 +1,9 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.InvitationManagerDTO;
-import com.example.javaspringbootapi.DTO.InvitationMemberDTO;
-import com.example.javaspringbootapi.DTO.InvitationRequestBody;
+import com.example.javaspringbootapi.DTO.InvitationDTO.InvitationManagerDTO;
+import com.example.javaspringbootapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
 import com.example.javaspringbootapi.DatabaseModel.User;
-import io.swagger.v3.core.util.AnnotationsUtils;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,7 +46,7 @@ public class InvitationController {
         User user = (User) authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         if ((myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)) && body.getRole().compareTo(myRole) >= 0){
-            return ResponseEntity.ok(new APIResponse<>("Created new invitation:",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body))));
+            return ResponseEntity.ok(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body))));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -70,7 +68,7 @@ public class InvitationController {
             if (body.getDueDate() != null){
                 invitation.setDueTime(body.getDueDate());
             }
-            return ResponseEntity.ok(new APIResponse<>("Patched the invitation:",new InvitationManagerDTO(invitationService.saveInvitation(invitation))));
+            return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.saveInvitation(invitation))));
         }
         else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -84,7 +82,7 @@ public class InvitationController {
         Invitation invitation = invitationService.getInvitationByUUID(invID);
         if ((myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)) && invitation != null){
             invitationService.deleteInvitation(invitation);
-            return ResponseEntity.ok("Invitation has been deleted!");
+            return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
         }
         else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

@@ -1,5 +1,5 @@
 package com.example.javaspringbootapi;
-import com.example.javaspringbootapi.DTO.InvitationRequestBody;
+import com.example.javaspringbootapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
 import com.example.javaspringbootapi.DatabaseModel.InvitationRepository;
 import com.example.javaspringbootapi.DatabaseModel.Team;

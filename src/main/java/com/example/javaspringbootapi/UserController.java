@@ -1,9 +1,7 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.UserMemberDTO;
-import com.example.javaspringbootapi.DatabaseModel.Task;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Team;
-import com.example.javaspringbootapi.DatabaseModel.TeamUserRole;
 import com.example.javaspringbootapi.DatabaseModel.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,9 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.*;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -88,6 +84,19 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/users/me")
+    public ResponseEntity<?> leaveTeam(@PathVariable long ID, Authentication authentication){
+        Team team = teamService.getTeamByID(ID);
+        User user = (User)authentication.getPrincipal();
+        if(teamUserRoleService.getRole(user,team).equals(PublicVariables.UserRole.ADMIN) && teamUserRoleService.getAllRole(team, PublicVariables.UserRole.ADMIN).size() == 1 && team.getTeammates().size() != 1){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only admin, disband team or add new admins",null));
+        }
+        else{
+            teamService.removeUser(team,user);
+            return ResponseEntity.ok(new APIResponse<>("Left the team",null));
+        }
+    }
+
 
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody PublicVariables.UserRole newRole, Authentication authentication){
@@ -96,7 +105,7 @@ public class UserController {
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (role.compareTo(myRole) > 0 && newRole.compareTo(myRole) >= 0){
             teamUserRoleService.setRole(userService.getUserByID(ID), team,newRole);
-            return ResponseEntity.ok("Role changed!");
+            return ResponseEntity.ok(new APIResponse<>("Role changed",null));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

@@ -1,7 +1,7 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.InvitationDTO;
 
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
-import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

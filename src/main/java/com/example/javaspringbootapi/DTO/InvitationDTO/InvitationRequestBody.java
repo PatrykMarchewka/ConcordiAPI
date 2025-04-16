@@ -1,12 +1,13 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.InvitationDTO;
 
 import com.example.javaspringbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
 
 import java.time.OffsetDateTime;
 
+@JsonIgnoreProperties()
 public class InvitationRequestBody {
     private Short uses = 1;
     private PublicVariables.UserRole role = PublicVariables.UserRole.MEMBER;

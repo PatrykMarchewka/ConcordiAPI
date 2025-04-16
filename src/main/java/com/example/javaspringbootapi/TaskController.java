@@ -1,20 +1,20 @@
 package com.example.javaspringbootapi;
 
-import com.example.javaspringbootapi.DTO.TaskManagerDTO;
-import com.example.javaspringbootapi.DTO.TaskMemberDTO;
-import com.example.javaspringbootapi.DTO.TaskRequestBody;
+import com.example.javaspringbootapi.DTO.OnCreate;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskManagerDTO;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskMemberDTO;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}")
@@ -38,11 +38,11 @@ public class TaskController {
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
         if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
-            Set<TaskMemberDTO> filteredTasks = new HashSet<>();
+            Set<TaskManagerDTO> filteredTasks = new HashSet<>();
             for (Task task : taskService.getAllTasks(team)){
-                filteredTasks.add(new TaskMemberDTO(task));
+                filteredTasks.add(new TaskManagerDTO(task));
             }
-            return ResponseEntity.ok(filteredTasks);
+            return ResponseEntity.ok(new APIResponse<>("All tasks for the team",filteredTasks));
         }
         else if (myRole.equals(PublicVariables.UserRole.MEMBER)){
             User user = (User)authentication.getPrincipal();
@@ -50,7 +50,7 @@ public class TaskController {
             for (Task task : user.getTasks()){
                 filteredTasks.add(new TaskMemberDTO(task));
             }
-            return ResponseEntity.ok(filteredTasks);
+            return ResponseEntity.ok(new APIResponse<>("All tasks assigned to me",filteredTasks));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -58,9 +58,7 @@ public class TaskController {
     }
 
     @PostMapping("/tasks")
-    public ResponseEntity<?> createTask(@PathVariable long teamID, @RequestBody TaskRequestBody body, Authentication authentication) throws JsonProcessingException {
-
-
+    public ResponseEntity<?> createTask(@PathVariable long teamID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body){
         if (body.getName() == null){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required fields");
         }
@@ -122,7 +120,7 @@ public class TaskController {
     }
 
     @PutMapping("/tasks/{ID}")
-    public ResponseEntity<?> putTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
+    public ResponseEntity<?> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);

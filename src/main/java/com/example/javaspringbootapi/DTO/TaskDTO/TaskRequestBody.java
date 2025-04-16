@@ -1,12 +1,17 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.TaskDTO;
 
+import com.example.javaspringbootapi.DTO.OnCreate;
 import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.PublicVariables;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
 import java.util.Set;
 
+@JsonIgnoreProperties()
 public class TaskRequestBody {
+    @NotBlank(groups = OnCreate.class)
     private String name;
     private String description;
     @NotNull
@@ -15,7 +20,7 @@ public class TaskRequestBody {
     private PublicVariables.TaskStatus taskStatus;
     private Set<Integer> subtasks;
 
-    public TaskRequestBody(@Nullable String name, @Nullable String description, Team team, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
+    public TaskRequestBody(String name, @Nullable String description, Team team, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
         this.name = name;
         this.description = description;
         this.team = team;

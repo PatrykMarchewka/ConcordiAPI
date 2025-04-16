@@ -1,10 +1,19 @@
-package com.example.javaspringbootapi.DTO;
+package com.example.javaspringbootapi.DTO.UserDTO;
 
+import com.example.javaspringbootapi.DTO.OnCreate;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
+
+@JsonIgnoreProperties()
 public class UserRequestBody {
+    @NotBlank(groups = OnCreate.class)
     private String login;
+    @NotBlank(groups = OnCreate.class)
     private String password;
 
+    @NotBlank(groups = OnCreate.class)
     private String name;
+    @NotBlank(groups = OnCreate.class)
     private String lastName;
 
 

@@ -1,10 +1,13 @@
 package com.example.javaspringbootapi;
 
 
-import com.example.javaspringbootapi.DTO.*;
+import com.example.javaspringbootapi.DTO.InvitationDTO.InvitationManagerDTO;
+import com.example.javaspringbootapi.DTO.SubtaskDTO.SubtaskMemberDTO;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskManagerDTO;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskMemberDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -356,6 +359,9 @@ public class MenuOptions {
             System.out.println("Type YES to disband");
             String answer = AskUser();
             if (answer.contains("YES")) {
+                for (User user : loggedUserTeam.getTeammates()){
+                    teamService.removeUser(loggedUserTeam,user);
+                }
                 teamService.deleteTeam(loggedUserTeam);
                 loggedUserTeam = null;
                 LoggingIn();
