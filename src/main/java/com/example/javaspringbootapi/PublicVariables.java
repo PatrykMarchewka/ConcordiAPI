@@ -20,6 +20,7 @@ public class PublicVariables {
     }
 
     public enum UserRole{
+        OWNER,
         ADMIN,
         MANAGER,
         MEMBER,
@@ -33,9 +34,22 @@ public class PublicVariables {
             }
             throw new IllegalArgumentException("Unknown value: " + name);
         }
+
+        public boolean isOwner(){
+            return this == OWNER;
+        }
+
+        public boolean isOwnerOrAdmin(){
+            return this == OWNER || this == ADMIN;
+        }
+
+        public boolean isManager(){
+            return this == MANAGER;
+        }
+        public boolean isMember(){
+            return this == MEMBER;
+        }
     }
-
-
 
 
 

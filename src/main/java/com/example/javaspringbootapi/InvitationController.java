@@ -29,7 +29,7 @@ public class InvitationController {
     public ResponseEntity<?> getInvitations(@PathVariable long teamID, Authentication authentication){
         User user = (User)authentication.getPrincipal();
         PublicVariables.UserRole myRole =  teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
             for (Invitation inv : invitationService.getAllInvitations(teamService.getTeamByID(teamID))){
                 invitations.add(new InvitationManagerDTO(inv));
@@ -45,7 +45,7 @@ public class InvitationController {
     public ResponseEntity<?> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         User user = (User) authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
-        if ((myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)) && body.getRole().compareTo(myRole) >= 0){
+        if ((myRole.isOwnerOrAdmin() || myRole.isManager()) && body.getRole().compareTo(myRole) >= 0){
             return ResponseEntity.ok(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body))));
         }
         else{
@@ -58,7 +58,7 @@ public class InvitationController {
         User user = (User)authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         Invitation invitation = invitationService.getInvitationByUUID(invID);
-        if ((myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)) && invitation != null){
+        if ((myRole.isOwnerOrAdmin() || myRole.isManager()) && invitation != null){
             if (body.getRole() != null){
                 invitation.setRole(body.getRole());
             }
@@ -80,7 +80,7 @@ public class InvitationController {
         User user = (User)authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         Invitation invitation = invitationService.getInvitationByUUID(invID);
-        if ((myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)) && invitation != null){
+        if ((myRole.isOwnerOrAdmin() || myRole.isManager()) && invitation != null){
             invitationService.deleteInvitation(invitation);
             return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
         }

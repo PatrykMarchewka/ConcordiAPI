@@ -32,7 +32,7 @@ public class SubtaskController {
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         Set<SubtaskMemberDTO> subtasks = new HashSet<>();
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             for (Subtask sub : task.getSubtasks()){
                 subtasks.add(new SubtaskMemberDTO(sub));
             }
@@ -47,7 +47,7 @@ public class SubtaskController {
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             if (body.getName() == null || body.getDescription() == null){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required fields");
             }
@@ -64,7 +64,7 @@ public class SubtaskController {
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             return ResponseEntity.ok(new APIResponse<>("Subtask details",new SubtaskMemberDTO(subtaskService.getSubtaskByID(taskID,ID))));
         }
         else{
@@ -77,7 +77,7 @@ public class SubtaskController {
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
             subtask.setName(body.getName());
             subtask.setDescription(body.getDescription());
@@ -95,7 +95,7 @@ public class SubtaskController {
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(taskID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
             if (body.getName() != null){
                 subtask.setName(body.getName());
@@ -117,7 +117,7 @@ public class SubtaskController {
     public ResponseEntity<?> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN)){
+        if (myRole.isOwnerOrAdmin()){
             subtaskService.deleteSubtask(taskID,ID);
             return ResponseEntity.ok(new APIResponse<>("Subtask deleted", null));
         }

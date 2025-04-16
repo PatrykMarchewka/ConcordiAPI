@@ -29,9 +29,9 @@ public class UserController {
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) PublicVariables.UserRole role){
         Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole myrole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
+        PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         Set<UserMemberDTO> users = new HashSet<>();
-        if (myrole.equals(PublicVariables.UserRole.ADMIN) || myrole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             if (role != null){
                 for (User user : teamUserRoleService.getAllRole(team,role)){
                     users.add(new UserMemberDTO(user));
@@ -45,7 +45,7 @@ public class UserController {
                 return ResponseEntity.ok(new APIResponse<>("All users in the team",users));
             }
         }
-        else if(role.equals(PublicVariables.UserRole.MEMBER)){
+        else if(myRole.isMember()){
             return ResponseEntity.ok(new APIResponse<>("All users in the team",team.getTeammates().size()));
         }
         else{
@@ -88,8 +88,8 @@ public class UserController {
     public ResponseEntity<?> leaveTeam(@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(ID);
         User user = (User)authentication.getPrincipal();
-        if(teamUserRoleService.getRole(user,team).equals(PublicVariables.UserRole.ADMIN) && teamUserRoleService.getAllRole(team, PublicVariables.UserRole.ADMIN).size() == 1 && team.getTeammates().size() != 1){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only admin, disband team or add new admins",null));
+        if(teamUserRoleService.getRole(user,team).isOwner() && teamUserRoleService.getAllRole(team, PublicVariables.UserRole.OWNER).size() == 1 && team.getTeammates().size() != 1){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
         }
         else{
             teamService.removeUser(team,user);
@@ -103,7 +103,7 @@ public class UserController {
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole role = teamUserRoleService.getRole(userService.getUserByID(ID),team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (role.compareTo(myRole) > 0 && newRole.compareTo(myRole) >= 0){
+        if (myRole.isOwnerOrAdmin() && role.compareTo(myRole) > 0 && newRole.compareTo(myRole) >= 0){
             teamUserRoleService.setRole(userService.getUserByID(ID), team,newRole);
             return ResponseEntity.ok(new APIResponse<>("Role changed",null));
         }

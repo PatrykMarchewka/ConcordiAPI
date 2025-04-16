@@ -89,12 +89,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Transactional
-    public void banUserByID(long id, Team team){
-        User user = userRepository.findById(id).orElseThrow();
-        teamUserRoleService.setRole(user,team, PublicVariables.UserRole.BANNED);
-    }
-
 
     public void deleteUser(User user){
         userRepository.delete(user);

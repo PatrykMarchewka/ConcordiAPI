@@ -23,7 +23,7 @@ public class TeamService {
         Team team = new Team();
         team.setName(name);
         team = teamRepository.save(team);
-        addUser(team,user, PublicVariables.UserRole.ADMIN);
+        addUser(team,user, PublicVariables.UserRole.OWNER);
         return team;
     }
 

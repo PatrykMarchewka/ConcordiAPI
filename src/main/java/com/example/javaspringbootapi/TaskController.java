@@ -37,14 +37,14 @@ public class TaskController {
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             Set<TaskManagerDTO> filteredTasks = new HashSet<>();
             for (Task task : taskService.getAllTasks(team)){
                 filteredTasks.add(new TaskManagerDTO(task));
             }
             return ResponseEntity.ok(new APIResponse<>("All tasks for the team",filteredTasks));
         }
-        else if (myRole.equals(PublicVariables.UserRole.MEMBER)){
+        else if (myRole.isMember()){
             User user = (User)authentication.getPrincipal();
             Set<TaskMemberDTO> filteredTasks = new HashSet<>();
             for (Task task : user.getTasks()){
@@ -84,14 +84,14 @@ public class TaskController {
     public ResponseEntity<?> getAllTasksAssignedToMe(@PathVariable long teamID,Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             Set<TaskManagerDTO> tasks = new HashSet<>();
             for (Task task : ((User) authentication.getPrincipal()).getTasks()){
                 tasks.add(new TaskManagerDTO(task));
             }
             return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",tasks));
         }
-        else if(myRole.equals(PublicVariables.UserRole.MEMBER)){
+        else if(myRole.isMember()){
             Set<TaskMemberDTO> tasks = new HashSet<>();
             for (Task task : ((User) authentication.getPrincipal()).getTasks()){
                 tasks.add(new TaskMemberDTO(task));
@@ -108,7 +108,7 @@ public class TaskController {
         Team team = teamService.getTeamByID(teamID);
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             return ResponseEntity.ok(new APIResponse<>("Task details", new TaskManagerDTO(task)));
         }
         else if(task.getUsers().contains((User)authentication.getPrincipal())){
@@ -125,7 +125,7 @@ public class TaskController {
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER) || task.getUsers().contains((User)authentication.getPrincipal())){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains((User)authentication.getPrincipal())){
             try{
                 task.setName(body.getName());
                 task.setDescription(body.getDescription());
@@ -165,7 +165,7 @@ public class TaskController {
         Task task = taskService.getTaskByID(ID,team);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
 
-        if (myRole.equals(PublicVariables.UserRole.ADMIN) || myRole.equals(PublicVariables.UserRole.MANAGER)){
+        if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             try{
                 if (body.getName() != null){
                     task.setName(body.getName());
@@ -213,7 +213,7 @@ public class TaskController {
     public ResponseEntity<?> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (myRole.equals(PublicVariables.UserRole.ADMIN)){
+        if (myRole.isOwnerOrAdmin()){
             taskService.deleteTaskByID(ID,team);
             return ResponseEntity.ok(new APIResponse<>("Task deleted",null));
         }

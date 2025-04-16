@@ -32,13 +32,13 @@ public class TeamController {
         Set<Object> teams = new HashSet<>();
         for (Team team : user.getTeams()){
             PublicVariables.UserRole role = teamUserRoleService.getRole(user,team);
-            if (role.equals(PublicVariables.UserRole.ADMIN)){
+            if (role.isOwnerOrAdmin()){
                 teams.add(new TeamAdminDTO(team,teamUserRoleService));
             }
-            else if(role.equals(PublicVariables.UserRole.MANAGER)){
+            else if(role.isManager()){
                 teams.add(new TeamManagerDTO(team,teamUserRoleService));
             }
-            else if(role.equals(PublicVariables.UserRole.MEMBER)){
+            else if(role.isMember()){
                 teams.add(new TeamMemberDTO(team,user));
             }
         }
@@ -54,13 +54,13 @@ public class TeamController {
     public ResponseEntity<?> getTeam(@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(ID);
         PublicVariables.UserRole role = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (role.equals(PublicVariables.UserRole.ADMIN)){
+        if (role.isOwnerOrAdmin()){
             return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamAdminDTO(team,teamUserRoleService)));
         }
-        else if(role.equals(PublicVariables.UserRole.MANAGER)){
+        else if(role.isManager()){
             return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamManagerDTO(team,teamUserRoleService)));
         }
-        else if(role.equals(PublicVariables.UserRole.MEMBER)){
+        else if(role.isMember()){
             return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamMemberDTO(team,(User)authentication.getPrincipal())));
         }
         else{
@@ -74,7 +74,7 @@ public class TeamController {
     public ResponseEntity<?> disbandTeam(@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(ID);
         User user = (User)authentication.getPrincipal();
-        if(teamUserRoleService.getRole(user,team).equals(PublicVariables.UserRole.ADMIN) ){
+        if(teamUserRoleService.getRole(user,team).isOwner()){
             for (User user1 : team.getTeammates()){
                 teamService.removeUser(team,user1);
             }
