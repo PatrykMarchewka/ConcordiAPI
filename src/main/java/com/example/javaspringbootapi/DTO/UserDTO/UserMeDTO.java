@@ -3,6 +3,7 @@ package com.example.javaspringbootapi.DTO.UserDTO;
 import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.DatabaseModel.User;
+import com.example.javaspringbootapi.TeamUserRoleService;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,12 +15,12 @@ public class UserMeDTO {
     private Set<TeamMemberDTO> teams = new HashSet<>();
 
 
-    public UserMeDTO(User user){
+    public UserMeDTO(User user, TeamUserRoleService teamUserRoleService){
         this.id = user.getID();
         this.name = user.getName();
         this.lastName = user.getLastName();
         for (Team team : user.getTeams()){
-            this.teams.add(new TeamMemberDTO(team,user));
+            this.teams.add(new TeamMemberDTO(team,user,teamUserRoleService));
         }
     }
 

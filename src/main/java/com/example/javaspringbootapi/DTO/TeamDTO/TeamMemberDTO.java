@@ -1,9 +1,12 @@
 package com.example.javaspringbootapi.DTO.TeamDTO;
 
 import com.example.javaspringbootapi.DTO.TaskDTO.TaskMemberDTO;
+import com.example.javaspringbootapi.DTO.UserDTO.UserMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.DatabaseModel.User;
+import com.example.javaspringbootapi.PublicVariables;
+import com.example.javaspringbootapi.TeamUserRoleService;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,8 +16,9 @@ public class TeamMemberDTO {
     private String name;
     private int teammateCount;
     private Set<TaskMemberDTO> tasks = new HashSet<>();
+    private Set<UserMemberDTO> owners = new HashSet<>();
 
-    public TeamMemberDTO(Team team, User user){
+    public TeamMemberDTO(Team team, User user, TeamUserRoleService service){
         this.id = team.getId();
         this.name = team.getName();
         this.teammateCount = team.getTeammates().size();
@@ -26,6 +30,9 @@ public class TeamMemberDTO {
                 }
             }
             this.tasks = filteredTasks;
+        }
+        for (User user1 : service.getAllRole(team, PublicVariables.UserRole.OWNER)){
+            this.owners.add(new UserMemberDTO(user1));
         }
     }
 
@@ -42,4 +49,7 @@ public class TeamMemberDTO {
 
     public Set<TaskMemberDTO> getTasks(){return tasks;}
     public void setTasks(Set<TaskMemberDTO> tasks){this.tasks = tasks;}
+
+    public Set<UserMemberDTO> getOwners(){return owners;}
+    public void setOwners(Set<UserMemberDTO> owners){this.owners = owners;}
 }

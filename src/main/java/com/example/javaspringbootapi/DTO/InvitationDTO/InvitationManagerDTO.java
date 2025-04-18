@@ -3,11 +3,13 @@ package com.example.javaspringbootapi.DTO.InvitationDTO;
 import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
 import com.example.javaspringbootapi.PublicVariables;
+import com.example.javaspringbootapi.TeamUserRoleService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 
 public class InvitationManagerDTO {
+
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String UUID;
@@ -16,9 +18,9 @@ public class InvitationManagerDTO {
     private short uses;
     private String dueTime;
 
-    public InvitationManagerDTO(Invitation invitation){
+    public InvitationManagerDTO(Invitation invitation, TeamUserRoleService teamUserRoleService){
         this.UUID = invitation.getUUID();
-        this.team = new TeamMemberDTO(invitation.getTeam(), null);
+        this.team = new TeamMemberDTO(invitation.getTeam(), null,teamUserRoleService);
         this.role = invitation.getRole();
         this.uses = invitation.getUses();
         this.dueTime = (invitation.getDueTime() != null) ? invitation.getDueTime().toString() : null;

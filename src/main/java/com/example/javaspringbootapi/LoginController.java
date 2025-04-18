@@ -62,7 +62,7 @@ public class LoginController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyData(Authentication authentication){
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO((User)authentication.getPrincipal())));
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO((User)authentication.getPrincipal(),teamUserRoleService)));
     }
 
     @PatchMapping("/me")
@@ -108,7 +108,7 @@ public class LoginController {
     public ResponseEntity<?> getInfoAboutInvitation(@PathVariable String invID){
         Invitation invitation = invitationService.getInvitationByUUID(invID);
         if (invitation!= null){
-            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(invitation)));
+            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(invitation,teamUserRoleService)));
         }
         else{
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Couldnt find invitation with provided UUID");
@@ -122,7 +122,7 @@ public class LoginController {
         Invitation invitation = invitationService.getInvitationByUUID(invID);
         if (invitation != null && !user.getTeams().contains(invitation.getTeam())){
             invitationService.useInvitation(invitation,user);
-            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(invitation.getTeam(), user)));
+            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(invitation.getTeam(), user,teamUserRoleService)));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

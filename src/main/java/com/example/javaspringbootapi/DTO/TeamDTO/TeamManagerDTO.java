@@ -16,6 +16,7 @@ public class TeamManagerDTO {
     private Set<UserMemberDTO> teammates = new HashSet<>();
     private Set<TaskManagerDTO> tasks = new HashSet<>();
     private Set<UserMemberDTO> managers = new HashSet<>();
+    private Set<UserMemberDTO> owners = new HashSet<>();
 
     public TeamManagerDTO(Team team, TeamUserRoleService service){
         this.id = team.getId();
@@ -29,6 +30,9 @@ public class TeamManagerDTO {
         Set<User> users = service.getAllRole(team, PublicVariables.UserRole.MANAGER);
         for (User user : users){
             managers.add(new UserMemberDTO(user));
+        }
+        for (User user1 : service.getAllRole(team, PublicVariables.UserRole.OWNER)){
+            this.owners.add(new UserMemberDTO(user1));
         }
     }
 
@@ -48,4 +52,7 @@ public class TeamManagerDTO {
 
     public Set<UserMemberDTO> getManagers(){return managers;}
     public void setManagers(Set<UserMemberDTO> managers){this.managers = managers;}
+
+    public Set<UserMemberDTO> getOwners(){return owners;}
+    public void setOwners(Set<UserMemberDTO> owners){this.owners = owners;}
 }

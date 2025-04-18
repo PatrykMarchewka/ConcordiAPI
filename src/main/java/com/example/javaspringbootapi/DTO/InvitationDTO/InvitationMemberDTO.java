@@ -3,6 +3,7 @@ package com.example.javaspringbootapi.DTO.InvitationDTO;
 import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Invitation;
 import com.example.javaspringbootapi.PublicVariables;
+import com.example.javaspringbootapi.TeamUserRoleService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class InvitationMemberDTO {
@@ -10,9 +11,9 @@ public class InvitationMemberDTO {
     private TeamMemberDTO team;
     private PublicVariables.UserRole role;
 
-    public InvitationMemberDTO(Invitation invitation){
+    public InvitationMemberDTO(Invitation invitation, TeamUserRoleService teamUserRoleService){
         this.UUID = invitation.getUUID();
-        this.team = new TeamMemberDTO(invitation.getTeam(),null);
+        this.team = new TeamMemberDTO(invitation.getTeam(),null,teamUserRoleService);
         this.role = invitation.getRole();
     }
 

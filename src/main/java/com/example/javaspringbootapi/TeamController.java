@@ -39,7 +39,7 @@ public class TeamController {
                 teams.add(new TeamManagerDTO(team,teamUserRoleService));
             }
             else if(role.isMember()){
-                teams.add(new TeamMemberDTO(team,user));
+                teams.add(new TeamMemberDTO(team,user,teamUserRoleService));
             }
         }
         return ResponseEntity.ok(new APIResponse<>("Information about all joined teams",teams));
@@ -61,7 +61,7 @@ public class TeamController {
             return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamManagerDTO(team,teamUserRoleService)));
         }
         else if(role.isMember()){
-            return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamMemberDTO(team,(User)authentication.getPrincipal())));
+            return ResponseEntity.ok(new APIResponse<>("Information about the team",new TeamMemberDTO(team,(User)authentication.getPrincipal(),teamUserRoleService)));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());

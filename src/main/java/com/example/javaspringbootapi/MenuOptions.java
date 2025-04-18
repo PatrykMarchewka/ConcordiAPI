@@ -817,7 +817,7 @@ public class MenuOptions {
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             System.out.println("All invitations for the team");
             for (Invitation invitation : invitationService.getAllInvitations(loggedUserTeam)){
-                System.out.println(new InvitationManagerDTO(invitation));
+                System.out.println(new InvitationManagerDTO(invitation,teamUserRoleService));
             }
         }
         else{

@@ -32,7 +32,7 @@ public class InvitationController {
         if (myRole.isOwnerOrAdmin() || myRole.isManager()){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
             for (Invitation inv : invitationService.getAllInvitations(teamService.getTeamByID(teamID))){
-                invitations.add(new InvitationManagerDTO(inv));
+                invitations.add(new InvitationManagerDTO(inv,teamUserRoleService));
             }
             return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitations));
         }
@@ -46,7 +46,7 @@ public class InvitationController {
         User user = (User) authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         if ((myRole.isOwnerOrAdmin() || myRole.isManager()) && body.getRole().compareTo(myRole) >= 0){
-            return ResponseEntity.ok(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body))));
+            return ResponseEntity.ok(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body),teamUserRoleService)));
         }
         else{
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
@@ -68,7 +68,7 @@ public class InvitationController {
             if (body.getDueDate() != null){
                 invitation.setDueTime(body.getDueDate());
             }
-            return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.saveInvitation(invitation))));
+            return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.saveInvitation(invitation),teamUserRoleService)));
         }
         else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
