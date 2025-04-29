@@ -1,6 +1,7 @@
 package com.example.javaspringbootapi.DTO.TaskDTO;
 
 import com.example.javaspringbootapi.DTO.OnCreate;
+import com.example.javaspringbootapi.DTO.TeamDTO.TeamMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Team;
 import com.example.javaspringbootapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,15 +16,15 @@ public class TaskRequestBody {
     private String name;
     private String description;
     @NotNull
-    private Team team;
+    private TeamMemberDTO teamMemberDTO;
     private Set<Integer> users;
     private PublicVariables.TaskStatus taskStatus;
     private Set<Integer> subtasks;
 
-    public TaskRequestBody(String name, @Nullable String description, Team team, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
+    public TaskRequestBody(String name, @Nullable String description, TeamMemberDTO teamMemberDTO, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
         this.name = name;
         this.description = description;
-        this.team = team;
+        this.teamMemberDTO = teamMemberDTO;
         this.users = users;
         this.taskStatus = taskStatus;
         this.subtasks = subtasks;
@@ -37,8 +38,8 @@ public class TaskRequestBody {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public Team getTeam(){return team;}
-    public void setTeam(Team team){this.team = team;}
+    public TeamMemberDTO getTeam(){return teamMemberDTO;}
+    public void setTeam(TeamMemberDTO teamMemberDTO){this.teamMemberDTO = teamMemberDTO;}
 
     public Set<Integer> getUsers(){return users;}
     public void setUsers(Set<Integer> users){this.users = users;}

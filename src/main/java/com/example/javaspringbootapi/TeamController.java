@@ -68,6 +68,17 @@ public class TeamController {
         }
     }
 
+    @PatchMapping("/teams/{ID}")
+    @Transactional
+    public ResponseEntity<?> patchTeam(@PathVariable long ID, TeamRequestBody body, Authentication authentication){
+        Team team = teamService.getTeamByID(ID);
+        if (teamUserRoleService.getRole((User)authentication.getPrincipal(),team).isOwnerOrAdmin()){
+            team.setName(body.getName());
+            return ResponseEntity.ok(new APIResponse<>("The name has been changed!",body.getName()));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
+    }
+
 
     @DeleteMapping("/teams/{ID}")
     @Transactional

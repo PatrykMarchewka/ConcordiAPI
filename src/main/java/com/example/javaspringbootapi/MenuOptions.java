@@ -154,7 +154,11 @@ public class MenuOptions {
 
         if (loggedUserTeam == null) {
             LoggingIn();
-        } else {
+        }
+        else if(teamUserRoleService.getRole(loggedUser,loggedUserTeam).isBanned()){
+            MenuBanned();
+        }
+        else {
             Menu();
         }
 
@@ -194,6 +198,13 @@ public class MenuOptions {
             System.out.println();
             Menu();
         }
+    }
+
+    private void MenuBanned(){
+        System.out.println("You have been banned from the team, contact the owners or administrators");
+        System.out.println("Logging you out now...");
+        System.out.println();
+        LoggingIn();
     }
 
     private void MenuTeams() {
@@ -534,7 +545,6 @@ public class MenuOptions {
     }
 
     private void CreateTask(){
-
         try {
             Task task = new Task();
             System.out.println("Give name for the new task");

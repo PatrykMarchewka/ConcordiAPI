@@ -27,7 +27,6 @@ public class SecurityConfig {
             .requestMatchers("/signup").permitAll()
             .requestMatchers("/teams/**","/tasks/**","/subtasks/**","/invitations/**","/users/**").denyAll()
             .anyRequest().authenticated()
-            //.and().httpBasic()
             .and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     return httpSecurity.build();
     }

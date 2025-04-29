@@ -42,13 +42,13 @@ public class PublicVariables {
         public boolean isOwnerOrAdmin(){
             return this == OWNER || this == ADMIN;
         }
-
         public boolean isManager(){
             return this == MANAGER;
         }
         public boolean isMember(){
             return this == MEMBER;
         }
+        public boolean isBanned(){return this == BANNED;}
     }
 
 

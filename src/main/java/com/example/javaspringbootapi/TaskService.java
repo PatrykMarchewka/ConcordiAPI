@@ -114,6 +114,7 @@ public class TaskService {
         }
         task.setTaskStatus((status == null) ? PublicVariables.TaskStatus.NEW : status);
         task.setCreationDate(OffsetDateTime.now());
+        task.setUpdateDate(OffsetDateTime.now());
         taskRepository.save(task);
         team.getTasks().add(task);
         teamService.saveTeam(team);

@@ -1,6 +1,7 @@
 package com.example.javaspringbootapi.DTO.SubtaskDTO;
 
 import com.example.javaspringbootapi.DTO.OnCreate;
+import com.example.javaspringbootapi.DTO.TaskDTO.TaskMemberDTO;
 import com.example.javaspringbootapi.DatabaseModel.Task;
 import com.example.javaspringbootapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,13 +16,13 @@ public class SubtaskRequestBody {
     @NotBlank(groups = OnCreate.class)
     private String description;
     @NotNull
-    private Task task;
+    private TaskMemberDTO taskMemberDTO;
     private PublicVariables.TaskStatus taskStatus;
 
-    public SubtaskRequestBody(@Nullable String name,@Nullable String description, Task task,@Nullable PublicVariables.TaskStatus taskStatus){
+    public SubtaskRequestBody(@Nullable String name,@Nullable String description, TaskMemberDTO taskMemberDTO,@Nullable PublicVariables.TaskStatus taskStatus){
         this.name = name;
         this.description = description;
-        this.task = task;
+        this.taskMemberDTO = taskMemberDTO;
         this.taskStatus = taskStatus;
     }
 
@@ -33,8 +34,8 @@ public class SubtaskRequestBody {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public Task getTask(){return task;}
-    public void setTask(Task task){this.task = task;}
+    public TaskMemberDTO getTask(){return taskMemberDTO;}
+    public void setTask(TaskMemberDTO taskMemberDTO){this.taskMemberDTO = taskMemberDTO;}
 
     public PublicVariables.TaskStatus getTaskStatus(){return taskStatus;}
     public void setTaskStatus(PublicVariables.TaskStatus taskStatus){this.taskStatus = taskStatus;}
