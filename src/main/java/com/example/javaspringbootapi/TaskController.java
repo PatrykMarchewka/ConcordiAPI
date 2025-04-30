@@ -5,8 +5,6 @@ import com.example.javaspringbootapi.DTO.TaskDTO.TaskManagerDTO;
 import com.example.javaspringbootapi.DTO.TaskDTO.TaskMemberDTO;
 import com.example.javaspringbootapi.DTO.TaskDTO.TaskRequestBody;
 import com.example.javaspringbootapi.DatabaseModel.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +29,6 @@ public class TaskController {
     @Autowired
     private SubtaskService subtaskService;
 
-
     @GetMapping("/tasks")
     public ResponseEntity<?> getAllTasks(@PathVariable long teamID,Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -53,7 +50,7 @@ public class TaskController {
             return ResponseEntity.ok(new APIResponse<>("All tasks assigned to me",filteredTasks));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -71,7 +68,7 @@ public class TaskController {
                     userSet.add(userService.getUserByID((long)id));
                 }
                 else{
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>("Tried to add user that isn't part of the team",null));
                 }
 
             }
@@ -99,7 +96,7 @@ public class TaskController {
             return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",tasks));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -115,7 +112,7 @@ public class TaskController {
             return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(task)));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -138,7 +135,7 @@ public class TaskController {
                         taskService.addUserToTask(team,ID, userService.getUserByID((long)id));
                     }
                     else{
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>("Tried to add user that isn't part of the team",null));
                     }
                 }
 
@@ -151,11 +148,11 @@ public class TaskController {
                 taskService.saveTask(task);
                 return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(task)));
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>(MenuOptions.CouldntCompleteOperation(),null));
             }
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -185,7 +182,7 @@ public class TaskController {
                             taskService.addUserToTask(team,ID, userService.getUserByID((long)id));
                         }
                         else{
-                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tried to add user that is not part of the team");
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>("Tried to add user that isn't part of the team",null));
                         }
                     }
 
@@ -201,11 +198,11 @@ public class TaskController {
                 taskService.saveTask(task);
                 return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(task)));
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>(MenuOptions.CouldntCompleteOperation(),null));
             }
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -214,11 +211,16 @@ public class TaskController {
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
         if (myRole.isOwnerOrAdmin()){
-            taskService.deleteTaskByID(ID,team);
-            return ResponseEntity.ok(new APIResponse<>("Task deleted",null));
+            if (taskService.getTaskByID(ID,team) != null){
+                taskService.deleteTaskByID(ID,team);
+                return ResponseEntity.ok(new APIResponse<>("Task deleted",null));
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new APIResponse<>("Couldn't find task with specified ID",null));
+            }
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -234,10 +236,10 @@ public class TaskController {
                 return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskByID(ID,team))));
             }
             else{
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>(MenuOptions.CouldntCompleteOperation(),null));
         }
 
     }
@@ -254,10 +256,10 @@ public class TaskController {
                 return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskByID(ID,team))));
             }
             else{
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MenuOptions.CouldntCompleteOperation());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>(MenuOptions.CouldntCompleteOperation(),null));
         }
     }
 

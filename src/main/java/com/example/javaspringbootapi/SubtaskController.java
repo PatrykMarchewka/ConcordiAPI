@@ -39,7 +39,7 @@ public class SubtaskController {
             return ResponseEntity.ok(new APIResponse<>("Subtasks attached to this task",subtasks));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
     @PostMapping("/subtasks")
@@ -54,7 +54,7 @@ public class SubtaskController {
             return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(team,taskID, body.getName(), body.getDescription()))));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
 
     }
@@ -68,7 +68,7 @@ public class SubtaskController {
             return ResponseEntity.ok(new APIResponse<>("Subtask details",new SubtaskMemberDTO(subtaskService.getSubtaskByID(taskID,ID))));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -86,7 +86,7 @@ public class SubtaskController {
             return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtask)));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
@@ -110,7 +110,7 @@ public class SubtaskController {
             return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtask)));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
     @DeleteMapping("/subtasks/{ID}")
@@ -122,7 +122,7 @@ public class SubtaskController {
             return ResponseEntity.ok(new APIResponse<>("Subtask deleted", null));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
 
