@@ -11,6 +11,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.Console;
 import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -53,7 +54,8 @@ public class MenuOptions {
         } catch (Exception e) {
             System.out.println("Found problem:");
             System.out.println(e.toString());
-            Start();
+            System.out.println("Exiting the application");
+            System.exit(0);
         }
 
     }
@@ -104,16 +106,6 @@ public class MenuOptions {
         }
         List<Team> list = new ArrayList<>();
         list.add(null);
-        if (user != null) {
-            System.out.println("0. CREATE NEW TEAM ");
-            int i = 1;
-            for (Team team : user.getTeams()) {
-                System.out.println(i + ". " + team.getName() + " - " + teamUserRoleService.getRole(user, team).name());
-                list.add(team);
-                i++;
-            }
-            System.out.println(i+1 + ". JOIN TEAM USING INVITATION CODE" );
-        }
 
         if (list.size() == 1){
             System.out.println("You have no teams, you need to create one now or join already existing one");
@@ -134,6 +126,14 @@ public class MenuOptions {
             }
         }
         else{
+            System.out.println("0. CREATE NEW TEAM ");
+            int i = 1;
+            for (Team team : user.getTeams()) {
+                System.out.println(i + ". " + team.getName() + " - " + teamUserRoleService.getRole(user, team).name());
+                list.add(team);
+                i++;
+            }
+            System.out.println(i+1 + ". JOIN TEAM USING INVITATION CODE" );
             try {
                 System.out.println("Type option number to choose it");
                 int choice = Integer.valueOf(AskUser());
@@ -166,13 +166,25 @@ public class MenuOptions {
     }
 
     private String AskUser() {
-        String ans = System.console().readLine();
+        String ans;
+        Console console = System.console();
+
+        if (console != null) {
+            ans = console.readLine();
+        } else {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter input: ");
+            ans = scanner.nextLine();
+        }
+
         if (ans.equalsIgnoreCase("quit")) {
             System.exit(0);
         }
+
         if (ans.equalsIgnoreCase("start") || ans.equalsIgnoreCase("logout")) {
             Start();
         }
+
         return ans;
     }
 
