@@ -52,10 +52,10 @@ public class MenuOptions {
                 Start();
             }
         } catch (Exception e) {
+            System.out.println();
             System.out.println("Found problem:");
             System.out.println(e.toString());
-            System.out.println("Exiting the application");
-            System.exit(0);
+            System.out.println("Can't use console!");
         }
 
     }
