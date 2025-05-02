@@ -1,6 +1,12 @@
 # ConcordiAPI
 
-Backend web application for creating tasks and assigning them to users. The application serves as a REST API supporting GET and POST requests and includes a local admin console for managing the system directly from the host machine. Built with **Spring Boot**, supports modern features like API documentation via **Swagger UI**. The project is containerized with **Docker** for easy deployment.
+A Spring Boot application for managing tasks, users, and teams, offering a REST API with full CRUD functionality (GET, POST, PUT, DELETE). Key features include:
+- Tasks & Subtasks: Create, update, delete tasks and subtasks, with assignments and status tracking.
+- Teams: Create and manage teams, assign users, and send invitations.
+- User Roles: Different roles (e.g., Admin, Member) with specific permissions.
+- Invitations: Users can invite others to teams and manage invitations.
+- API Documentation: Access to Swagger UI for easy endpoint reference.
+- Dockerized: The app is containerized with Docker for easy deployment.
 
 ---
 
@@ -18,10 +24,12 @@ Backend web application for creating tasks and assigning them to users. The appl
 
 ## Features
 
-- **Authentication**: Secure login, user roles management.
-- **Task Management**: Create, update, delete tasks, and more.
-- **Swagger UI**: API documentation for easier integration.
-- **Docker Support**: Fully dockerized for containerization and deployment.
+- **Authentication**: Secure login using BCrypt and JSON Web Tokens with user roles management and team-based permissions.
+- **Task Management**: Create, update, delete tasks and subtasks, assign them to users, and track their progress.
+- **Teams & Invitations**: Manage teams, invite users, and handle pending invitations.
+- **User Roles**: Assign and manage different user roles (Admin, Member, etc.) for access control.
+- **Swagger UI**: Interactive API documentation for easier integration and testing.
+- **Docker Support**: Fully dockerized for containerization and deployment in any environment.
   
 ---
 
@@ -57,7 +65,7 @@ To create a new user, send a post request to /signup
 
 ## API Documentation
 - **Visit 0.0.0.0:10000/swagger-ui/index.html for interactive API documentation**
-- **Visit http://localhost:8080/v3/api-docs for JSON Open API Docs**
+- **Visit 0.0.0.0:10000/v3/api-docs for JSON Open API Docs**
 
 ## Releases
 - **The latest release of the app is available on the [releases tab](https://github.com/PatrykMarchewka/ConcordiAPI/releases/)**
