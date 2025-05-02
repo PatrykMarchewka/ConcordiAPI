@@ -31,6 +31,12 @@ public class LoginController {
     @Autowired
     private InvitationService invitationService;
 
+
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck(){
+        return ResponseEntity.ok(new APIResponse<>("Service is up!",null));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid UserRequestLogin body){
 

@@ -25,6 +25,7 @@ public class SecurityConfig {
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/login").permitAll()
             .requestMatchers("/signup").permitAll()
+            .requestMatchers("/health").permitAll()
             .requestMatchers("/teams/**","/tasks/**","/subtasks/**","/invitations/**","/users/**").denyAll()
             .anyRequest().authenticated()
             .and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
