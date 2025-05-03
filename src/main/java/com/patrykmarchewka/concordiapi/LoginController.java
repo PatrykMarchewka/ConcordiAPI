@@ -9,6 +9,10 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +26,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 @RestController
+@Tag(name = "Authentication and misc", description = "Authentication, user information and invitation check")
 public class LoginController {
 
     @Autowired
@@ -32,11 +37,15 @@ public class LoginController {
     private InvitationService invitationService;
 
 
+    @Operation(summary = "Check service status", description = "Checks if service is up and working")
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck(){
         return ResponseEntity.ok(new APIResponse<>("Service is up!",null));
     }
 
+    @Operation(summary = "Login user", description = "Authenticate the user and return JWT Token")
+    @ApiResponse(responseCode = "200",description = "Successful login, token was generated and provided")
+    @ApiResponse(responseCode = "401", description = "Can't authenticate, provided credentials are wrong")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid UserRequestLogin body){
 
@@ -58,6 +67,7 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong credentials!");
     }
 
+    @Operation(summary = "Create new user", description = "Create new user with provided credentials")
     @PostMapping("/signup")
     public ResponseEntity<?> create(@RequestBody @Validated(OnCreate.class) UserRequestBody body){
         if (userService.checkIfUserExistsByLogin(body.getLogin())){
@@ -66,11 +76,15 @@ public class LoginController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body.getLogin(), body.getPassword(), body.getName(), body.getLastName()))));
     }
 
+    @Operation(summary = "Information about me", description = "Return information about currently logged in user")
+    @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/me")
     public ResponseEntity<?> getMyData(Authentication authentication){
         return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO((User)authentication.getPrincipal(),teamUserRoleService)));
     }
 
+    @Operation(summary = "Edit information about me", description = "Edit information about currently logged in user")
+    @SecurityRequirement(name = "BearerAuth")
     @PatchMapping("/me")
     @Transactional
     public ResponseEntity<?> changeData(@RequestBody UserRequestBody body,Authentication authentication){
@@ -97,6 +111,8 @@ public class LoginController {
 
     }
 
+    @Operation(summary = "Generate new token", description = "Generates new JWT token")
+    @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/me/refresh")
     public ResponseEntity<?> refreshToken(Authentication authentication){
         User user = (User) authentication.getPrincipal();
@@ -109,7 +125,8 @@ public class LoginController {
         return ResponseEntity.ok(new APIResponse<>("Your new token",response));
     }
 
-
+    @Operation(summary = "Check invitation", description = "Returns information about provided invitation")
+    @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<?> getInfoAboutInvitation(@PathVariable String invID){
         Invitation invitation = invitationService.getInvitationByUUID(invID);
@@ -121,7 +138,8 @@ public class LoginController {
         }
     }
 
-
+    @Operation(summary = "Join team using invitation", description = "Joins team using the provided invitation")
+    @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<?> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
         User user = (User)authentication.getPrincipal();

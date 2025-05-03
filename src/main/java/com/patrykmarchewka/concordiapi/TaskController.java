@@ -9,6 +9,8 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}")
+@SecurityRequirement(name = "BearerAuth")
 public class TaskController {
 
     @Autowired
@@ -33,6 +36,7 @@ public class TaskController {
     @Autowired
     private SubtaskService subtaskService;
 
+    @Operation(summary = "Get all tasks",description = "Get all tasks if Owner/Admin/Manager or just tasks assigned to me if Member")
     @GetMapping("/tasks")
     public ResponseEntity<?> getAllTasks(@PathVariable long teamID,Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -58,6 +62,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Create new task", description = "Creates a new task with specified information")
     @PostMapping("/tasks")
     public ResponseEntity<?> createTask(@PathVariable long teamID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body){
         if (body.getName() == null){
@@ -81,6 +86,7 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new task",new TaskMemberDTO(task)));
     }
 
+    @Operation(summary = "Get all tasks assigned to me", description = "Gets all tasks assigned to me even if user is Owner/Admin/Manager")
     @GetMapping("/tasks/me")
     public ResponseEntity<?> getAllTasksAssignedToMe(@PathVariable long teamID,Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -104,6 +110,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Get information about task",description = "Get information about specific task by its ID")
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<?> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -120,6 +127,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Edit completely task",description = "Edits the entire task with all required fields")
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<?> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -160,6 +168,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Edit task",description = "Edit task fields")
     @PatchMapping("/tasks/{ID}")
     public ResponseEntity<?> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -210,6 +219,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Delete the task", description = "Delete the entire task completely")
     @DeleteMapping("/tasks/{ID}")
     public ResponseEntity<?> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -228,6 +238,7 @@ public class TaskController {
         }
     }
 
+    @Operation(summary = "Attach user to task",description = "Assigns the task to given user")
     @PostMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<?> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -248,6 +259,7 @@ public class TaskController {
 
     }
 
+    @Operation(summary = "Remove user from task", description = "Removes user from the task")
     @DeleteMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<?> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);

@@ -8,6 +8,8 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}/tasks/{taskID}")
+@SecurityRequirement(name = "BearerAuth")
 public class SubtaskController {
 
     @Autowired
@@ -30,6 +33,7 @@ public class SubtaskController {
     @Autowired
     private TeamUserRoleService teamUserRoleService;
 
+    @Operation(summary = "Check subtasks",description = "Check all subtasks for the given team and task")
     @GetMapping("/subtasks")
     public ResponseEntity<?> getSubtasks(@PathVariable long teamID,@PathVariable long taskID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -46,6 +50,7 @@ public class SubtaskController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
+    @Operation(summary = "Create new subtask", description = "Create new subtask for the given team and task")
     @PostMapping("/subtasks")
     public ResponseEntity<?> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -63,6 +68,7 @@ public class SubtaskController {
 
     }
 
+    @Operation(summary = "Check specific subtask", description = "Check information about specific subtask for the given team and task")
     @GetMapping("/subtasks/{ID}")
     public ResponseEntity<?> getSubtaskByID(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -76,6 +82,7 @@ public class SubtaskController {
         }
     }
 
+    @Operation(summary = "Edit entire subtask", description = "Edits entire subtask with all required fields")
     @PutMapping("/subtasks/{ID}")
     public ResponseEntity<?> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -94,6 +101,7 @@ public class SubtaskController {
         }
     }
 
+    @Operation(summary = "Edit subtask", description = "Edit subtask fields for the given team and task")
     @PatchMapping("/subtasks/{ID}")
     public ResponseEntity<?> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody SubtaskRequestBody body, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -117,6 +125,8 @@ public class SubtaskController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(MenuOptions.NoPermissionsMessage(),null));
         }
     }
+
+    @Operation(summary = "Delete the subtask",description = "Delete the subtask entirely")
     @DeleteMapping("/subtasks/{ID}")
     public ResponseEntity<?> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);

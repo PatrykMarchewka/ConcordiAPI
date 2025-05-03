@@ -4,6 +4,8 @@ import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}")
+@SecurityRequirement(name = "BearerAuth")
 public class InvitationController {
 
     @Autowired
@@ -25,6 +28,7 @@ public class InvitationController {
     private TeamService teamService;
 
 
+    @Operation(summary = "Check invitations",description = "Check all invitations for given team")
     @GetMapping("/invitations")
     public ResponseEntity<?> getInvitations(@PathVariable long teamID, Authentication authentication){
         User user = (User)authentication.getPrincipal();
@@ -41,6 +45,7 @@ public class InvitationController {
         }
     }
 
+    @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
     @PostMapping("/invitations")
     public ResponseEntity<?> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         User user = (User) authentication.getPrincipal();
@@ -53,6 +58,7 @@ public class InvitationController {
         }
     }
 
+    @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<?> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         User user = (User)authentication.getPrincipal();
@@ -75,6 +81,7 @@ public class InvitationController {
         }
     }
 
+    @Operation(summary = "Delete invitation", description = "Delete existing invitation for the team")
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<?> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         User user = (User)authentication.getPrincipal();

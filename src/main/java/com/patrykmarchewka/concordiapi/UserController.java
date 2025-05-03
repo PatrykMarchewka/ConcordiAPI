@@ -3,6 +3,8 @@ package com.patrykmarchewka.concordiapi;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}")
+@SecurityRequirement(name = "BearerAuth")
 public class UserController {
 
     @Autowired
@@ -26,6 +29,7 @@ public class UserController {
     private TaskService taskService;
 
     //param, ?role=ADMIN
+    @Operation(summary = "Get users in team", description = "Get users in the team, get their information or just number of teammates depending on your role, you can also filter by role")
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) PublicVariables.UserRole role){
         Team team = teamService.getTeamByID(teamID);
@@ -54,21 +58,26 @@ public class UserController {
     }
 
 
-
+    @Operation(summary = "Get information about user", description = "Gets information about user if my role is higher than theirs")
     @GetMapping("/users/{ID}")
     public ResponseEntity<?> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole role = teamUserRoleService.getRole(userService.getUserByID(ID),team);
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
-        if (role.compareTo(myRole) >= 0){
-            return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
-        }
-        else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+        try{
+            PublicVariables.UserRole role = teamUserRoleService.getRole(userService.getUserByID(ID),team);
+            PublicVariables.UserRole myRole = teamUserRoleService.getRole((User)authentication.getPrincipal(),team);
+            if (role.compareTo(myRole) >= 0){
+                return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new APIResponse<>(MenuOptions.CouldntCompleteOperation(),"Can't find user with provided ID in the team"));
         }
 
     }
 
+    @Operation(summary = "Remove user from team", description = "Removes selected user from team")
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<?> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
@@ -84,6 +93,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Leave team", description = "Leave the team")
     @DeleteMapping("/users/me")
     public ResponseEntity<?> leaveTeam(@PathVariable long ID, Authentication authentication){
         Team team = teamService.getTeamByID(ID);
@@ -97,7 +107,7 @@ public class UserController {
         }
     }
 
-
+    @Operation(summary = "Change user role", description = "Change the role of selected user")
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody PublicVariables.UserRole newRole, Authentication authentication){
         Team team = teamService.getTeamByID(teamID);
