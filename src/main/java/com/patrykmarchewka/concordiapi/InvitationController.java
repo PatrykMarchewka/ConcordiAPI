@@ -6,6 +6,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/teams/{teamID}")
 @SecurityRequirement(name = "BearerAuth")
+@Tag(name = "Invitations", description = "Managing invitations to team")
 public class InvitationController {
 
     @Autowired

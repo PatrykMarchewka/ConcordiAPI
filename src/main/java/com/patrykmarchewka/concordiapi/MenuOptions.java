@@ -42,7 +42,10 @@ public class MenuOptions {
         System.out.println("2. Create new account");
         try {
             String ans = AskUser();
-            if (ans.contains("1")) {
+            if (ans == null){
+                //Error, can't initialize console
+                throw new Exception("Can't initialize console");
+            } else if (ans.contains("1")) {
                 LoggingIn();
             } else if (ans.contains("2")) {
                 CreatingUser();
@@ -106,6 +109,12 @@ public class MenuOptions {
         }
         List<Team> list = new ArrayList<>();
         list.add(null);
+        int i = 1;
+        for (Team team : user.getTeams()) {
+            System.out.println(i + ". " + team.getName() + " - " + teamUserRoleService.getRole(user, team).name());
+            list.add(team);
+            i++;
+        }
 
         if (list.size() == 1){
             System.out.println("You have no teams, you need to create one now or join already existing one");
@@ -127,12 +136,7 @@ public class MenuOptions {
         }
         else{
             System.out.println("0. CREATE NEW TEAM ");
-            int i = 1;
-            for (Team team : user.getTeams()) {
-                System.out.println(i + ". " + team.getName() + " - " + teamUserRoleService.getRole(user, team).name());
-                list.add(team);
-                i++;
-            }
+
             System.out.println(i+1 + ". JOIN TEAM USING INVITATION CODE" );
             try {
                 System.out.println("Type option number to choose it");
@@ -172,9 +176,8 @@ public class MenuOptions {
         if (console != null) {
             ans = console.readLine();
         } else {
-            Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter input: ");
-            ans = scanner.nextLine();
+            //Can't initialize console
+            return null;
         }
 
         if (ans.equalsIgnoreCase("quit")) {

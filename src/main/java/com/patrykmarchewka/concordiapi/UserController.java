@@ -5,6 +5,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/teams/{teamID}")
 @SecurityRequirement(name = "BearerAuth")
+@Tag(name = "Users", description = "Managing users in a team")
 public class UserController {
 
     @Autowired
@@ -25,8 +27,6 @@ public class UserController {
     private TeamUserRoleService teamUserRoleService;
     @Autowired
     private TeamService teamService;
-    @Autowired
-    private TaskService taskService;
 
     //param, ?role=ADMIN
     @Operation(summary = "Get users in team", description = "Get users in the team, get their information or just number of teammates depending on your role, you can also filter by role")
@@ -95,8 +95,8 @@ public class UserController {
 
     @Operation(summary = "Leave team", description = "Leave the team")
     @DeleteMapping("/users/me")
-    public ResponseEntity<?> leaveTeam(@PathVariable long ID, Authentication authentication){
-        Team team = teamService.getTeamByID(ID);
+    public ResponseEntity<?> leaveTeam(@PathVariable long teamID, Authentication authentication){
+        Team team = teamService.getTeamByID(teamID);
         User user = (User)authentication.getPrincipal();
         if(teamUserRoleService.getRole(user,team).isOwner() && teamUserRoleService.getAllRole(team, PublicVariables.UserRole.OWNER).size() == 1 && team.getTeammates().size() != 1){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));

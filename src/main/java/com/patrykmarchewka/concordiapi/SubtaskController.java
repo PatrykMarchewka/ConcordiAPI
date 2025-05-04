@@ -3,13 +3,13 @@ package com.patrykmarchewka.concordiapi;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +22,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/teams/{teamID}/tasks/{taskID}")
 @SecurityRequirement(name = "BearerAuth")
+@Tag(name = "Subtasks", description = "Managing subtasks assigned to task")
 public class SubtaskController {
 
     @Autowired
