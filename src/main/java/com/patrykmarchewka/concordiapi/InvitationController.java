@@ -4,7 +4,10 @@ import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,8 +34,11 @@ public class InvitationController {
 
 
     @Operation(summary = "Check invitations",description = "Check all invitations for given team")
+    @ApiResponse(responseCode = "200",description = "Data about invitations was provided")
+    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @GetMapping("/invitations")
-    public ResponseEntity<?> getInvitations(@PathVariable long teamID, Authentication authentication){
+    public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
         User user = (User)authentication.getPrincipal();
         PublicVariables.UserRole myRole =  teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         if (myRole.isOwnerOrAdmin() || myRole.isManager()){
@@ -43,24 +49,30 @@ public class InvitationController {
             return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitations));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            throw new NoPrivilegesException();
         }
     }
 
     @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
+    @ApiResponse(responseCode = "201",description = "Created new invitation")
+    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @PostMapping("/invitations")
-    public ResponseEntity<?> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         User user = (User) authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         if ((myRole.isOwnerOrAdmin() || myRole.isManager()) && body.getRole().compareTo(myRole) >= 0){
-            return ResponseEntity.ok(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body),teamUserRoleService)));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body),teamUserRoleService)));
         }
         else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            throw new NoPrivilegesException();
         }
     }
 
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
+    @ApiResponse(responseCode = "200",description = "Invitation was edited")
+    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<?> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         User user = (User)authentication.getPrincipal();
@@ -79,13 +91,17 @@ public class InvitationController {
             return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.saveInvitation(invitation),teamUserRoleService)));
         }
         else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            throw new NoPrivilegesException();
         }
     }
 
     @Operation(summary = "Delete invitation", description = "Delete existing invitation for the team")
+    @ApiResponse(responseCode = "200",description = "Invitation has been deleted")
+    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @ApiResponse(responseCode = "404",description = "Invitation was not found")
     @DeleteMapping("/invitations/{invID}")
-    public ResponseEntity<?> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
+    public ResponseEntity<APIResponse<Void>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         User user = (User)authentication.getPrincipal();
         PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
         Invitation invitation = invitationService.getInvitationByUUID(invID);
@@ -93,8 +109,11 @@ public class InvitationController {
             invitationService.deleteInvitation(invitation);
             return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
         }
+        else if(invitation == null){
+            throw new NotFoundException();
+        }
         else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(MenuOptions.NoPermissionsMessage());
+            throw new NoPrivilegesException();
         }
     }
 }
