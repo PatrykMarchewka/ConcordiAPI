@@ -1,5 +1,7 @@
 package com.patrykmarchewka.concordiapi;
 
+import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.SubtaskRepository;
@@ -9,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class SubtaskService {
@@ -48,6 +53,37 @@ public class SubtaskService {
 
     public Subtask saveSubtask(Subtask subtask){
         return subtaskRepository.save(subtask);
+    }
+
+    public Set<SubtaskMemberDTO> getSubtasksDTO(Task task){
+        Set<SubtaskMemberDTO> subtasks = new HashSet<>();
+        for (Subtask sub : task.getSubtasks()){
+            subtasks.add(new SubtaskMemberDTO(sub));
+        }
+        return subtasks;
+    }
+
+    @Transactional
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body){
+        subtask.setName(body.getName());
+        subtask.setDescription(body.getDescription());
+        subtask.setTaskStatus(body.getTaskStatus());
+        return saveSubtask(subtask);
+    }
+
+
+    @Transactional
+    public Subtask partialUpdate(Subtask subtask, SubtaskRequestBody body){
+        if (body.getName() != null){
+            subtask.setName(body.getName());
+        }
+        if (body.getDescription() != null){
+            subtask.setDescription(body.getDescription());
+        }
+        if (body.getTaskStatus() != null){
+            subtask.setTaskStatus(body.getTaskStatus());
+        }
+        return saveSubtask(subtask);
     }
 
 

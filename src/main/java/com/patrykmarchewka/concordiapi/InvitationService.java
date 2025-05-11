@@ -64,6 +64,7 @@ public class InvitationService {
             return invitations;
     }
 
+    @Transactional
     public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body){
             if (body.getRole() != null){
                 invitation.setRole(body.getRole());
@@ -74,7 +75,7 @@ public class InvitationService {
             if (body.getDueDate() != null){
                 invitation.setDueTime(body.getDueDate());
             }
-            return invitation;
+            return saveInvitation(invitation);
     }
 
 }

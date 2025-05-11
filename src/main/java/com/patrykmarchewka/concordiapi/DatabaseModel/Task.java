@@ -98,6 +98,8 @@ public class Task {
     public Team getTeam(){ return this.team; }
     public void setTeam(Team team){ this.team = team; }
 
+    public boolean hasUser(User user){return users.contains(user);}
+
 
 
     @Override
