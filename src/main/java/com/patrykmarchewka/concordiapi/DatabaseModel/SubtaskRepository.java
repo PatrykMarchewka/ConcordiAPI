@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface SubtaskRepository extends JpaRepository<Subtask,Long> {
 
     Optional<Subtask> findSubtaskByIdAndTaskId(long subtaskID,long taskID);
+
+    boolean existsByIdAndTask(long id, Task task);
 }

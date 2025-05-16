@@ -35,7 +35,7 @@ public class SubtaskController {
 
     @Operation(summary = "Check subtasks",description = "Check all subtasks for the given team and task")
     @GetMapping("/subtasks")
-    public ResponseEntity<?> getSubtasks(@PathVariable long teamID,@PathVariable long taskID, Authentication authentication){
+    public ResponseEntity<APIResponse<Set<SubtaskMemberDTO>>> getSubtasks(@PathVariable long teamID,@PathVariable long taskID, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
 
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
@@ -45,7 +45,7 @@ public class SubtaskController {
     }
     @Operation(summary = "Create new subtask", description = "Create new subtask for the given team and task")
     @PostMapping("/subtasks")
-    public ResponseEntity<?> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
 
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
@@ -58,7 +58,7 @@ public class SubtaskController {
 
     @Operation(summary = "Check specific subtask", description = "Check information about specific subtask for the given team and task")
     @GetMapping("/subtasks/{ID}")
-    public ResponseEntity<?> getSubtaskByID(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> getSubtaskByID(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
 
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
@@ -69,42 +69,32 @@ public class SubtaskController {
 
     @Operation(summary = "Edit entire subtask", description = "Edits entire subtask with all required fields")
     @PutMapping("/subtasks/{ID}")
-    public ResponseEntity<?> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        if (subtask == null){
-            throw new NotFoundException();
-        }
         return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body))));
     }
 
     @Operation(summary = "Edit subtask", description = "Edit subtask fields for the given team and task")
     @PatchMapping("/subtasks/{ID}")
-    public ResponseEntity<?> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody SubtaskRequestBody body, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        if (subtask == null){
-            throw new NotFoundException();
-        }
         return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.partialUpdate(subtask,body))));
     }
 
     @Operation(summary = "Delete the subtask",description = "Delete the subtask entirely")
     @DeleteMapping("/subtasks/{ID}")
-    public ResponseEntity<?> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<Void>> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         ControllerContext context = ControllerContext.forSubtasks(authentication,teamID,taskID,teamService,taskService,teamUserRoleService);
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
-        }
-        Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        if (subtask == null){
-            throw new NotFoundException();
         }
         subtaskService.deleteSubtask(taskID,ID);
         return ResponseEntity.ok(new APIResponse<>("Subtask deleted", null));

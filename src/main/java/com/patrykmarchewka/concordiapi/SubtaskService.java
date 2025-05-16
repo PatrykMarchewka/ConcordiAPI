@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.SubtaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,18 +26,18 @@ public class SubtaskService {
     private TaskService taskService;
 
     public Subtask getSubtaskByID(long taskID, long subtaskID){
-        return subtaskRepository.findSubtaskByIdAndTaskId(subtaskID,taskID).orElseThrow(() -> new RuntimeException("Subtask not found"));
+        return subtaskRepository.findSubtaskByIdAndTaskId(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
     }
 
     @Transactional
     public Subtask createSubtask(Team team, long taskID, String name, String description){
-        Task task = taskService.getTaskByID(taskID,team);
+        Task task = taskService.getTaskbyIDAndTeam(taskID,team);
         Subtask subtask = new Subtask();
         subtask.setTask(task);
         subtask.setName(name);
         subtask.setDescription(description);
         subtask.setTaskStatus(PublicVariables.TaskStatus.NEW);
-        subtaskRepository.save(subtask);
+        saveSubtask(subtask);
         task.getSubtasks().add(subtask);
         taskService.saveTask(task);
         return subtask;
@@ -69,6 +70,14 @@ public class SubtaskService {
         subtask.setDescription(body.getDescription());
         subtask.setTaskStatus(body.getTaskStatus());
         return saveSubtask(subtask);
+    }
+
+    public boolean checkIfSubtaskExistsByIDAndTask(long ID,Task task){
+        return subtaskRepository.existsByIdAndTask(ID, task);
+    }
+
+    public boolean checkIfSubtaskExistsByID(long ID){
+        return subtaskRepository.existsById(ID);
     }
 
 

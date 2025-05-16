@@ -8,8 +8,9 @@ import org.springframework.security.core.Authentication;
 public class ControllerContext {
     private final User user;
     private final Team team;
-    private final Task task;
+    private Task task;
     private final PublicVariables.UserRole userRole;
+    private PublicVariables.UserRole otherRole;
 
     private ControllerContext(User user, Team team, PublicVariables.UserRole userRole, Task task) {
         this.user = user;
@@ -18,11 +19,24 @@ public class ControllerContext {
         this.task = task;
     }
 
+    private ControllerContext(User user, Team team, PublicVariables.UserRole userRole) {
+        this.user = user;
+        this.team = team;
+        this.userRole = userRole;
+    }
+
+    private ControllerContext(User user, Team team, PublicVariables.UserRole myRole, PublicVariables.UserRole otherRole){
+        this.user = user;
+        this.team = team;
+        this.userRole = myRole;
+        this.otherRole = otherRole;
+    }
+
     public static ControllerContext forSubtasks(Authentication authentication, long teamID, long taskID, TeamService teamService, TaskService taskService, TeamUserRoleService teamUserRoleService) {
         User user = (User)authentication.getPrincipal();
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole userRole = teamUserRoleService.getRole(user,team);
-        Task task = taskService.getTaskByID(taskID,team);
+        Task task = taskService.getTaskbyIDAndTeam(taskID,team);
 
         return new ControllerContext(user,team,userRole,task);
     }
@@ -32,7 +46,15 @@ public class ControllerContext {
         Team team = teamService.getTeamByID(teamID);
         PublicVariables.UserRole userRole = teamUserRoleService.getRole(user,team);
 
-        return new ControllerContext(user,team,userRole,null);
+        return new ControllerContext(user,team,userRole);
+    }
+
+    public static ControllerContext forTasksWithUser(Authentication authentication, long teamID, TeamService teamService, TeamUserRoleService teamUserRoleService, User otherUser){
+        User user = (User)authentication.getPrincipal();
+        Team team = teamService.getTeamByID(teamID);
+        PublicVariables.UserRole myRole = teamUserRoleService.getRole(user,team);
+        PublicVariables.UserRole otherRole = teamUserRoleService.getRole(otherUser,team);
+        return new ControllerContext(user,team,myRole,otherRole);
     }
 
 
@@ -40,4 +62,5 @@ public class ControllerContext {
     public Team getTeam() {return team;}
     public Task getTask() {return task;}
     public PublicVariables.UserRole getUserRole() {return userRole;}
+    public PublicVariables.UserRole getOtherRole() {return otherRole;}
 }

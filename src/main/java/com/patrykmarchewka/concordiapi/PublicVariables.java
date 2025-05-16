@@ -52,6 +52,7 @@ public class PublicVariables {
         public boolean isOwnerOrAdmin(){
             return this == OWNER || this == ADMIN;
         }
+        public boolean isAllowedBasic() { return this == OWNER || this == ADMIN || this == MANAGER || this == MEMBER; }
     }
 
 

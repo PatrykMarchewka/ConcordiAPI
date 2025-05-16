@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 @Service
 public class TeamUserRoleService {
@@ -47,4 +49,11 @@ public class TeamUserRoleService {
     public TeamUserRole saveTMR(TeamUserRole tmr){
         return teamUserRoleRepository.save(tmr);
     }
+
+
+
+    public BiPredicate<PublicVariables.UserRole, PublicVariables.UserRole> checkRoles = (mine,other) -> mine.compareTo(other) >= 0;
+
+
+
 }

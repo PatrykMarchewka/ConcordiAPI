@@ -2,6 +2,7 @@ package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
 import java.util.Set;
 
 public interface TaskRepository extends JpaRepository<Task,Long> {
@@ -10,7 +11,7 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     Task findByName(String name);
     Task findById(long id);
 
-    Task findByIdAndTeam(long id, Team team);
+    Optional<Task> findByIdAndTeam(long id, Team team);
 
     Set<Task> findByTeam(Team team);
 }

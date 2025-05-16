@@ -2,6 +2,7 @@ package com.patrykmarchewka.concordiapi;
 
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,7 @@ public class UserService {
 
 
     public User getUserByID(Long id){
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id).orElseThrow(NotFoundException::new);
     }
 
     public User getUserByLogin(String Login){
@@ -103,6 +104,5 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    
 
 }

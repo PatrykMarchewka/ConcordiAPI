@@ -25,13 +25,18 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(WrongCredentialsException.class)
-    public ResponseEntity<APIResponse<Void>> handleWrongCred(WrongCredentialsException ex){
+    public ResponseEntity<APIResponse<String>> handleWrongCred(WrongCredentialsException ex){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new APIResponse<>(ex.getMessage(), null));
     }
 
     @ExceptionHandler(NoPrivilegesException.class)
-    public ResponseEntity<APIResponse<Void>> handleNoPriv(NoPrivilegesException ex){
+    public ResponseEntity<APIResponse<String>> handleNoPriv(NoPrivilegesException ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(JWTException.class)
+    public ResponseEntity<APIResponse<String>> handleJWT(JWTException ex){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new APIResponse<>(ex.getMessage(),ex.getCause().toString()));
     }
 
     @ExceptionHandler(ConflictException.class)
@@ -40,8 +45,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<APIResponse<Void>> handleNotFound(NotFoundException ex){
+    public ResponseEntity<APIResponse<String>> handleNotFound(NotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new APIResponse<>(ex.getMessage(),null));
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<APIResponse<String>> handleBadRequest(BadRequestException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>(ex.getMessage(), null));
     }
 
 
