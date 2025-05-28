@@ -11,7 +11,7 @@ import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TeamAdminDTO {
+public class TeamAdminDTO implements TeamDTO {
 
     private long id;
     private String name;

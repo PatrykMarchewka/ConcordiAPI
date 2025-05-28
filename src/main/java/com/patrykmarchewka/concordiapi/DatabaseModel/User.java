@@ -70,6 +70,9 @@ public class User {
     public void setTasks(Set<Task> tasks) {this.tasks = tasks;}
 
     public Set<Team> getTeams(){ return this.teams; }
+    public void addTeam(Team team){this.teams.add(team);}
+    public void removeTeam(Team team){this.teams.remove(team);}
+    public boolean checkTeam(Team team){return this.teams.contains(team);}
     public void setTeams(Set<Team> teams){this.teams = teams;}
 
 

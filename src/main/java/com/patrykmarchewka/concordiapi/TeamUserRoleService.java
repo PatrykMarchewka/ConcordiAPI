@@ -8,15 +8,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 @Service
 public class TeamUserRoleService {
     @Autowired
     private TeamUserRoleRepository teamUserRoleRepository;
+
+    @Transactional
+    public TeamUserRole createTMR(User user, Team team, PublicVariables.UserRole role){
+        TeamUserRole tmr = new TeamUserRole();
+        tmr.setTeam(team);
+        tmr.setUser(user);
+        tmr.setUserRole(role);
+        return saveTMR(tmr);
+    }
 
     public TeamUserRole getByUserAndTeam(User user, Team team){
         return teamUserRoleRepository.findByUserAndTeam(user,team);
@@ -27,23 +34,29 @@ public class TeamUserRoleService {
     }
 
     public PublicVariables.UserRole getRole(User user, Team team){
-        TeamUserRole tmr = teamUserRoleRepository.findByUserAndTeam(user,team);
+        TeamUserRole tmr = getByUserAndTeam(user,team);
         return tmr.getUserRole();
     }
 
     public void setRole(User user, Team team, PublicVariables.UserRole role){
-        TeamUserRole tmr = teamUserRoleRepository.findByUserAndTeam(user,team);
+        TeamUserRole tmr = getByUserAndTeam(user,team);
         tmr.setUserRole(role);
-        teamUserRoleRepository.save(tmr);
+        saveTMR(tmr);
     }
 
+    /**
+     * TODO: Replace with the one below
+     * @param team
+     * @param role
+     * @return
+     */
     @Transactional(readOnly = true)
     public Set<User> getAllRole(Team team, PublicVariables.UserRole role){
-        Set<User> temp = new HashSet<>();
-        for (TeamUserRole tmr : teamUserRoleRepository.findAllByTeamAndUserRole(team,role)){
-            temp.add(tmr.getUser());
-        }
-        return temp;
+        return getAllByTeamAndUserRole(team,role);
+    }
+
+    public Set<User> getAllByTeamAndUserRole(Team team, PublicVariables.UserRole role){
+        return teamUserRoleRepository.findAllByTeamAndUserRole(team,role);
     }
 
     public TeamUserRole saveTMR(TeamUserRole tmr){
@@ -53,6 +66,10 @@ public class TeamUserRoleService {
 
 
     public BiPredicate<PublicVariables.UserRole, PublicVariables.UserRole> checkRoles = (mine,other) -> mine.compareTo(other) >= 0;
+
+    public int checkRoles(PublicVariables.UserRole mine, PublicVariables.UserRole other){
+        return mine.compareTo(other);
+    }
 
 
 

@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi;
 
+import com.patrykmarchewka.concordiapi.Users.UserService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -9,5 +9,5 @@ public interface TeamUserRoleRepository extends JpaRepository<TeamUserRole,Long>
 
     TeamUserRole findByUserAndTeam(User user, Team team);
 
-    Set<TeamUserRole> findAllByTeamAndUserRole(Team team, PublicVariables.UserRole userRole);
+    Set<User> findAllByTeamAndUserRole(Team team, PublicVariables.UserRole userRole);
 }

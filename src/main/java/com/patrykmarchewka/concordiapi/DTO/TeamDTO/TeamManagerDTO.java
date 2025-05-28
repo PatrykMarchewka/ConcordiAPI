@@ -10,7 +10,7 @@ import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TeamManagerDTO {
+public class TeamManagerDTO implements TeamDTO {
     private long id;
     private String name;
     private Set<UserMemberDTO> teammates = new HashSet<>();

@@ -1,10 +1,11 @@
-package com.patrykmarchewka.concordiapi;
+package com.patrykmarchewka.concordiapi.Invitations;
 
+import com.patrykmarchewka.concordiapi.APIResponse;
+import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
-import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,13 +24,17 @@ import java.util.Set;
 @Tag(name = "Invitations", description = "Managing invitations to team")
 public class InvitationController {
 
-    @Autowired
-    private InvitationService invitationService;
-    @Autowired
-    private TeamUserRoleService teamUserRoleService;
-    @Autowired
-    private TeamService teamService;
+    private final InvitationService invitationService;
+    private final TeamUserRoleService teamUserRoleService;
+    private ControllerContext context;
 
+    @Autowired
+    public InvitationController(InvitationService invitationService, TeamUserRoleService teamUserRoleService, ControllerContext context){
+        this.invitationService = invitationService;
+        this.teamUserRoleService = teamUserRoleService;
+        this.context = context;
+
+    }
 
     @Operation(summary = "Check invitations",description = "Check all invitations for given team")
     @ApiResponse(responseCode = "200",description = "Data about invitations was provided")
@@ -37,11 +42,26 @@ public class InvitationController {
     @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
-        if (!teamUserRoleService.getRole((User)authentication.getPrincipal(), teamService.getTeamByID(teamID)).isAdminGroup()){
+        context = context.withUser(authentication).withTeam(teamID).withRole();
+
+        if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
+        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitationService.getInvitationsDTO(context.getTeam())));
+    }
 
-        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitationService.getInvitationsDTO(teamService.getTeamByID(teamID))));
+    @Operation(summary = "Check invitation", description = "Check specific invitation for given team")
+    @ApiResponse(responseCode = "200",description = "Data about invitations was provided")
+    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @GetMapping("/invitations/{invID}")
+    public ResponseEntity<?> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
+        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+
+        if (!context.getUserRole().isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(context.getInvitation(), teamUserRoleService)));
     }
 
     @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
@@ -50,12 +70,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
-        User user = (User) authentication.getPrincipal();
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(user, teamService.getTeamByID(teamID));
-        if (!myRole.isAdminGroup() || body.getRole().compareTo(myRole) < 0){
+        context = context.withUser(authentication).withTeam(teamID).withRole();
+        if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles.test(context.getUserRole(),body.getRole())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(teamService.getTeamByID(teamID), body),teamUserRoleService)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getTeam(), body),teamUserRoleService)));
     }
 
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
@@ -64,13 +83,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<?> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
-        if (invitationService.getInvitationByUUID(invID) == null){
-            throw new NotFoundException();
-        }
-        else if (!teamUserRoleService.getRole((User)authentication.getPrincipal(), teamService.getTeamByID(teamID)).isAdminGroup()){
+        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(invitationService.getInvitationByUUID(invID), body),teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(context.getInvitation(), body),teamUserRoleService)));
     }
 
     @Operation(summary = "Delete invitation", description = "Delete existing invitation for the team")
@@ -80,13 +97,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "404",description = "Invitation was not found")
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<Void>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
-        if (invitationService.getInvitationByUUID(invID) == null){
-            throw new NotFoundException();
-        }
-        else if(!teamUserRoleService.getRole((User)authentication.getPrincipal(), teamService.getTeamByID(teamID)).isAdminGroup()){
+        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        invitationService.deleteInvitation(invitationService.getInvitationByUUID(invID));
+        invitationService.deleteInvitation(context.getInvitation());
         return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
     }
 }

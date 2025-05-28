@@ -1,61 +1,86 @@
 package com.patrykmarchewka.concordiapi;
 
+import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
+import com.patrykmarchewka.concordiapi.Tasks.TaskService;
+import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 
+
+/**
+ * Order: (withUser, withTeam, withInvitation) -> (withTask, withRole, withOtherRole) <br>
+ */
+@Component
 public class ControllerContext {
-    private final User user;
-    private final Team team;
+    private User user;
+    private Team team;
     private Task task;
-    private final PublicVariables.UserRole userRole;
+    private PublicVariables.UserRole userRole;
     private PublicVariables.UserRole otherRole;
+    private Invitation invitation;
 
-    private ControllerContext(User user, Team team, PublicVariables.UserRole userRole, Task task) {
-        this.user = user;
-        this.team = team;
-        this.userRole = userRole;
-        this.task = task;
+
+
+    private final TeamService teamService;
+    private final TaskService taskService;
+    private final TeamUserRoleService teamUserRoleService;
+    private final InvitationService invitationService;
+
+
+    @Autowired
+    public ControllerContext(TeamService teamService, TaskService taskService, TeamUserRoleService teamUserRoleService, InvitationService invitationService) {
+        this.teamService = teamService;
+        this.taskService = taskService;
+        this.teamUserRoleService = teamUserRoleService;
+        this.invitationService = invitationService;
     }
 
-    private ControllerContext(User user, Team team, PublicVariables.UserRole userRole) {
-        this.user = user;
-        this.team = team;
-        this.userRole = userRole;
+    public ControllerContext withUser(Authentication authentication){
+        this.user = (User)authentication.getPrincipal();
+        return this;
     }
 
-    private ControllerContext(User user, Team team, PublicVariables.UserRole myRole, PublicVariables.UserRole otherRole){
-        this.user = user;
-        this.team = team;
-        this.userRole = myRole;
-        this.otherRole = otherRole;
+    public ControllerContext withTeam(long teamID){
+        this.team = teamService.getTeamByID(teamID);
+        return this;
     }
 
-    public static ControllerContext forSubtasks(Authentication authentication, long teamID, long taskID, TeamService teamService, TaskService taskService, TeamUserRoleService teamUserRoleService) {
-        User user = (User)authentication.getPrincipal();
-        Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole userRole = teamUserRoleService.getRole(user,team);
-        Task task = taskService.getTaskbyIDAndTeam(taskID,team);
-
-        return new ControllerContext(user,team,userRole,task);
+    public ControllerContext withTask(long taskID){
+        if (team == null){
+            throw new BadRequestException("Cannot call withTask before specifying team!");
+        }
+        this.task = taskService.getTaskByIDAndTeam(taskID,team);
+        return this;
     }
 
-    public static ControllerContext forTasks(Authentication authentication, long teamID, TeamService teamService, TeamUserRoleService teamUserRoleService){
-        User user = (User)authentication.getPrincipal();
-        Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole userRole = teamUserRoleService.getRole(user,team);
-
-        return new ControllerContext(user,team,userRole);
+    public ControllerContext withRole(){
+        if (user == null || team == null){
+            throw new BadRequestException("Cannot call withRole before specifying user and team!");
+        }
+        this.userRole = teamUserRoleService.getRole(user,team);
+        return this;
     }
 
-    public static ControllerContext forTasksWithUser(Authentication authentication, long teamID, TeamService teamService, TeamUserRoleService teamUserRoleService, User otherUser){
-        User user = (User)authentication.getPrincipal();
-        Team team = teamService.getTeamByID(teamID);
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(user,team);
-        PublicVariables.UserRole otherRole = teamUserRoleService.getRole(otherUser,team);
-        return new ControllerContext(user,team,myRole,otherRole);
+    public ControllerContext withOtherRole(User otherUser){
+        if (team == null){
+            throw new BadRequestException("Cannot call withOtherRole before specifying team!");
+        }
+        this.otherRole = teamUserRoleService.getRole(otherUser,team);
+        return this;
     }
+
+    public ControllerContext withInvitation(String UUID){
+        this.invitation = invitationService.getInvitationByUUID(UUID);
+        return this;
+    }
+
+
 
 
     public User getUser() {return user;}
@@ -63,4 +88,6 @@ public class ControllerContext {
     public Task getTask() {return task;}
     public PublicVariables.UserRole getUserRole() {return userRole;}
     public PublicVariables.UserRole getOtherRole() {return otherRole;}
+    public Invitation getInvitation(){return invitation;}
+
 }

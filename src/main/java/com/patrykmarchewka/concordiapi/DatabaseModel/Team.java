@@ -35,6 +35,8 @@ public class Team {
     public void setName(String name){ this.name = name; }
 
     public Set<User> getTeammates(){ return this.teammates; }
+    public void addTeammate(User user){this.teammates.add(user);}
+    public void removeTeammate(User user){this.teammates.remove(user);}
     public void setTeammates(Set<User> teammates){this.teammates = teammates;}
 
     public Set<Task> getTasks() { return tasks; }

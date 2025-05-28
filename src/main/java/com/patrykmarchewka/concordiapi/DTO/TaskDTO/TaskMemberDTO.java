@@ -10,7 +10,7 @@ import com.patrykmarchewka.concordiapi.PublicVariables;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TaskMemberDTO {
+public class TaskMemberDTO implements TaskDTO {
     private long id;
     private String name;
     private String description;

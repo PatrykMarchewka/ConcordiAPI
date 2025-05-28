@@ -7,9 +7,10 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMeDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.*;
+import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
+import com.patrykmarchewka.concordiapi.Users.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -30,12 +31,18 @@ import java.security.NoSuchAlgorithmException;
 @Tag(name = "Authentication and misc", description = "Authentication, user information and invitation check")
 public class LoginController {
 
+    private final UserService userService;
+    private final TeamUserRoleService teamUserRoleService;
+    private final InvitationService invitationService;
+    private ControllerContext context;
+
     @Autowired
-    private UserService userService;
-    @Autowired
-    private TeamUserRoleService teamUserRoleService;
-    @Autowired
-    private InvitationService invitationService;
+    public LoginController(UserService userService, TeamUserRoleService teamUserRoleService, InvitationService invitationService, ControllerContext context){
+        this.userService = userService;
+        this.teamUserRoleService = teamUserRoleService;
+        this.invitationService = invitationService;
+        this.context = context;
+    }
 
 
     @Operation(summary = "Check service status", description = "Checks if service is up and working")
@@ -47,26 +54,18 @@ public class LoginController {
     @Operation(summary = "Login user", description = "Authenticate the user and return JWT Token")
     @ApiResponse(responseCode = "200",description = "Successful login, token was generated and provided")
     @ApiResponse(responseCode = "401", description = "Can't authenticate, provided credentials are wrong")
+    @ApiResponse(responseCode = "409", description = "No user with such login")
     @ApiResponse(responseCode = "500", description = "Problem generating token, check error message for details")
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @Valid UserRequestLogin body){
-
-        User user = userService.getUserByLogin(body.getLogin());
-        if (user != null && Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
-            String token = null;
-            try {
-                token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());
-            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                throw new JWTException(e.getMessage(),e);
-            }
-            if (token != null) {
-                return ResponseEntity.ok(new APIResponse<>("Token",token));
-            }
-            else{
-                throw new RuntimeException("Token is set to null");
-            }
+        User user = userService.getUserByLoginAndPassword(body);
+        String token = new String();
+        try {
+            token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new JWTException(e.getMessage(),e);
         }
-        throw new WrongCredentialsException();
+        return ResponseEntity.ok(new APIResponse<>("Token",token));
     }
 
     @Operation(summary = "Create new user", description = "Create new user with provided credentials")
@@ -74,10 +73,7 @@ public class LoginController {
     @ApiResponse(responseCode = "409", description = "Login already in use")
     @PostMapping("/signup")
     public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @Validated(OnCreate.class) UserRequestBody body){
-        if (userService.checkIfUserExistsByLogin(body.getLogin())){
-            throw new ConflictException("Login already in use, please choose a different one");
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body.getLogin(), body.getPassword(), body.getName(), body.getLastName()))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body))));
     }
 
     @Operation(summary = "Information about me", description = "Return information about currently logged in user")
@@ -96,28 +92,10 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @PatchMapping("/me")
     @Transactional
-    public ResponseEntity<APIResponse<UserMemberDTO>> changeData(@RequestBody UserRequestBody body,Authentication authentication){
-        User user = (User)authentication.getPrincipal();
-        if (body.getLogin() != null){
-            if (userService.checkIfUserExistsByLogin(body.getLogin())){
-                throw new ConflictException("Login currently in use");
-            }
-            else{
-                user.setLogin(body.getLogin());
-            }
-        }
-        if (body.getPassword() != null){
-            user.setPassword(Passwords.HashPasswordBCrypt(body.getPassword()));
-        }
-        if (body.getName() != null){
-            user.setName(body.getName());
-        }
-        if (body.getLastName() != null){
-            user.setLastName(body.getLastName());
-        }
-        userService.saveUser(user);
-        return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(user)));
-
+    public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody UserRequestBody body, Authentication authentication){
+        context = context.withUser(authentication);
+        userService.patchUser(context.getUser(), body);
+        return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(context.getUser())));
     }
 
     @Operation(summary = "Generate new token", description = "Generates new JWT token")
@@ -127,10 +105,10 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/me/refresh")
     public ResponseEntity<APIResponse<String>> refreshToken(Authentication authentication){
-        User user = (User) authentication.getPrincipal();
+        context = context.withUser(authentication);
         String response;
         try {
-            response = JSONWebToken.GenerateJWToken(user.getLogin(),user.getPassword());
+            response = JSONWebToken.GenerateJWToken(context.getUser().getLogin(),context.getUser().getPassword());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new JWTException(e.getMessage(),e);
         }
@@ -144,9 +122,9 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
-        Invitation invitation = invitationService.getInvitationByUUID(invID);
-        if (invitation!= null){
-            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(invitation,teamUserRoleService)));
+        context = context.withInvitation(invID);
+        if (context.getInvitation() != null){
+            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation(), teamUserRoleService)));
         }
         else{
             throw new NotFoundException();
@@ -160,11 +138,10 @@ public class LoginController {
     @ApiResponse(responseCode = "409", description = "Invitation expired or you are already part of that team")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
-        User user = (User)authentication.getPrincipal();
-        Invitation invitation = invitationService.getInvitationByUUID(invID);
-        if (invitation != null && !user.getTeams().contains(invitation.getTeam())){
-            invitationService.useInvitation(invitation,user);
-            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(invitation.getTeam(), user,teamUserRoleService)));
+        context = context.withUser(authentication).withInvitation(invID);
+        if (context.getInvitation() != null && !context.getUser().checkTeam(context.getTeam())){
+            invitationService.useInvitation(context.getInvitation(), context.getUser());
+            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(context.getTeam(), context.getUser(), teamUserRoleService)));
         }
         else{
             throw new ConflictException("Invitation expired or you are already part of that team");

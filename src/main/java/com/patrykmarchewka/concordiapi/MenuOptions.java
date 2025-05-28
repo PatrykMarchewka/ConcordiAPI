@@ -7,7 +7,11 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
-import com.patrykmarchewka.concordiapi.DatabaseModel.*;
+import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
+import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
+import com.patrykmarchewka.concordiapi.Tasks.TaskService;
+import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -340,11 +344,11 @@ public class MenuOptions {
 
 
     //TEAMS
-    //TODO: Add JavaDocs(///)
+    //TODO: Fix this later
     private void CreateTeam(){
         System.out.println("Give a name to your new team");
         String answer = AskUser();
-        loggedUserTeam = teamService.createTeam(answer, loggedUser);
+        //loggedUserTeam = teamService.createTeam(answer, loggedUser);
     }
 
     private void JoinTeam(){
@@ -586,9 +590,10 @@ public class MenuOptions {
     private void EditTask(Task task){
         try {
             if (task == null){
-                System.out.println("Type ID of the task you want to edit");
-                long id = Long.valueOf(AskUser());
-                task = taskService.getTaskByID(id,loggedUserTeam);
+                //TODO: Fix later
+                //System.out.println("Type ID of the task you want to edit");
+                //long id = Long.valueOf(AskUser());
+                //task = taskService.getTaskByID(id,loggedUserTeam);
             }
             PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
             if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains(loggedUser)){
@@ -638,7 +643,7 @@ public class MenuOptions {
                                 if (loggedUserTeam.getTeammates().contains(potentialNewUser)){
                                     PublicVariables.UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
                                     if (role.compareTo(myRole) >= 0){
-                                        taskService.addUserToTask(loggedUserTeam, task.getID(), potentialNewUser);
+                                        taskService.addUserToTask(task, potentialNewUser);
                                         System.out.println("User added to task");
                                     }
                                     else{
@@ -671,7 +676,7 @@ public class MenuOptions {
                             if (task.getUsers().contains(todelete)){
                                 PublicVariables.UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
                                 if (role.compareTo(myRole) >= 0){
-                                    taskService.removeUserFromTask(loggedUserTeam,task.getID(),todelete);
+                                    taskService.removeUserFromTask(task,todelete);
                                     System.out.println("User removed from task");
                                 }
                                 else{
