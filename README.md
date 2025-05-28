@@ -1,10 +1,13 @@
 # ConcordiAPI
 
-A Spring Boot application for managing tasks, users, and teams, offering a REST API with full CRUD functionality (GET, POST, PUT, DELETE). Key features include:
+A Spring Boot application for managing tasks, users, and teams, offering a REST API with full CRUD functionality (GET, POST, PUT, DELETE). Designed with SOLID principles, ensuring maintainability and scalability.
+
+Key features:
 - Tasks & Subtasks: Create, update, delete tasks and subtasks, with assignments and status tracking.
 - Teams: Create and manage teams, assign users, and send invitations.
 - User Roles: Different roles (e.g., Admin, Member) with specific permissions.
-- Invitations: Users can invite others to teams and manage invitations.
+- Invitation system: Send,accept and manage invitations within teams.
+- Secure Authentication: BCrypt and JWT for user authentication.
 - API Documentation: Access to Swagger UI for easy endpoint reference.
 - Dockerized: The app is containerized with Docker for easy deployment.
 
