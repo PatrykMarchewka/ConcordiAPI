@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Get all tasks",description = "Get all tasks if Owner/Admin/Manager or just tasks assigned to me if Member")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks")
     public ResponseEntity<APIResponse<Set<?>>> getAllTasks(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -50,6 +55,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Create new task", description = "Creates a new task with specified information")
+    @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks")
     public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -60,6 +69,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Get all tasks assigned to me", description = "Gets all tasks assigned to me even if user is Owner/Admin/Manager")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/me")
     public ResponseEntity<APIResponse<Set<?>>> getAllTasksAssignedToMe(@PathVariable long teamID,Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -71,6 +84,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Get information about task",description = "Get information about specific task by its ID")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<Object>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
@@ -79,6 +96,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Edit completely task",description = "Edits the entire task with all required fields")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
@@ -89,6 +110,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Edit task",description = "Edit task fields")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
@@ -99,6 +124,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Delete the task", description = "Delete the entire task completely")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<Void>> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -109,6 +138,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Attach user to task",description = "Assigns the task to given user")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<?> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
@@ -123,6 +156,10 @@ public class TaskController {
     }
 
     @Operation(summary = "Remove user from task", description = "Removes user from the task")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<?> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));

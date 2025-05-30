@@ -6,6 +6,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,6 +35,9 @@ public class TeamController {
     }
 
     @Operation(summary = "Get information about joined teams", description = "Gives information about joined teams based on user role in each team")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/teams")
     public ResponseEntity<?> myTeams(Authentication authentication){
         context = context.withUser(authentication);
@@ -41,6 +45,9 @@ public class TeamController {
     }
 
     @Operation(summary = "Create new team", description = "Creates new team and sets current user as its Owner")
+    @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/teams")
     public ResponseEntity<?> createTeam(@RequestBody @Valid TeamRequestBody body, Authentication authentication){
         Team team = teamService.createTeam(body,(User) authentication.getPrincipal());
@@ -48,6 +55,10 @@ public class TeamController {
     }
 
     @Operation(summary = "Get information about joined team", description = "Gives information about joined team based on user role")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/teams/{ID}")
     public ResponseEntity<?> getTeam(@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
@@ -58,6 +69,10 @@ public class TeamController {
     }
 
     @Operation(summary = "Change team name", description = "Changes team name to new one")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/teams/{ID}")
     @Transactional
     public ResponseEntity<?> patchTeam(@PathVariable long ID, TeamRequestBody body, Authentication authentication){
@@ -71,6 +86,10 @@ public class TeamController {
 
 
     @Operation(summary = "Delete the team", description = "Deletes entire team and assosciated data with it")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/teams/{ID}")
     @Transactional
     public ResponseEntity<?> disbandTeam(@PathVariable long ID, Authentication authentication){

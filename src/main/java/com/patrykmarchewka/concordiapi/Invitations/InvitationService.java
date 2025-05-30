@@ -110,4 +110,10 @@ public class InvitationService {
             return saveInvitation(invitation);
     }
 
+    @Transactional
+    public Invitation putUpdate(Invitation invitation, InvitationRequestBody body){
+        applyPutUpdates(invitation, body);
+        return saveInvitation(invitation);
+    }
+
 }

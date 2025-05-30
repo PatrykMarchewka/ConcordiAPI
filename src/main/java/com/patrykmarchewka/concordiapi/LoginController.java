@@ -46,16 +46,17 @@ public class LoginController {
 
 
     @Operation(summary = "Check service status", description = "Checks if service is up and working")
+    @ApiResponse(responseCode = "200", ref = "200")
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck(){
         return ResponseEntity.ok(new APIResponse<>("Service is up!",null));
     }
 
     @Operation(summary = "Login user", description = "Authenticate the user and return JWT Token")
-    @ApiResponse(responseCode = "200",description = "Successful login, token was generated and provided")
-    @ApiResponse(responseCode = "401", description = "Can't authenticate, provided credentials are wrong")
-    @ApiResponse(responseCode = "409", description = "No user with such login")
-    @ApiResponse(responseCode = "500", description = "Problem generating token, check error message for details")
+    @ApiResponse(responseCode = "200",description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "409", description = "409")
+    @ApiResponse(responseCode = "500", description = "500")
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @Valid UserRequestLogin body){
         User user = userService.getUserByLoginAndPassword(body);
@@ -69,16 +70,16 @@ public class LoginController {
     }
 
     @Operation(summary = "Create new user", description = "Create new user with provided credentials")
-    @ApiResponse(responseCode = "201", description = "User has been created")
-    @ApiResponse(responseCode = "409", description = "Login already in use")
+    @ApiResponse(responseCode = "201", description = "201")
+    @ApiResponse(responseCode = "409", description = "409")
     @PostMapping("/signup")
     public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @Validated(OnCreate.class) UserRequestBody body){
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body))));
     }
 
     @Operation(summary = "Information about me", description = "Return information about currently logged in user")
-    @ApiResponse(responseCode = "200", description = "Data related to account was provided")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
+    @ApiResponse(responseCode = "200", description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
@@ -86,9 +87,9 @@ public class LoginController {
     }
 
     @Operation(summary = "Edit information about me", description = "Edit information about currently logged in user")
-    @ApiResponse(responseCode = "200",description = "Data has been changed")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "409", description = "Login already in use")
+    @ApiResponse(responseCode = "200",description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "409", description = "409")
     @SecurityRequirement(name = "BearerAuth")
     @PatchMapping("/me")
     @Transactional
@@ -99,9 +100,9 @@ public class LoginController {
     }
 
     @Operation(summary = "Generate new token", description = "Generates new JWT token")
-    @ApiResponse(responseCode = "200",description = "New token was generated and provided")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "500", description = "Problem generating token, check error message for details")
+    @ApiResponse(responseCode = "200",description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "500", description = "500")
     @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/me/refresh")
     public ResponseEntity<APIResponse<String>> refreshToken(Authentication authentication){
@@ -116,9 +117,9 @@ public class LoginController {
     }
 
     @Operation(summary = "Check invitation", description = "Returns information about provided invitation")
-    @ApiResponse(responseCode = "200", description = "Data about invitation was provided")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "404", description = "Cant find invitation with provided UUID")
+    @ApiResponse(responseCode = "200", description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "404", description = "404")
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
@@ -133,9 +134,9 @@ public class LoginController {
 
     @Operation(summary = "Join team using invitation", description = "Joins team using the provided invitation")
     @SecurityRequirement(name = "BearerAuth")
-    @ApiResponse(responseCode = "200", description = "Joined the team")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "409", description = "Invitation expired or you are already part of that team")
+    @ApiResponse(responseCode = "200", description = "200")
+    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "409", description = "409")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
         context = context.withUser(authentication).withInvitation(invID);

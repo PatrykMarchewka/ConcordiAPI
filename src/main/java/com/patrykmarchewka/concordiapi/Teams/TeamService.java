@@ -4,6 +4,7 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
@@ -90,7 +91,7 @@ public class TeamService {
     }
 
     public Team getTeamByID(long id){
-        return teamRepository.getTeamById(id);
+        return teamRepository.getTeamById(id).orElseThrow(NotFoundException::new);
     }
 
     public Team saveTeam(Team team){return teamRepository.save(team);}

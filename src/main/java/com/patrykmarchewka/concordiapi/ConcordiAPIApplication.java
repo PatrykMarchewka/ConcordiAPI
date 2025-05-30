@@ -10,7 +10,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
-@OpenAPIDefinition(info = @Info(title = "ConcordiAPI",version = "v1.0.0",description = "REST API for managing tasks,users and teams"))
 public class ConcordiAPIApplication {
 
 	@Autowired

@@ -37,9 +37,10 @@ public class InvitationController {
     }
 
     @Operation(summary = "Check invitations",description = "Check all invitations for given team")
-    @ApiResponse(responseCode = "200",description = "Data about invitations was provided")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -51,11 +52,12 @@ public class InvitationController {
     }
 
     @Operation(summary = "Check invitation", description = "Check specific invitation for given team")
-    @ApiResponse(responseCode = "200",description = "Data about invitations was provided")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/invitations/{invID}")
-    public ResponseEntity<?> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
 
         if (!context.getUserRole().isAdminGroup()){
@@ -65,9 +67,10 @@ public class InvitationController {
     }
 
     @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
-    @ApiResponse(responseCode = "201",description = "Created new invitation")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
@@ -77,12 +80,27 @@ public class InvitationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getTeam(), body),teamUserRoleService)));
     }
 
+    @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
+    @PutMapping("/invitations/{invID}")
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        if (!context.getUserRole().isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.putUpdate(context.getInvitation(), body),teamUserRoleService)));
+    }
+
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
-    @ApiResponse(responseCode = "200",description = "Invitation was edited")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/invitations/{invID}")
-    public ResponseEntity<?> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
@@ -91,10 +109,10 @@ public class InvitationController {
     }
 
     @Operation(summary = "Delete invitation", description = "Delete existing invitation for the team")
-    @ApiResponse(responseCode = "200",description = "Invitation has been deleted")
-    @ApiResponse(responseCode = "401", description = "You are not authenticated")
-    @ApiResponse(responseCode = "403", description = "You don't have enough privileges to perform that action")
-    @ApiResponse(responseCode = "404",description = "Invitation was not found")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<Void>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);

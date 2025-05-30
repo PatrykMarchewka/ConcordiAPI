@@ -292,6 +292,11 @@ public class TaskService {
                     addUserToTask(team,task.getID(), userService.getUserByID((long)id));
                 }
             }
+    void removeUsersFromTask(Task task){
+        for (User user : task.getUsers()){
+            removeUserFromTask(task, user);
+        }
+    }
 
     private void removeSubtasksFromTask(Task task){
         for (Subtask subtask : task.getSubtasks()){
