@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Tasks.*;
+import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @Service
 public class SubtaskService {
@@ -23,31 +26,35 @@ public class SubtaskService {
 
     private final SubtaskRepository subtaskRepository;
     private final TaskService taskService;
+    private final TeamService teamService;
 
     @Autowired
-    public SubtaskService(SubtaskRepository subtaskRepository,@Lazy TaskService taskService){
+    public SubtaskService(SubtaskRepository subtaskRepository,@Lazy TaskService taskService,@Lazy TeamService teamService){
         this.subtaskRepository = subtaskRepository;
         this.taskService = taskService;
+        this.teamService = teamService;
     }
 
 
 
-    final List<SubtaskUpdater> updaters(){
-        return List.of(new SubtaskNameUpdater(),
+    final List<SubtaskUpdater> updaters(Supplier<Long> teamID){
+        return List.of(
+                new SubtaskTaskUpdater(taskService,teamService,teamID),
+                new SubtaskNameUpdater(),
                 new SubtaskDescriptionUpdater(),
                 new SubtaskStatusUpdater());
     }
 
-    private void applyCreateUpdates(Subtask subtask, SubtaskRequestBody body){
-        for (SubtaskUpdater updater : updaters()){
+    private void applyCreateUpdates(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
+        for (SubtaskUpdater updater : updaters(teamID)){
             if (updater instanceof SubtaskCREATEUpdater createUpdater){
                 createUpdater.CREATEUpdate(subtask,body);
             }
         }
     }
 
-    private void applyPutUpdates(Subtask subtask, SubtaskRequestBody body){
-        for (SubtaskUpdater updater : updaters()){
+    private void applyPutUpdates(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
+        for (SubtaskUpdater updater : updaters(teamID)){
             if (updater instanceof SubtaskPUTUpdater putUpdater){
                 putUpdater.PUTUpdate(subtask,body);
             }
@@ -55,7 +62,7 @@ public class SubtaskService {
     }
 
     private void applyPatchUpdates(Subtask subtask, SubtaskRequestBody body){
-        for (SubtaskUpdater updater : updaters()){
+        for (SubtaskUpdater updater : updaters(null)){
             if (updater instanceof SubtaskPATCHUpdater patchUpdater){
                 patchUpdater.PATCHUpdate(subtask,body);
             }
@@ -67,9 +74,9 @@ public class SubtaskService {
     }
 
     @Transactional
-    public Subtask createSubtask(Task task, SubtaskRequestBody body){
+    public Subtask createSubtask(Task task, SubtaskRequestBody body, Supplier<Long> teamID){
         Subtask subtask = new Subtask();
-        applyCreateUpdates(subtask,body);
+        applyCreateUpdates(subtask,body,teamID);
         saveSubtask(subtask);
         taskService.addSubtaskToTask(task,subtask);
         return subtask;
@@ -108,8 +115,8 @@ public class SubtaskService {
     }
 
     @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body){
-        applyPutUpdates(subtask,body);
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
+        applyPutUpdates(subtask,body, teamID);
         return saveSubtask(subtask);
     }
 

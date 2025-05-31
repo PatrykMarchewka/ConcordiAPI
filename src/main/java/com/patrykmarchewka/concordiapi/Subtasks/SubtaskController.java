@@ -60,7 +60,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(context.getTask(), body))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(context.getTask(), body,() -> teamID))));
 
     }
 
@@ -91,7 +91,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,() -> teamID))));
     }
 
     @Operation(summary = "Edit subtask", description = "Edit subtask fields for the given team and task")

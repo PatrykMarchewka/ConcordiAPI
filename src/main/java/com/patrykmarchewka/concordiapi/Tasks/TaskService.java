@@ -41,6 +41,7 @@ public class TaskService {
     final List<TaskUpdater> updaters(){
         return List.of(new TaskNameUpdater(),
                 new TaskDescriptionUpdater(),
+                new TaskTeamUpdater(teamService),
                 new TaskStatusUpdater(),
                 new TaskUserUpdater(userService,this),
                 new TaskSubtaskUpdater(subtaskService,this),
@@ -157,9 +158,7 @@ public class TaskService {
         subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
         applyCreateUpdates(task,body);
-
         saveTask(task);
-        teamService.addTask(team,task);
 
         return task;
     }
@@ -276,22 +275,27 @@ public class TaskService {
 
 
 
-    @Transactional
-    public Task partialUpdate(Task task, TaskRequestBody body, Team team){
-        if (body.getUsers() != null){
-            for (int id : body.getUsers()) {
-                if (!userService.checkIfUserExistsInATeam(userService.getUserByID((long) id), team)) {
-                    throw new BadRequestException("Cannot add user to this task that is not part of the team");
-                }
-            }
-            for (User user : task.getUsers()){
-                removeUserFromTask(team, task.getID(), user);
-            }
-            for (int id : body.getUsers()){
-                if (userService.checkIfUserExistsInATeam(userService.getUserByID((long)id), team)){
-                    addUserToTask(team,task.getID(), userService.getUserByID((long)id));
-                }
-            }
+    // Reflection for other, maybe useful someday
+//        Field[] fields = body.getClass().getDeclaredFields();
+//
+//        for (Field field : fields) {
+//            field.setAccessible(true);
+//            try {
+//                Object value = field.get(body);
+//                if (value != null) {
+//                    Field taskField = task.getClass().getDeclaredField(field.getName());
+//                    taskField.setAccessible(true);
+//                    taskField.set(task, value);
+//                }
+//            } catch (NoSuchFieldException | IllegalAccessException e) {
+//                throw new RuntimeException("Failed to update field: " + field.getName(), e);
+//            }
+//        }
+
+
+
+
+
     void removeUsersFromTask(Task task){
         for (User user : task.getUsers()){
             removeUserFromTask(task, user);

@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.DTO.TaskDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
@@ -15,15 +14,15 @@ public class TaskRequestBody {
     private String name;
     private String description;
     @NotNull
-    private TeamMemberDTO teamMemberDTO;
+    private long team;
     private Set<Integer> users;
     private PublicVariables.TaskStatus taskStatus;
     private Set<Integer> subtasks;
 
-    public TaskRequestBody(String name, @Nullable String description, TeamMemberDTO teamMemberDTO, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
+    public TaskRequestBody(String name, @Nullable String description, long team, @Nullable Set<Integer> users, @Nullable PublicVariables.TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
         this.name = name;
         this.description = description;
-        this.teamMemberDTO = teamMemberDTO;
+        this.team = team;
         this.users = users;
         this.taskStatus = taskStatus;
         this.subtasks = subtasks;
@@ -37,8 +36,8 @@ public class TaskRequestBody {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public TeamMemberDTO getTeam(){return teamMemberDTO;}
-    public void setTeam(TeamMemberDTO teamMemberDTO){this.teamMemberDTO = teamMemberDTO;}
+    public long getTeam(){return team;}
+    public void setTeam(long team){this.team = team;}
 
     public Set<Integer> getUsers(){return users;}
     public void setUsers(Set<Integer> users){this.users = users;}

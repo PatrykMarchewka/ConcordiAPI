@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
@@ -15,13 +14,13 @@ public class SubtaskRequestBody {
     @NotBlank(groups = OnCreate.class)
     private String description;
     @NotNull
-    private TaskMemberDTO taskMemberDTO;
+    private long task;
     private PublicVariables.TaskStatus taskStatus;
 
-    public SubtaskRequestBody(@Nullable String name,@Nullable String description, TaskMemberDTO taskMemberDTO,@Nullable PublicVariables.TaskStatus taskStatus){
+    public SubtaskRequestBody(@Nullable String name,@Nullable String description, long task,@Nullable PublicVariables.TaskStatus taskStatus){
         this.name = name;
         this.description = description;
-        this.taskMemberDTO = taskMemberDTO;
+        this.task = task;
         this.taskStatus = taskStatus;
     }
 
@@ -33,8 +32,8 @@ public class SubtaskRequestBody {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public TaskMemberDTO getTask(){return taskMemberDTO;}
-    public void setTask(TaskMemberDTO taskMemberDTO){this.taskMemberDTO = taskMemberDTO;}
+    public long getTask(){return task;}
+    public void setTask(long task){this.task = task;}
 
     public PublicVariables.TaskStatus getTaskStatus(){return taskStatus;}
     public void setTaskStatus(PublicVariables.TaskStatus taskStatus){this.taskStatus = taskStatus;}
