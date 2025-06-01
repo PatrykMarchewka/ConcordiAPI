@@ -31,7 +31,7 @@ public class TeamMemberDTO implements TeamDTO {
             }
             this.tasks = filteredTasks;
         }
-        for (User user1 : service.getAllRole(team, PublicVariables.UserRole.OWNER)){
+        for (User user1 : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.OWNER)){
             this.owners.add(new UserMemberDTO(user1));
         }
     }

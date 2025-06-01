@@ -23,7 +23,7 @@ public class TaskSubtaskUpdater implements TaskCREATEUpdater,TaskPUTUpdater,Task
     @Override
     public void PUTUpdate(Task task, TaskRequestBody body) {
         for (Subtask subtask : task.getSubtasks()){
-            taskService.removeSubtaskFromTask(task, subtask);
+            taskService.removeSubtaskFromTaskAndDelete(task, subtask);
         }
         for (int id : body.getSubtasks()){
             taskService.addSubtaskToTask(task, subtaskService.getSubtaskByID(task.getID(), id));
@@ -36,13 +36,13 @@ public class TaskSubtaskUpdater implements TaskCREATEUpdater,TaskPUTUpdater,Task
     }
 
     private void sharedUpdate(Task task, TaskRequestBody body){
-        if (body.getSubtasks() != null){
+        if (task.getSubtasks() != null){
             for (Subtask subtask : task.getSubtasks()){
-                taskService.removeSubtaskFromTask(task, subtask);
+                taskService.removeSubtaskFromTaskAndDelete(task, subtask);
             }
-            for (int id : body.getSubtasks()){
-                taskService.addSubtaskToTask(task, subtaskService.getSubtaskByID(task.getID(), id));
-            }
+        }
+        for (int id : body.getSubtasks()){
+            taskService.addSubtaskToTask(task, subtaskService.getSubtaskByID(task.getID(), id));
         }
     }
 }

@@ -30,6 +30,7 @@ public class InvitationService {
 
     final List<InvitationUpdater> updaters(){
         return List.of(
+                new InvitationTeamUpdater(teamService),
                 new InvitationRoleUpdater(),
                 new InvitationUsesUpdater(),
                 new InvitationDueTimeUpdater()
@@ -64,9 +65,8 @@ public class InvitationService {
 
 
     @Transactional
-    public Invitation createInvitation(Team team,InvitationRequestBody body){
+    public Invitation createInvitation(InvitationRequestBody body){
         Invitation invitation = new Invitation();
-        invitation.setTeam(team);
         applyCreateUpdates(invitation,body);
         return saveInvitation(invitation);
     }
@@ -74,7 +74,7 @@ public class InvitationService {
     @Transactional(rollbackFor = Exception.class)
     public void useInvitation(Invitation invitation,User user) throws Exception {
         invitation.useOne();
-        invitationRepository.save(invitation);
+        saveInvitation(invitation);
         teamService.addUser(invitation.getTeam(), user,invitation.getRole());
     }
 

@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
+import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,11 +27,13 @@ import java.util.*;
 @Tag(name = "Subtasks", description = "Managing subtasks assigned to task")
 public class SubtaskController {
     private final SubtaskService subtaskService;
+    private final TaskService taskService;
     private ControllerContext context;
 
     @Autowired
-    public SubtaskController(SubtaskService subtaskService, ControllerContext context){
+    public SubtaskController(SubtaskService subtaskService,TaskService taskService, ControllerContext context){
         this.subtaskService = subtaskService;
+        this.taskService = taskService;
         this.context = context;
     }
 
@@ -60,7 +63,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(context.getTask(), body,() -> teamID))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,() -> teamID))));
 
     }
 
@@ -120,7 +123,7 @@ public class SubtaskController {
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        subtaskService.deleteSubtask(taskID,ID);
+        taskService.removeSubtaskFromTaskAndDelete(context.getTask(), subtaskService.getSubtaskByID(taskID,ID));
         return ResponseEntity.ok(new APIResponse<>("Subtask deleted", null));
     }
 

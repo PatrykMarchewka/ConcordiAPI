@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Supplier;
 
 @Service
 public class TaskService {
@@ -38,10 +39,10 @@ public class TaskService {
         this.roleRegistry = roleRegistry;
     }
 
-    final List<TaskUpdater> updaters(){
+    final List<TaskUpdater> updaters(Supplier<Team> teamSupplier){
         return List.of(new TaskNameUpdater(),
                 new TaskDescriptionUpdater(),
-                new TaskTeamUpdater(teamService),
+                new TaskTeamUpdater(teamSupplier,teamService),
                 new TaskStatusUpdater(),
                 new TaskUserUpdater(userService,this),
                 new TaskSubtaskUpdater(subtaskService,this),
@@ -50,23 +51,23 @@ public class TaskService {
     }
 
     private void applyCreateUpdates(Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters()){
+        for (TaskUpdater updater : updaters(null)){
             if (updater instanceof TaskCREATEUpdater createUpdater){
                 createUpdater.CREATEUpdate(task,body);
             }
         }
     }
 
-    private void applyPutUpdates(Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters()){
+    private void applyPutUpdates(Supplier<Team> team,Task task, TaskRequestBody body){
+        for (TaskUpdater updater : updaters(team)){
             if (updater instanceof TaskPUTUpdater putUpdater){
                 putUpdater.PUTUpdate(task,body);
             }
         }
     }
 
-    private void applyPatchUpdates(Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters()){
+    private void applyPatchUpdates(Supplier<Team> team,Task task, TaskRequestBody body){
+        for (TaskUpdater updater : updaters(team)){
             if (updater instanceof TaskPATCHUpdater patchUpdater){
                 patchUpdater.PATCHUpdate(task,body);
             }
@@ -154,7 +155,7 @@ public class TaskService {
 
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
-        userService.validateUsers(body.getUsers(),team);
+        userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
         applyCreateUpdates(task,body);
@@ -164,19 +165,19 @@ public class TaskService {
     }
 
     @Transactional
-    public Task putTask(TaskRequestBody body, Team team, Task task) {
-        userService.validateUsers(body.getUsers(),team);
+    public Task putTask(TaskRequestBody body, Supplier<Team> team, Task task) {
+        userService.validateUsersForTasks(body.getUsers(),team.get());
         subtaskService.validateSubtasks(body.getSubtasks());
-        applyPutUpdates(task,body);
+        applyPutUpdates(team,task,body);
         saveTask(task);
         return task;
     }
 
     @Transactional
-    public Task patchTask(Task task, TaskRequestBody body, Team team){
-        userService.validateUsers(body.getUsers(),team);
+    public Task patchTask(Task task, TaskRequestBody body, Supplier<Team> team){
+        userService.validateUsersForTasks(body.getUsers(),team.get());
         subtaskService.validateSubtasks(body.getSubtasks());
-        applyPatchUpdates(task, body);
+        applyPatchUpdates(team,task, body);
         saveTask(task);
         return task;
     }
@@ -217,16 +218,22 @@ public class TaskService {
 
     @Transactional
     public void addSubtaskToTask(Task task, Subtask subtask){
-        task.getSubtasks().add(subtask);
+        task.addSubtask(subtask);
         saveTask(task);
         subtaskService.setTaskToSubtask(subtask,task);
     }
 
     @Transactional
     public void removeSubtaskFromTask(Task task, Subtask subtask){
+        task.removeSubtask(subtask);
+        saveTask(task);
+    }
+
+    @Transactional
+    public void removeSubtaskFromTaskAndDelete(Task task, Subtask subtask){
         task.getSubtasks().remove(subtask);
         saveTask(task);
-        subtaskService.deleteSubtask(task.getID(), subtask.getID());
+        subtaskService.deleteSubtask(subtask);
     }
 
 
@@ -304,7 +311,7 @@ public class TaskService {
 
     private void removeSubtasksFromTask(Task task){
         for (Subtask subtask : task.getSubtasks()){
-            removeSubtaskFromTask(task,subtask);
+            removeSubtaskFromTaskAndDelete(task,subtask);
         }
     }
 

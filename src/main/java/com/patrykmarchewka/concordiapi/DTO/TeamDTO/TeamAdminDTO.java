@@ -30,13 +30,13 @@ public class TeamAdminDTO implements TeamDTO {
         for (Task task : team.getTasks()){
             tasks.add(new TaskManagerDTO(task));
         }
-        for (User admin : service.getAllRole(team, PublicVariables.UserRole.ADMIN)){
+        for (User admin : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.ADMIN)){
             admins.add(new UserMemberDTO(admin));
         }
-        for (User manager : service.getAllRole(team, PublicVariables.UserRole.MANAGER)){
+        for (User manager : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.MANAGER)){
             managers.add(new UserMemberDTO(manager));
         }
-        for (User user1 : service.getAllRole(team, PublicVariables.UserRole.OWNER)){
+        for (User user1 : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.OWNER)){
             this.owners.add(new UserMemberDTO(user1));
         }
     }

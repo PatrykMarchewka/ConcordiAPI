@@ -74,32 +74,20 @@ public class SubtaskService {
     }
 
     @Transactional
-    public Subtask createSubtask(Task task, SubtaskRequestBody body, Supplier<Long> teamID){
+    public Subtask createSubtask(SubtaskRequestBody body, Supplier<Long> teamID){
         Subtask subtask = new Subtask();
         applyCreateUpdates(subtask,body,teamID);
         saveSubtask(subtask);
-        taskService.addSubtaskToTask(task,subtask);
         return subtask;
     }
 
     /**
-     * Unused, TODO: delete
-     * @param taskID
-     * @param subtaskID
+     * Should only be called from TaskService.removeSubtaskFromTaskAndDelete
+     * @param subtask
      */
     @Transactional
-    public void deleteSubtask(long taskID, long subtaskID){
-        Subtask subtask = getSubtaskByID(taskID,subtaskID);
-        Task task = subtask.getTask();
-        task.getSubtasks().remove(subtask);
-        taskService.saveTask(task);
-        subtaskRepository.delete(subtask);
-    }
-
-    @Transactional
     public void deleteSubtask(Subtask subtask){
-        Task task = subtask.getTask();
-        taskService.removeSubtaskFromTask(task,subtask);
+        subtaskRepository.delete(subtask);
     }
 
     public Subtask saveSubtask(Subtask subtask){
@@ -116,6 +104,7 @@ public class SubtaskService {
 
     @Transactional
     public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
+
         applyPutUpdates(subtask,body, teamID);
         return saveSubtask(subtask);
     }

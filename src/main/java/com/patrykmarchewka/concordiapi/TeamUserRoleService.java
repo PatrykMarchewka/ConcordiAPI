@@ -44,17 +44,8 @@ public class TeamUserRoleService {
         saveTMR(tmr);
     }
 
-    /**
-     * TODO: Replace with the one below
-     * @param team
-     * @param role
-     * @return
-     */
-    @Transactional(readOnly = true)
-    public Set<User> getAllRole(Team team, PublicVariables.UserRole role){
-        return getAllByTeamAndUserRole(team,role);
-    }
 
+    @Transactional(readOnly = true)
     public Set<User> getAllByTeamAndUserRole(Team team, PublicVariables.UserRole role){
         return teamUserRoleRepository.findAllByTeamAndUserRole(team,role);
     }

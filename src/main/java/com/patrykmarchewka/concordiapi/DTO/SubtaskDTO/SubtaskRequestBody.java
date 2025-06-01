@@ -13,7 +13,7 @@ public class SubtaskRequestBody {
     private String name;
     @NotBlank(groups = OnCreate.class)
     private String description;
-    @NotNull
+    @NotNull(groups = OnCreate.class)
     private long task;
     private PublicVariables.TaskStatus taskStatus;
 

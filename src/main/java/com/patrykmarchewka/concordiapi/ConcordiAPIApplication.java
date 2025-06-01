@@ -38,21 +38,21 @@ public class ConcordiAPIApplication {
 
 	private void CheckUsers(){
 		if (!userService.checkIfUserExistsByLogin("admin")){
-			userService.createUser("admin","admin","admin","admin");
+			userService.createUser(new UserRequestBody("admin","admin","admin","admin"));
 			System.out.println("Created admin account with these credentials:");
 			System.out.println("Login: admin");
 			System.out.println("Password: admin");
 			System.out.println("It's advised to change these values as soon as possible!");
 		}
 		if (!userService.checkIfUserExistsByLogin("manager")){
-			userService.createUser("manager","manager","manager","manager");
+			userService.createUser(new UserRequestBody("manager","manager","manager","manager"));
 			System.out.println("Created manager account with these credentials:");
 			System.out.println("Login: manager");
 			System.out.println("Password: manager");
 			System.out.println("It's advised to change these values as soon as possible!");
 		}
 		if (!userService.checkIfUserExistsByLogin("member")){
-			userService.createUser("member","member","member,","member");
+			userService.createUser(new UserRequestBody("member","member","member,","member"));
 			System.out.println("Created member account with these credentials:");
 			System.out.println("Login: member");
 			System.out.println("Password: member");

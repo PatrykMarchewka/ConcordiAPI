@@ -30,6 +30,10 @@ public class SubtaskTaskUpdater implements SubtaskCREATEUpdater,SubtaskPUTUpdate
     }
 
     void sharedUpdate(Subtask subtask, SubtaskRequestBody body){
+        if (subtask.getTask() != null){
+            taskService.removeSubtaskFromTask(subtask.getTask(), subtask);
+        }
+
         subtask.setTask(taskService.getTaskByIDAndTeam(body.getTask(), teamService.getTeamByID(teamID.get())));
         taskService.addSubtaskToTask(taskService.getTaskByIDAndTeam(body.getTask(), teamService.getTeamByID(teamID.get())),subtask);
     }

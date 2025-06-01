@@ -77,7 +77,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles.test(context.getUserRole(),body.getRole())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getTeam(), body),teamUserRoleService)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body),teamUserRoleService)));
     }
 
     @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")

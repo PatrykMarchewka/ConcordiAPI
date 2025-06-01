@@ -106,7 +106,7 @@ public class TaskController {
         if (!taskService.putTaskRole(context.getUserRole(), context.getTask(), context.getUser())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getTeam(), context.getTask()))));
+        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, () -> context.getTeam(), context.getTask()))));
     }
 
     @Operation(summary = "Edit task",description = "Edit task fields")
@@ -120,7 +120,7 @@ public class TaskController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(context.getTask(), body, context.getTeam()))));
+        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(context.getTask(), body, () -> context.getTeam()))));
     }
 
     @Operation(summary = "Delete the task", description = "Delete the entire task completely")

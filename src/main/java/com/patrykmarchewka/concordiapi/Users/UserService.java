@@ -72,20 +72,6 @@ public class UserService {
         return userRepository.findByLogin(Login).orElseThrow(NotFoundException::new);
     }
 
-    /**
-     * TODO: Replace with one below
-     * @param login
-     * @param password
-     * @return
-     */
-    public User getUserByLoginAndPassword(String login, String password){
-        User user = getUserByLogin(login);
-        if (!Passwords.CheckPasswordBCrypt(password,user.getPassword())){
-            throw new NotFoundException();
-        }
-        return user;
-    }
-
     public User getUserByLoginAndPassword(UserRequestLogin body){
         User user = getUserByLogin(body.getLogin());
         if (!Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
@@ -135,24 +121,6 @@ public class UserService {
     public User getUserByNameAndLastName(String fullname){
         String answer[] = fullname.split(" ");
         return userRepository.findByNameAndLastName(answer[0], answer[1]);
-    }
-
-    /**
-     * TODO: Replace with one below
-     * @param login
-     * @param password
-     * @param name
-     * @param lastName
-     * @return
-     */
-    @Transactional
-    public User createUser(String login, String password, String name, String lastName){
-        User user = new User();
-        user.setLogin(login);
-        user.setPassword(Passwords.HashPasswordBCrypt(password));
-        user.setName(name);
-        user.setLastName(lastName);
-        return userRepository.save(user);
     }
 
     @Transactional
@@ -206,8 +174,7 @@ public class UserService {
     }
 
 
-    //TODO: Check if this response is okay, otherwise add string requirement
-    public boolean validateUsers(Set<Integer> userIDs, Team team){
+    public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
         if (userIDs == null || team == null) return false;
         for (int id : userIDs) {
             if (!checkIfUserExistsInATeam(getUserByID((long) id), team)) {
@@ -215,13 +182,6 @@ public class UserService {
             }
         }
         return true;
-    }
-
-    //TODO: delete?
-    private void validateUser(User user){
-        if (user == null){
-            throw new BadRequestException("User is set to null");
-        }
     }
 
     public Set<Team> getTeams(User user){

@@ -94,7 +94,7 @@ public class UserController {
     public ResponseEntity<?> leaveTeam(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (context.getUserRole().isOwner() && teamUserRoleService.getAllRole(context.getTeam(), PublicVariables.UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
+        if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), PublicVariables.UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
         }
         else{

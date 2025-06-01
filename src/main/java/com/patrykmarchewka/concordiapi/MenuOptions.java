@@ -5,7 +5,10 @@ import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
+import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
@@ -82,7 +85,7 @@ public class MenuOptions {
             userCredentials[2] = AskUser();
             System.out.println("Type your lastname");
             userCredentials[3] = AskUser();
-            userService.createUser(userCredentials[0], userCredentials[1], userCredentials[2], userCredentials[3]);
+            userService.createUser(new UserRequestBody(userCredentials[0], userCredentials[1], userCredentials[2], userCredentials[3]));
             System.out.println("User created!");
             System.out.println("Now try to log in!");
             LoggingIn();
@@ -97,7 +100,7 @@ public class MenuOptions {
         userCredentials[0] = AskUser();
         System.out.println("Now enter password:");
         userCredentials[1] = AskUser();
-        User user = userService.getUserByLoginAndPassword(userCredentials[0], userCredentials[1]);
+        User user = userService.getUserByLoginAndPassword(new UserRequestLogin(userCredentials[0], userCredentials[1]));
         try {
             if (JSONWebToken.VerifyJWT(JSONWebToken.GenerateJWToken(userCredentials[0], userCredentials[1])) && userService.getUserByLogin(userCredentials[0]) != null && Passwords.CheckPasswordBCrypt(userCredentials[1], userService.getUserByLogin(userCredentials[0]).getPassword())) {
                 System.out.println("Identity validated");
@@ -344,11 +347,10 @@ public class MenuOptions {
 
 
     //TEAMS
-    //TODO: Fix this later
     private void CreateTeam(){
         System.out.println("Give a name to your new team");
         String answer = AskUser();
-        //loggedUserTeam = teamService.createTeam(answer, loggedUser);
+        loggedUserTeam = teamService.createTeam(new TeamRequestBody(answer), loggedUser);
     }
 
     private void JoinTeam(){
@@ -590,10 +592,9 @@ public class MenuOptions {
     private void EditTask(Task task){
         try {
             if (task == null){
-                //TODO: Fix later
-                //System.out.println("Type ID of the task you want to edit");
-                //long id = Long.valueOf(AskUser());
-                //task = taskService.getTaskByID(id,loggedUserTeam);
+                System.out.println("Type ID of the task you want to edit");
+                long id = Long.valueOf(AskUser());
+                task = taskService.getTaskByIDAndTeam(id, loggedUserTeam);
             }
             PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
             if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains(loggedUser)){
@@ -798,7 +799,7 @@ public class MenuOptions {
             }
             try{
                 long choice = Long.valueOf(AskUser());
-                subtaskService.deleteSubtask(task.getID(),choice);
+                taskService.removeSubtaskFromTaskAndDelete(task, subtaskService.getSubtaskByID(task.getID(), choice));
                 System.out.println("Subtask deleted");
             } catch (Exception e) {
                 System.out.println(CouldntUnderstand());

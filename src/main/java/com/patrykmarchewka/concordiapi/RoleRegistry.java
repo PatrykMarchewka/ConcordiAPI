@@ -49,9 +49,9 @@ public class RoleRegistry {
     //Users
     public Map<PublicVariables.UserRole, Supplier<Set<User>>> createUserDTOMapWithParam(Team team, PublicVariables.UserRole role){
         return Map.of(
-                PublicVariables.UserRole.OWNER, () -> teamUserRoleService.getAllRole(team, role),
-                PublicVariables.UserRole.ADMIN, () -> teamUserRoleService.getAllRole(team, role),
-                PublicVariables.UserRole.MANAGER, () -> teamUserRoleService.getAllRole(team, role)
+                PublicVariables.UserRole.OWNER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
+                PublicVariables.UserRole.ADMIN, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
+                PublicVariables.UserRole.MANAGER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role)
         );
     }
 
