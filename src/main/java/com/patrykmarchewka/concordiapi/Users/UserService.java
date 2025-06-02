@@ -9,8 +9,8 @@ import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -163,12 +163,12 @@ public class UserService {
         return ret;
     }
 
-    public Set<UserMemberDTO> userMemberDTOSetParam(PublicVariables.UserRole myRole, PublicVariables.UserRole param, Team team){
+    public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, Team team){
         Set<User> users = roleRegistry.createUserDTOMapWithParam(team,param).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
         return userMemberDTOSetProcess(users);
     }
 
-    public Set<UserMemberDTO> userMemberDTOSetNoParam(PublicVariables.UserRole myRole, Team team){
+    public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, Team team){
         Set<User> users = roleRegistry.createUserDTOMapNoParam(team).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
         return userMemberDTOSetProcess(users);
     }

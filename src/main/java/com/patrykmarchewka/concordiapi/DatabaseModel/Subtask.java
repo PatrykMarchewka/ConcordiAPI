@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -20,7 +19,7 @@ public class Subtask {
     private Task task;
 
     @Enumerated(value = EnumType.STRING)
-    private PublicVariables.TaskStatus taskStatus;
+    private TaskStatus taskStatus;
 
 
     public long getID() {
@@ -50,11 +49,11 @@ public class Subtask {
         this.task = task;
     }
 
-    public PublicVariables.TaskStatus getTaskStatus() {
+    public TaskStatus getTaskStatus() {
         return taskStatus;
     }
 
-    public void setTaskStatus(PublicVariables.TaskStatus taskStatus) {
+    public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
 

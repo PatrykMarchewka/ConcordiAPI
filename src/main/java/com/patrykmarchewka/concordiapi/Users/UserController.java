@@ -40,7 +40,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) PublicVariables.UserRole role){
+    public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
@@ -94,7 +94,7 @@ public class UserController {
     public ResponseEntity<?> leaveTeam(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), PublicVariables.UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
+        if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
         }
         else{
@@ -109,7 +109,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/users/{ID}/role")
-    public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody PublicVariables.UserRole newRole, Authentication authentication){
+    public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
         if (!context.getUserRole().isOwnerOrAdmin() || teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole()) <= 0 || !teamUserRoleService.checkRoles.test(newRole,context.getUserRole())){
             throw new NoPrivilegesException();

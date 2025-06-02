@@ -17,8 +17,12 @@ import java.util.Map;
 @Component
 public class JWTFilter extends OncePerRequestFilter {
 
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public JWTFilter(UserService userService){
+        this.userService = userService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain){

@@ -1,6 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
-import com.patrykmarchewka.concordiapi.PublicVariables;
+import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -18,7 +18,7 @@ public class TeamUserRole {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    private PublicVariables.UserRole userRole;
+    private UserRole userRole;
 
     public Long getID() {return id;}
     public void setId(Long id) {this.id = id;}
@@ -31,9 +31,9 @@ public class TeamUserRole {
 
     public void setUser(User user) { this.user = user; }
 
-    public PublicVariables.UserRole getUserRole(){ return this.userRole; }
+    public UserRole getUserRole(){ return this.userRole; }
 
-    public void setUserRole(PublicVariables.UserRole role){ this.userRole = role;}
+    public void setUserRole(UserRole role){ this.userRole = role;}
 
 
     @Override

@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -18,7 +17,7 @@ public class Invitation {
     private Team team;
     private short uses;
     @Enumerated(EnumType.STRING)
-    private PublicVariables.UserRole role;
+    private UserRole role;
     @Column(nullable = true)
     private OffsetDateTime dueTime;
 
@@ -31,8 +30,8 @@ public class Invitation {
     public short getUses(){return uses;}
     public void setUses(short uses){this.uses = uses;}
 
-    public PublicVariables.UserRole getRole() {return role;}
-    public void setRole(PublicVariables.UserRole role) {this.role = role;}
+    public UserRole getRole() {return role;}
+    public void setRole(UserRole role) {this.role = role;}
 
     public OffsetDateTime getDueTime() {return dueTime;}
     public void setDueTime(OffsetDateTime dueTime) {this.dueTime = dueTime;}

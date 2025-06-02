@@ -21,8 +21,8 @@ public class ControllerContext {
     private User user;
     private Team team;
     private Task task;
-    private PublicVariables.UserRole userRole;
-    private PublicVariables.UserRole otherRole;
+    private UserRole userRole;
+    private UserRole otherRole;
     private Invitation invitation;
 
 
@@ -86,8 +86,8 @@ public class ControllerContext {
     public User getUser() {return user;}
     public Team getTeam() {return team;}
     public Task getTask() {return task;}
-    public PublicVariables.UserRole getUserRole() {return userRole;}
-    public PublicVariables.UserRole getOtherRole() {return otherRole;}
+    public UserRole getUserRole() {return userRole;}
+    public UserRole getOtherRole() {return otherRole;}
     public Invitation getInvitation(){return invitation;}
 
 }

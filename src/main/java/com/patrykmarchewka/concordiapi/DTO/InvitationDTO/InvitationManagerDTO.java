@@ -2,9 +2,9 @@ package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.time.OffsetDateTime;
 
@@ -14,7 +14,7 @@ public class InvitationManagerDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String UUID;
     private TeamMemberDTO team;
-    private PublicVariables.UserRole role;
+    private UserRole role;
     private short uses;
     private String dueTime;
 
@@ -35,8 +35,8 @@ public class InvitationManagerDTO {
     public TeamMemberDTO getTeam(){return this.team;}
     public void setTeam(TeamMemberDTO team){this.team = team;}
 
-    public PublicVariables.UserRole getRole(){return this.role;}
-    public void setRole(PublicVariables.UserRole role){this.role = role;}
+    public UserRole getRole(){return this.role;}
+    public void setRole(UserRole role){this.role = role;}
 
     public short getUses(){return this.uses;}
     public void setUses(short uses){this.uses = uses;}

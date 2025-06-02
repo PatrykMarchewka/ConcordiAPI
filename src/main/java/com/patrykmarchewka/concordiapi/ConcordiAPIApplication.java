@@ -1,8 +1,7 @@
 package com.patrykmarchewka.concordiapi;
 
+import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.Users.UserService;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,11 +11,17 @@ import org.springframework.context.event.EventListener;
 @SpringBootApplication
 public class ConcordiAPIApplication {
 
-	@Autowired
-	private UserService userService;
+	private final UserService userService;
+	private final MenuOptions menuOptions;
 
 	@Autowired
-	private MenuOptions menuOptions;
+	public ConcordiAPIApplication(UserService userService, MenuOptions menuOptions){
+		this.userService = userService;
+		this.menuOptions = menuOptions;
+	}
+
+
+
 
 	public static void main(String[] args) {
 		System.out.println("Checking DB connection...");

@@ -2,12 +2,12 @@ package com.patrykmarchewka.concordiapi.Subtasks;
 
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
-import com.patrykmarchewka.concordiapi.PublicVariables;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 
 public class SubtaskStatusUpdater implements SubtaskCREATEUpdater,SubtaskPUTUpdater,SubtaskPATCHUpdater{
     @Override
     public void CREATEUpdate(Subtask subtask, SubtaskRequestBody body) {
-        subtask.setTaskStatus((body.getTaskStatus() == null ? PublicVariables.TaskStatus.NEW : body.getTaskStatus()));
+        subtask.setTaskStatus((body.getTaskStatus() == null ? TaskStatus.NEW : body.getTaskStatus()));
     }
 
     @Override

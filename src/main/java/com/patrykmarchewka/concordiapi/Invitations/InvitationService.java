@@ -18,12 +18,16 @@ import java.util.Set;
 @Service
 public class InvitationService {
 
+    private final InvitationRepository invitationRepository;
+    private final TeamService teamService;
+    private final TeamUserRoleService teamUserRoleService;
+
     @Autowired
-    private InvitationRepository invitationRepository;
-    @Autowired
-    private TeamService teamService;
-    @Autowired
-    private TeamUserRoleService teamUserRoleService;
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, TeamUserRoleService teamUserRoleService){
+        this.invitationRepository = invitationRepository;
+        this.teamService = teamService;
+        this.teamUserRoleService = teamUserRoleService;
+    }
 
 
 

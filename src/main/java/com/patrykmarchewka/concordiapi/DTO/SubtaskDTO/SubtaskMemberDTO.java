@@ -1,13 +1,13 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
-import com.patrykmarchewka.concordiapi.PublicVariables;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 
 public class SubtaskMemberDTO {
     private long id;
     private String name;
     private String description;
-    private PublicVariables.TaskStatus taskStatus;
+    private TaskStatus taskStatus;
 
 
     public SubtaskMemberDTO(Subtask subtask){
@@ -33,6 +33,6 @@ public class SubtaskMemberDTO {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public PublicVariables.TaskStatus getTaskStatus(){return taskStatus;}
-    public void setTaskStatus(PublicVariables.TaskStatus taskStatus) {this.taskStatus = taskStatus;}
+    public TaskStatus getTaskStatus(){return taskStatus;}
+    public void setTaskStatus(TaskStatus taskStatus) {this.taskStatus = taskStatus;}
 }

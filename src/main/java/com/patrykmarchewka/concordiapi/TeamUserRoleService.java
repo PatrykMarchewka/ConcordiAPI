@@ -13,11 +13,16 @@ import java.util.function.BiPredicate;
 
 @Service
 public class TeamUserRoleService {
+
+    private final TeamUserRoleRepository teamUserRoleRepository;
+
     @Autowired
-    private TeamUserRoleRepository teamUserRoleRepository;
+    public TeamUserRoleService(TeamUserRoleRepository teamUserRoleRepository){
+        this.teamUserRoleRepository = teamUserRoleRepository;
+    }
 
     @Transactional
-    public TeamUserRole createTMR(User user, Team team, PublicVariables.UserRole role){
+    public TeamUserRole createTMR(User user, Team team, UserRole role){
         TeamUserRole tmr = new TeamUserRole();
         tmr.setTeam(team);
         tmr.setUser(user);
@@ -33,12 +38,12 @@ public class TeamUserRoleService {
         teamUserRoleRepository.delete(tmr);
     }
 
-    public PublicVariables.UserRole getRole(User user, Team team){
+    public UserRole getRole(User user, Team team){
         TeamUserRole tmr = getByUserAndTeam(user,team);
         return tmr.getUserRole();
     }
 
-    public void setRole(User user, Team team, PublicVariables.UserRole role){
+    public void setRole(User user, Team team, UserRole role){
         TeamUserRole tmr = getByUserAndTeam(user,team);
         tmr.setUserRole(role);
         saveTMR(tmr);
@@ -46,7 +51,7 @@ public class TeamUserRoleService {
 
 
     @Transactional(readOnly = true)
-    public Set<User> getAllByTeamAndUserRole(Team team, PublicVariables.UserRole role){
+    public Set<User> getAllByTeamAndUserRole(Team team, UserRole role){
         return teamUserRoleRepository.findAllByTeamAndUserRole(team,role);
     }
 
@@ -56,9 +61,9 @@ public class TeamUserRoleService {
 
 
 
-    public BiPredicate<PublicVariables.UserRole, PublicVariables.UserRole> checkRoles = (mine,other) -> mine.compareTo(other) >= 0;
+    public BiPredicate<UserRole, UserRole> checkRoles = (mine,other) -> mine.compareTo(other) >= 0;
 
-    public int checkRoles(PublicVariables.UserRole mine, PublicVariables.UserRole other){
+    public int checkRoles(UserRole mine, UserRole other){
         return mine.compareTo(other);
     }
 

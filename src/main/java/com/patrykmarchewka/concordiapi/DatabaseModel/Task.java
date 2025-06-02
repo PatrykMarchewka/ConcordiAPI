@@ -1,7 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -18,7 +18,7 @@ public class Task {
     private String name;
     private String description;
     @Enumerated(value = EnumType.STRING)
-    private PublicVariables.TaskStatus taskStatus;
+    private TaskStatus taskStatus;
 
 
     private OffsetDateTime creationDate;
@@ -58,11 +58,11 @@ public class Task {
         this.description = description;
     }
 
-    public PublicVariables.TaskStatus getTaskStatus() {
+    public TaskStatus getTaskStatus() {
         return taskStatus;
     }
 
-    public void setTaskStatus(PublicVariables.TaskStatus taskStatus) {
+    public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
 

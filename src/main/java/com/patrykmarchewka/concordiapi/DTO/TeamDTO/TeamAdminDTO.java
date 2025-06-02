@@ -5,8 +5,8 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,13 +30,13 @@ public class TeamAdminDTO implements TeamDTO {
         for (Task task : team.getTasks()){
             tasks.add(new TaskManagerDTO(task));
         }
-        for (User admin : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.ADMIN)){
+        for (User admin : service.getAllByTeamAndUserRole(team, UserRole.ADMIN)){
             admins.add(new UserMemberDTO(admin));
         }
-        for (User manager : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.MANAGER)){
+        for (User manager : service.getAllByTeamAndUserRole(team, UserRole.MANAGER)){
             managers.add(new UserMemberDTO(manager));
         }
-        for (User user1 : service.getAllByTeamAndUserRole(team, PublicVariables.UserRole.OWNER)){
+        for (User user1 : service.getAllByTeamAndUserRole(team, UserRole.OWNER)){
             this.owners.add(new UserMemberDTO(user1));
         }
     }

@@ -5,7 +5,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.PublicVariables;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,7 +14,7 @@ public class TaskMemberDTO implements TaskDTO {
     private long id;
     private String name;
     private String description;
-    private PublicVariables.TaskStatus taskStatus;
+    private TaskStatus taskStatus;
     private Set<SubtaskMemberDTO> subtasks = new HashSet<>();
     private Set<UserMemberDTO> users = new HashSet<>();
 
@@ -42,8 +42,8 @@ public class TaskMemberDTO implements TaskDTO {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public PublicVariables.TaskStatus getTaskStatus(){return taskStatus;}
-    public void setTaskStatus(PublicVariables.TaskStatus taskStatus){this.taskStatus = taskStatus;}
+    public TaskStatus getTaskStatus(){return taskStatus;}
+    public void setTaskStatus(TaskStatus taskStatus){this.taskStatus = taskStatus;}
 
     public Set<SubtaskMemberDTO> getSubtasks(){return subtasks;}
     public void setSubtasks(Set<SubtaskMemberDTO> subtasks){this.subtasks = subtasks;}

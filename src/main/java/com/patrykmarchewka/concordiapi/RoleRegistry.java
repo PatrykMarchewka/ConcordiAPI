@@ -11,6 +11,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class RoleRegistry {
     private final TaskService taskService;
     private final TeamUserRoleService teamUserRoleService;
 
+    @Autowired
     public RoleRegistry(@Lazy TaskService taskService, TeamUserRoleService teamUserRoleService){
         this.taskService = taskService;
         this.teamUserRoleService = teamUserRoleService;
@@ -36,30 +38,30 @@ public class RoleRegistry {
 
 
     //Team
-    public Map<PublicVariables.UserRole, BiFunction<Team, User, TeamDTO>> createTeamDTOMap() {
+    public Map<UserRole, BiFunction<Team, User, TeamDTO>> createTeamDTOMap() {
         return Map.of(
-            PublicVariables.UserRole.OWNER, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
-            PublicVariables.UserRole.ADMIN, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
-            PublicVariables.UserRole.MANAGER, (team, user) -> new TeamManagerDTO(team, teamUserRoleService),
-            PublicVariables.UserRole.MEMBER, (team, user) -> new TeamMemberDTO(team, user, teamUserRoleService)
+            UserRole.OWNER, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
+            UserRole.ADMIN, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
+            UserRole.MANAGER, (team, user) -> new TeamManagerDTO(team, teamUserRoleService),
+            UserRole.MEMBER, (team, user) -> new TeamMemberDTO(team, user, teamUserRoleService)
     );
 }
 
 
     //Users
-    public Map<PublicVariables.UserRole, Supplier<Set<User>>> createUserDTOMapWithParam(Team team, PublicVariables.UserRole role){
+    public Map<UserRole, Supplier<Set<User>>> createUserDTOMapWithParam(Team team, UserRole role){
         return Map.of(
-                PublicVariables.UserRole.OWNER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
-                PublicVariables.UserRole.ADMIN, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
-                PublicVariables.UserRole.MANAGER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role)
+                UserRole.OWNER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
+                UserRole.ADMIN, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
+                UserRole.MANAGER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role)
         );
     }
 
-    public Map<PublicVariables.UserRole, Supplier<Set<User>>> createUserDTOMapNoParam(Team team){
+    public Map<UserRole, Supplier<Set<User>>> createUserDTOMapNoParam(Team team){
         return Map.of(
-                PublicVariables.UserRole.OWNER, () -> team.getTeammates(),
-                PublicVariables.UserRole.ADMIN, () -> team.getTeammates(),
-                PublicVariables.UserRole.MANAGER, () -> team.getTeammates()
+                UserRole.OWNER, () -> team.getTeammates(),
+                UserRole.ADMIN, () -> team.getTeammates(),
+                UserRole.MANAGER, () -> team.getTeammates()
         );
     }
 
@@ -68,42 +70,42 @@ public class RoleRegistry {
 
 
     //Tasks
-    public Map<PublicVariables.UserRole, Predicate<Task>> putTaskRoleMap(User user) {
+    public Map<UserRole, Predicate<Task>> putTaskRoleMap(User user) {
         return Map.of(
-                PublicVariables.UserRole.OWNER, t -> true,
-                PublicVariables.UserRole.ADMIN, t -> true,
-                PublicVariables.UserRole.MANAGER, t -> true,
-                PublicVariables.UserRole.MEMBER, t -> t.hasUser(user)
+                UserRole.OWNER, t -> true,
+                UserRole.ADMIN, t -> true,
+                UserRole.MANAGER, t -> true,
+                UserRole.MEMBER, t -> t.hasUser(user)
         );
     }
 
 
 
-    public Map<Predicate<PublicVariables.UserRole>, Function<Task, TaskDTO>> getInformationAboutTaskRoleMap(Task task, User user) {
+    public Map<Predicate<UserRole>, Function<Task, TaskDTO>> getInformationAboutTaskRoleMap(Task task, User user) {
         return Map.of(
                 u -> u.isAdminGroup(), t -> new TaskManagerDTO(t),
                 u -> task.hasUser(user), t -> new TaskMemberDTO(t)
         );
     }
 
-    public Map<PublicVariables.UserRole, Set<TaskDTO>> getMyTasksMap(User user) {
-        Map<PublicVariables.UserRole, Set<TaskDTO>> roleActions = new HashMap<>();
+    public Map<UserRole, Set<TaskDTO>> getMyTasksMap(User user) {
+        Map<UserRole, Set<TaskDTO>> roleActions = new HashMap<>();
 
-        roleActions.put(PublicVariables.UserRole.OWNER, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(PublicVariables.UserRole.ADMIN, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(PublicVariables.UserRole.MANAGER, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(PublicVariables.UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
+        roleActions.put(UserRole.OWNER, new HashSet<>(taskService.getMyTasksManager(user)));
+        roleActions.put(UserRole.ADMIN, new HashSet<>(taskService.getMyTasksManager(user)));
+        roleActions.put(UserRole.MANAGER, new HashSet<>(taskService.getMyTasksManager(user)));
+        roleActions.put(UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
 
         return roleActions;
     }
 
-    public Map<PublicVariables.UserRole, Set<TaskDTO>> getAllTasksMap(User user, Team team) {
-        Map<PublicVariables.UserRole,Set<TaskDTO>> roleActions = new HashMap<>();
+    public Map<UserRole, Set<TaskDTO>> getAllTasksMap(User user, Team team) {
+        Map<UserRole,Set<TaskDTO>> roleActions = new HashMap<>();
 
-        roleActions.put(PublicVariables.UserRole.OWNER, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(PublicVariables.UserRole.ADMIN, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(PublicVariables.UserRole.MANAGER, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(PublicVariables.UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
+        roleActions.put(UserRole.OWNER, new HashSet<>(taskService.getAllTasksManager(team)));
+        roleActions.put(UserRole.ADMIN, new HashSet<>(taskService.getAllTasksManager(team)));
+        roleActions.put(UserRole.MANAGER, new HashSet<>(taskService.getAllTasksManager(team)));
+        roleActions.put(UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
 
         return roleActions;
 }

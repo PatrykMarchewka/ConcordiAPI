@@ -387,7 +387,7 @@ public class MenuOptions {
     }
 
     private void DisbandTeam(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwner()) {
             System.out.println("Are you sure you want to permanently disband team " + loggedUserTeam.getName() + "?");
             System.out.println("Type YES to disband");
@@ -413,7 +413,7 @@ public class MenuOptions {
 
     //Users
     private void ViewUsers(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             Set<UserMemberDTO> users = new HashSet<>();
             for (User user : loggedUserTeam.getTeammates()) {
@@ -430,13 +430,13 @@ public class MenuOptions {
     }
 
     private void RemoveUserFromTeam(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             System.out.println("Type ID of the user you want to delete");
             try {
                 User user = userService.getUserByID(Long.valueOf(AskUser()));
                 if (user != null){
-                    PublicVariables.UserRole role = teamUserRoleService.getRole(user, loggedUserTeam);
+                    UserRole role = teamUserRoleService.getRole(user, loggedUserTeam);
                     if (role.compareTo(myRole) > 0) {
                         for (Task task : loggedUserTeam.getTasks()) {
                             if (task.getUsers().contains(user)) {
@@ -462,13 +462,13 @@ public class MenuOptions {
     }
 
     private void SetAsAdmin(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type ID of the user you want to promote to admin role");
             try {
                 User user = userService.getUserByID(Long.valueOf(AskUser()));
                 if (user != null){
-                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.ADMIN);
+                    teamUserRoleService.setRole(user,loggedUserTeam, UserRole.ADMIN);
                     System.out.println("User " + user.getName() + " is now ADMIN on your team!");
                 }
             } catch (Exception e) {
@@ -481,13 +481,13 @@ public class MenuOptions {
     }
 
     private void SetAsManager(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type ID of the user you want to set as manager role");
             try {
                 User user = userService.getUserByID(Long.valueOf(AskUser()));
                 if (user!= null){
-                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.MANAGER);
+                    teamUserRoleService.setRole(user,loggedUserTeam, UserRole.MANAGER);
                     System.out.println("User " + user.getName() + " is now MANAGER on your team!");
                 }
             } catch (Exception e) {
@@ -500,13 +500,13 @@ public class MenuOptions {
     }
 
     private void SetAsUser(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type ID of the user you want to set as member role");
             try {
                 User user = userService.getUserByID(Long.valueOf(AskUser()));
                 if (user!= null){
-                    teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.MEMBER);
+                    teamUserRoleService.setRole(user,loggedUserTeam, UserRole.MEMBER);
                     System.out.println("User " + user.getName() + " is now MEMBER on your team!");
                 }
             } catch (Exception e) {
@@ -520,15 +520,15 @@ public class MenuOptions {
     }
 
     private void BanUser(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type ID user you want to ban on your team");
             try{
                 User user = userService.getUserByID(Long.valueOf(AskUser()));
                 if (user != null){
-                    PublicVariables.UserRole role = teamUserRoleService.getRole(user,loggedUserTeam);
+                    UserRole role = teamUserRoleService.getRole(user,loggedUserTeam);
                     if (role.compareTo(myRole) > 0){
-                        teamUserRoleService.setRole(user,loggedUserTeam, PublicVariables.UserRole.BANNED);
+                        teamUserRoleService.setRole(user,loggedUserTeam, UserRole.BANNED);
                     }
                 }
             } catch (Exception e) {
@@ -544,7 +544,7 @@ public class MenuOptions {
 
     //TASKS
     private void ViewTasks(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             Set<TaskManagerDTO> tasks = new HashSet<>();
             for (Task task : loggedUserTeam.getTasks()) {
@@ -574,7 +574,7 @@ public class MenuOptions {
             System.out.println("Give description for your task");
             task.setDescription(AskUser());
             task.setCreationDate(OffsetDateTime.now());
-            task.setTaskStatus(PublicVariables.TaskStatus.NEW);
+            task.setTaskStatus(TaskStatus.NEW);
             task.getUsers().add(loggedUser);
             taskService.saveTask(task);
 
@@ -596,7 +596,7 @@ public class MenuOptions {
                 long id = Long.valueOf(AskUser());
                 task = taskService.getTaskByIDAndTeam(id, loggedUserTeam);
             }
-            PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+            UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
             if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains(loggedUser)){
                 System.out.println("Choose what you want to edit");
                 System.out.println("1. Task Name");
@@ -621,11 +621,11 @@ public class MenuOptions {
                 }
                 else if(ans.contains("3")){
                     System.out.println("Type number of new task status for the task");
-                    for (PublicVariables.TaskStatus ts : PublicVariables.TaskStatus.values()){
+                    for (TaskStatus ts : TaskStatus.values()){
                         System.out.println(ts.ordinal() + " " + ts.name());
                     }
                     int choice = Integer.valueOf(AskUser());
-                    task.setTaskStatus(PublicVariables.TaskStatus.values()[choice]);
+                    task.setTaskStatus(TaskStatus.values()[choice]);
                     taskService.saveTask(task);
                     EditTask(task);
                 }
@@ -642,7 +642,7 @@ public class MenuOptions {
                             if (myRole.isOwnerOrAdmin() || myRole.isManager() || task.getUsers().contains(loggedUser)){
                                 User potentialNewUser = userService.getUserByID(userID);
                                 if (loggedUserTeam.getTeammates().contains(potentialNewUser)){
-                                    PublicVariables.UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
+                                    UserRole role = teamUserRoleService.getRole(potentialNewUser,loggedUserTeam);
                                     if (role.compareTo(myRole) >= 0){
                                         taskService.addUserToTask(task, potentialNewUser);
                                         System.out.println("User added to task");
@@ -675,7 +675,7 @@ public class MenuOptions {
                             long userID = Long.valueOf(userid);
                             User todelete = userService.getUserByID(userID);
                             if (task.getUsers().contains(todelete)){
-                                PublicVariables.UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
+                                UserRole role = teamUserRoleService.getRole(todelete,loggedUserTeam);
                                 if (role.compareTo(myRole) >= 0){
                                     taskService.removeUserFromTask(task,todelete);
                                     System.out.println("User removed from task");
@@ -743,7 +743,7 @@ public class MenuOptions {
     }
 
     private void DeleteTask(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type the ID of the task you want to delete");
             try{
@@ -776,7 +776,7 @@ public class MenuOptions {
         try {
             Subtask subtask = new Subtask();
             subtask.setTask(task);
-            subtask.setTaskStatus(PublicVariables.TaskStatus.NEW);
+            subtask.setTaskStatus(TaskStatus.NEW);
             System.out.println("Type name for the subtask");
             subtask.setName(AskUser());
             System.out.println("Type description for the subtask");
@@ -791,7 +791,7 @@ public class MenuOptions {
     }
 
     private void DeleteSubtask(Task task){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin()) {
             System.out.println("Type ID of the subtask you want to delete");
             for (Subtask sub : task.getSubtasks()){
@@ -845,7 +845,7 @@ public class MenuOptions {
     }
 
     private void GetInvitations(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             System.out.println("All invitations for the team");
             for (Invitation invitation : invitationService.getAllInvitations(loggedUserTeam)){
@@ -858,7 +858,7 @@ public class MenuOptions {
     }
 
     private void CreateInvitation(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             try {
                 Invitation invitation = new Invitation();
@@ -881,7 +881,7 @@ public class MenuOptions {
                     }
                 }
                 System.out.println("Type the role attached to the invitation (ADMIN, MANAGER, MEMBER)");
-                invitation.setRole(PublicVariables.UserRole.fromString(AskUser()));
+                invitation.setRole(UserRole.fromString(AskUser()));
                 System.out.println("Type the date when the invitation will expire in ISO8601 format (example: 2025-04-15T15:30:00+02:00 for 15th april 2025 15:30+02:00 timezone) or type NULL if you don't want it to expire");
                 String dateString = AskUser();
                 if (!dateString.toUpperCase().contains("NULL")){
@@ -902,7 +902,7 @@ public class MenuOptions {
     }
 
     private void EditInvitation(Invitation invitation){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             try{
                 if (invitation == null){
@@ -945,7 +945,7 @@ public class MenuOptions {
                     else if(ans.contains("2")){
                         System.out.println(String.format("Invitation currently has %s role assigned",invitation.getRole().name()));
                         System.out.println("Type the role attached to the invitation (ADMIN, MANAGER, MEMBER)");
-                        invitation.setRole(PublicVariables.UserRole.fromString(AskUser()));
+                        invitation.setRole(UserRole.fromString(AskUser()));
                         EditInvitation(invitation);
                     }
                     else if(ans.contains("3")){
@@ -976,7 +976,7 @@ public class MenuOptions {
     }
 
     private void DeleteInvitation(){
-        PublicVariables.UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
+        UserRole myRole = teamUserRoleService.getRole(loggedUser,loggedUserTeam);
         if (myRole.isOwnerOrAdmin() || myRole.isManager()) {
             try {
                 System.out.println("Type the UUID of the invitation you want to delete");

@@ -122,7 +122,7 @@ public class TaskService {
      * Unused, TODO: Refactor
      */
     @Transactional(readOnly = true)
-    public Set<Task> getAllTasksByStatus(PublicVariables.TaskStatus status){
+    public Set<Task> getAllTasksByStatus(TaskStatus status){
         Set<Task> temp = new HashSet<>();
 
         for (Task task : taskRepository.findAll()){
@@ -239,7 +239,7 @@ public class TaskService {
 
 
 
-    public Set<TaskDTO> getAllTasksRole(PublicVariables.UserRole role, Team team, User user){
+    public Set<TaskDTO> getAllTasksRole(UserRole role, Team team, User user){
         return  roleRegistry.getAllTasksMap(user,team).getOrDefault(role,Set.of());
     }
 
@@ -259,7 +259,7 @@ public class TaskService {
         return filteredTasks;
     }
 
-    public Set<TaskDTO> getMyTasksRole(PublicVariables.UserRole role, User user){
+    public Set<TaskDTO> getMyTasksRole(UserRole role, User user){
         return roleRegistry.getMyTasksMap(user).getOrDefault(role,Set.of());
     }
 
@@ -272,11 +272,11 @@ public class TaskService {
     }
 
 
-    public TaskDTO getInformationAboutTaskRole(PublicVariables.UserRole role, Task task, User user) {
+    public TaskDTO getInformationAboutTaskRole(UserRole role, Task task, User user) {
         return roleRegistry.getInformationAboutTaskRoleMap(task,user).entrySet().stream().filter(entry -> entry.getKey().test(role)).map(entry -> entry.getValue().apply(task)).findFirst().orElseThrow(() -> new NoPrivilegesException());
     }
 
-    public boolean putTaskRole(PublicVariables.UserRole role, Task task, User user){
+    public boolean putTaskRole(UserRole role, Task task, User user){
         return roleRegistry.putTaskRoleMap(user).getOrDefault(role, t-> false).test(task);
     }
 

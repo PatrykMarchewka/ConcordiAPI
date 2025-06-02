@@ -5,10 +5,10 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,6 @@ public class TeamService {
     private final UserService userService;
     private final TeamUserRoleService teamUserRoleService;
     private final TaskService taskService;
-
     private final RoleRegistry roleRegistry;
 
     @Autowired
@@ -76,7 +75,7 @@ public class TeamService {
     public Team createTeam(TeamRequestBody body, User user){
         Team team = new Team();
         applyCreateUpdates(team,body);
-        addUser(team,user, PublicVariables.UserRole.OWNER);
+        addUser(team,user, UserRole.OWNER);
         return team;
     }
 
@@ -127,7 +126,7 @@ public class TeamService {
 
 
     @Transactional
-    public void addUser(Team team, User user, PublicVariables.UserRole role){
+    public void addUser(Team team, User user, UserRole role){
         team.addTeammate(user);
         saveTeam(team);
         user.addTeam(team);
@@ -150,7 +149,7 @@ public class TeamService {
 
 
     public TeamDTO createTeamDTO(User user, Team team){
-        PublicVariables.UserRole role = teamUserRoleService.getRole(user,team);
+        UserRole role = teamUserRoleService.getRole(user,team);
         return roleRegistry.createTeamDTOMap().getOrDefault(role, (t, u) -> { throw new NoPrivilegesException(); }).apply(team, user);
     }
 

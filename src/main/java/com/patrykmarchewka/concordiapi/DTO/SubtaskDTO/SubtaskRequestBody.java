@@ -1,8 +1,8 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.patrykmarchewka.concordiapi.PublicVariables;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
@@ -15,9 +15,9 @@ public class SubtaskRequestBody {
     private String description;
     @NotNull(groups = OnCreate.class)
     private long task;
-    private PublicVariables.TaskStatus taskStatus;
+    private TaskStatus taskStatus;
 
-    public SubtaskRequestBody(@Nullable String name,@Nullable String description, long task,@Nullable PublicVariables.TaskStatus taskStatus){
+    public SubtaskRequestBody(@Nullable String name,@Nullable String description, long task,@Nullable TaskStatus taskStatus){
         this.name = name;
         this.description = description;
         this.task = task;
@@ -35,6 +35,6 @@ public class SubtaskRequestBody {
     public long getTask(){return task;}
     public void setTask(long task){this.task = task;}
 
-    public PublicVariables.TaskStatus getTaskStatus(){return taskStatus;}
-    public void setTaskStatus(PublicVariables.TaskStatus taskStatus){this.taskStatus = taskStatus;}
+    public TaskStatus getTaskStatus(){return taskStatus;}
+    public void setTaskStatus(TaskStatus taskStatus){this.taskStatus = taskStatus;}
 }
