@@ -6,6 +6,12 @@ public enum TaskStatus{
     INPROGRESS,
     HALTED,
     FINISHED;
+
+    /**
+     * Converts String to TaskStatus value ignoring case
+     * @param name String of TaskStatus value
+     * @return TaskStatus from the String
+     */
     public static TaskStatus fromString(String name){
         for (TaskStatus status : TaskStatus.values()){
             if (status.name().equalsIgnoreCase(name)){

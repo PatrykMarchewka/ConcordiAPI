@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.patrykmarchewka.concondiapi'
-version = '1.0.0'
+version = '1.0.1'
 
 java {
 	toolchain {
@@ -28,6 +28,7 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.h2database:h2'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

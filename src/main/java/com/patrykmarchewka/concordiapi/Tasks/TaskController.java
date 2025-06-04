@@ -129,7 +129,7 @@ public class TaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}")
-    public ResponseEntity<APIResponse<Void>> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();

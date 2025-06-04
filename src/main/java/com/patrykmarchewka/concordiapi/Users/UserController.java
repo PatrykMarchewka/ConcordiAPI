@@ -33,8 +33,16 @@ public class UserController {
         this.context = context;
     }
 
+    /**
+     * Gets information about users in team
+     * @param teamID Team ID to check in
+     * @param authentication Authentication from logged user
+     * @param role Optional, UserRole in String form
+     * @return UserMemberDTO information about users if user has sufficient privileges, otherwise throws
+     * @throws NoPrivilegesException Thrown when user is not in admin group
+     */
     //param, ?role=ADMIN
-    @Operation(summary = "Get users in team", description = "Get users in the team, get their information or just number of teammates depending on your role, you can also filter by role")
+    @Operation(summary = "Get users in team", description = "Get users in the team with their information, allows filtering by role with optional param")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
@@ -55,13 +63,21 @@ public class UserController {
     }
 
 
-    @Operation(summary = "Get information about user", description = "Gets information about user if my role is higher than theirs")
+    /**
+     * Gets information about specific user
+     * @param teamID Team ID of which both users are part of
+     * @param ID ID of the user you want to check
+     * @param authentication Authentication from logged user
+     * @return Information about user with given ID
+     * @throws NoPrivilegesException Thrown when you don't have enough privileges to get information about other person
+     */
+    @Operation(summary = "Get information about user", description = "Gets information about user if my role is same or higher than theirs")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users/{ID}")
-    public ResponseEntity<?> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<UserMemberDTO>> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
         if (!teamUserRoleService.checkRoles.test(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
@@ -69,22 +85,37 @@ public class UserController {
         return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
     }
 
+    /**
+     * Removes given user from Team
+     * @param teamID Team ID from which you want to kick the user
+     * @param ID ID of the user you want to kick
+     * @param authentication Authentication from logged user
+     * @return Message if user has been removed successfully from the team
+     * @throws NoPrivilegesException Thrown if other user has same or higher role than user kicking
+     */
     @Operation(summary = "Remove user from team", description = "Removes selected user from team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/{ID}")
-    public ResponseEntity<?> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
 
-        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole()) <= 0){
+        if (teamUserRoleService.checkRoles.test(context.getOtherRole(),context.getUserRole())){
             throw new NoPrivilegesException();
         }
+
         teamService.removeUser(context.getTeam(), userService.getUserByID(ID));
-        return ResponseEntity.ok("User deleted from team!");
+        return ResponseEntity.ok(new APIResponse<>("User deleted from team!",null));
     }
 
+    /**
+     * Leaves the team
+     * @param teamID Team ID to leave
+     * @param authentication Authentication from logged user
+     * @return Message whether team was left successfully or were there any problems
+     */
     @Operation(summary = "Leave team", description = "Leave the team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -103,6 +134,15 @@ public class UserController {
         }
     }
 
+    /**
+     * Changes the UserRole of a specified User in a team
+     * @param teamID Team ID in which both users are part of
+     * @param ID ID of user you want to change role of
+     * @param newRole New role that you want to give
+     * @param authentication Authentication from logged user
+     * @return Message if role was successfully changed
+     * @throws NoPrivilegesException Thrown when User changing role is not Owner or Admin or when new role is higher than the one of User changing role
+     */
     @Operation(summary = "Change user role", description = "Change the role of selected user")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -111,7 +151,7 @@ public class UserController {
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<?> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
-        if (!context.getUserRole().isOwnerOrAdmin() || teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole()) <= 0 || !teamUserRoleService.checkRoles.test(newRole,context.getUserRole())){
+        if (!context.getUserRole().isOwnerOrAdmin() || !teamUserRoleService.checkRoles.test(newRole,context.getUserRole())){
             throw new NoPrivilegesException();
         }
         teamUserRoleService.setRole(userService.getUserByID(ID), context.getTeam(), newRole);

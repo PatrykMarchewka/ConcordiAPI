@@ -41,16 +41,30 @@ public class ControllerContext {
         this.invitationService = invitationService;
     }
 
+    /**
+     * @param authentication Authentication from logged user
+     * @return User
+     */
     public ControllerContext withUser(Authentication authentication){
         this.user = (User)authentication.getPrincipal();
         return this;
     }
 
+    /**
+     * @param teamID long to convert into Team object
+     * @return Team
+     */
     public ControllerContext withTeam(long teamID){
         this.team = teamService.getTeamByID(teamID);
         return this;
     }
 
+    /**
+     * Requires withTeam to be called before
+     * @param taskID long to convert into Task object
+     * @return Task
+     * @throws BadRequestException Thrown when called before {@link #withTeam(long)}
+     */
     public ControllerContext withTask(long taskID){
         if (team == null){
             throw new BadRequestException("Cannot call withTask before specifying team!");
@@ -59,6 +73,11 @@ public class ControllerContext {
         return this;
     }
 
+    /**
+     * Requires withUser and withTeam to be called before
+     * @return UserRole
+     * @throws BadRequestException Thrown when called before {@link #withTeam(long)} and {@link #withUser(Authentication)}
+     */
     public ControllerContext withRole(){
         if (user == null || team == null){
             throw new BadRequestException("Cannot call withRole before specifying user and team!");
@@ -67,6 +86,12 @@ public class ControllerContext {
         return this;
     }
 
+    /**
+     * Requires withTeam to be called before
+     * @param otherUser User to get UserRole
+     * @return UserRole
+     * @throws BadRequestException Thrown when called before {@link #withTeam(long)}
+     */
     public ControllerContext withOtherRole(User otherUser){
         if (team == null){
             throw new BadRequestException("Cannot call withOtherRole before specifying team!");
@@ -75,12 +100,14 @@ public class ControllerContext {
         return this;
     }
 
+    /**
+     * @param UUID String to get Invitation
+     * @return Invitation
+     */
     public ControllerContext withInvitation(String UUID){
         this.invitation = invitationService.getInvitationByUUID(UUID);
         return this;
     }
-
-
 
 
     public User getUser() {return user;}

@@ -118,7 +118,7 @@ public class SubtaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/subtasks/{ID}")
-    public ResponseEntity<APIResponse<Void>> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(taskID);
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();

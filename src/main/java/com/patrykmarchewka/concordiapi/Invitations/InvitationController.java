@@ -114,7 +114,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<Void>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();

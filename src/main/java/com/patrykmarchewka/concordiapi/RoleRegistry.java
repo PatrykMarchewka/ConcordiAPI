@@ -38,6 +38,11 @@ public class RoleRegistry {
 
 
     //Team
+
+    /**
+     * Map of user Roles and DTOs to return
+     * @return Appropriate DTO for the UserRole
+     */
     public Map<UserRole, BiFunction<Team, User, TeamDTO>> createTeamDTOMap() {
         return Map.of(
             UserRole.OWNER, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
@@ -49,6 +54,13 @@ public class RoleRegistry {
 
 
     //Users
+
+    /**
+     * Map of User Roles and Set of User to return
+     * @param team Current team in which to search
+     * @param role Role to search for
+     * @return Set of Users with that role in the team
+     */
     public Map<UserRole, Supplier<Set<User>>> createUserDTOMapWithParam(Team team, UserRole role){
         return Map.of(
                 UserRole.OWNER, () -> teamUserRoleService.getAllByTeamAndUserRole(team, role),
@@ -57,6 +69,11 @@ public class RoleRegistry {
         );
     }
 
+    /**
+     * Map of User Roles and Set of User to return
+     * @param team Current team in which to search
+     * @return Set of users in the team
+     */
     public Map<UserRole, Supplier<Set<User>>> createUserDTOMapNoParam(Team team){
         return Map.of(
                 UserRole.OWNER, () -> team.getTeammates(),
@@ -66,10 +83,13 @@ public class RoleRegistry {
     }
 
 
-
-
-
     //Tasks
+
+    /**
+     * Map of User and whether user can PUT task
+     * @param user User to check permissions
+     * @return True if user can edit task with PUT, otherwise false
+     */
     public Map<UserRole, Predicate<Task>> putTaskRoleMap(User user) {
         return Map.of(
                 UserRole.OWNER, t -> true,
@@ -79,8 +99,12 @@ public class RoleRegistry {
         );
     }
 
-
-
+    /**
+     * Map of User Role and Task DTO to return based on User Role
+     * @param task Task to return DTO of
+     * @param user User to check permissions
+     * @return Appropriate DTO based on User Role
+     */
     public Map<Predicate<UserRole>, Function<Task, TaskDTO>> getInformationAboutTaskRoleMap(Task task, User user) {
         return Map.of(
                 u -> u.isAdminGroup(), t -> new TaskManagerDTO(t),
@@ -88,6 +112,11 @@ public class RoleRegistry {
         );
     }
 
+    /**
+     * Map of User Role and Set of Task DTO to return based on User Role
+     * @param user User to check permissions
+     * @return Set of Task DTO that user is assigned to
+     */
     public Map<UserRole, Set<TaskDTO>> getMyTasksMap(User user) {
         Map<UserRole, Set<TaskDTO>> roleActions = new HashMap<>();
 
@@ -99,6 +128,12 @@ public class RoleRegistry {
         return roleActions;
     }
 
+    /**
+     * Map of User Role and Set of Task DTO to return based on User Role
+     * @param user User to check permissions
+     * @param team Team to which return tasks of
+     * @return Set of Task DTO in the team
+     */
     public Map<UserRole, Set<TaskDTO>> getAllTasksMap(User user, Team team) {
         Map<UserRole,Set<TaskDTO>> roleActions = new HashMap<>();
 

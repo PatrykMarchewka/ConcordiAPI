@@ -33,6 +33,10 @@ public class JSONWebToken {
     private String SECRET_KEY;
     private static String secret_key;
 
+
+    /**
+     * Generates new secret key
+     */
     @PostConstruct
     private void swapSecret(){
         if (SECRET_KEY.isBlank()){
@@ -44,6 +48,14 @@ public class JSONWebToken {
 
     }
 
+    /**
+     * Hashes data, encodes to base64 and returns it without extra padding as String
+     * @param data Data to hash
+     * @param secret Secret key, environment variable
+     * @return HMAC hash after Base64 encoding
+     * @throws NoSuchAlgorithmException Thrown when it can't use HMacSHA256 from javax.Mac class
+     * @throws InvalidKeyException Thrown when key is invalid
+     */
     private static String HmacSHA256(String data, String secret) throws NoSuchAlgorithmException, InvalidKeyException {
         Mac mac = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(),"HmacSHA256");
@@ -53,6 +65,13 @@ public class JSONWebToken {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes);
     }
 
+    /**
+     * Compares two JsonWebTokens and verifies authenticity
+     * @param jwt Full three part JWT
+     * @return True if recomputed JWT matches the one provided, otherwise false
+     * @throws NoSuchAlgorithmException Thrown when it can't use HMacSHA256 from javax.Mac class
+     * @throws InvalidKeyException Thrown when key is invalid
+     */
     public static boolean VerifyJWT(String jwt) throws NoSuchAlgorithmException, InvalidKeyException {
         String[] parts = jwt.split("\\.");
         if (parts.length != 3){
@@ -67,16 +86,35 @@ public class JSONWebToken {
         return computedSignature.equals(signatureReceived);
     }
 
+    /**
+     * Creates Base64 String key without padding that is between 32 and 64 byte length <br>
+     * Uses SecureRandom for safer RNG
+     * @return Base64 String without padding
+     */
     public static String SecureSecretKeyGenerator(){
         byte[] key = new byte[new Random().nextInt(32,65)];
         new SecureRandom().nextBytes(key);
         return Base64.getEncoder().withoutPadding().encodeToString(key);
     }
 
+    /**
+     * Converts String to Base64 String without padding, uses UTF-8
+     * @param input String to convert
+     * @return Base64 String without padding, uses UTF-8
+     */
     public static String Base64Encoding(String input){
         return Base64.getEncoder().withoutPadding().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Generates Json Web Token from given login and password String <br>
+     * Generated token is valud for 1 hour since creation
+     * @param login String with user login
+     * @param password String with user password
+     * @return Encoded JsonWebToken
+     * @throws NoSuchAlgorithmException Thrown when it can't use HMacSHA256 from javax.Mac class
+     * @throws InvalidKeyException Thrown when key is invalid
+     */
     public static String GenerateJWToken(String login, String password) throws NoSuchAlgorithmException, InvalidKeyException {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
@@ -88,6 +126,12 @@ public class JSONWebToken {
         return encodedHeader + "." + encodedPayload + "." + signature;
     }
 
+    /**
+     * Extracts information from Json Web Token
+     * @param jwt Full Json Web Token
+     * @return Payload or Null if jwt is not valid
+     * @throws JsonProcessingException Thrown when can't read value from payload
+     */
     public static Map<String,Object> ExtractJWTTokenPayload(String jwt) throws JsonProcessingException {
         String[] parts = jwt.split("\\.");
         if (parts.length != 3){

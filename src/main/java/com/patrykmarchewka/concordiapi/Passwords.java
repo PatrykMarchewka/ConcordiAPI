@@ -8,6 +8,11 @@ import java.security.NoSuchAlgorithmException;
 
 public class Passwords {
 
+    /**
+     * Hashes password using BCrypt, currently uses strength of 13
+     * @param password String to hash
+     * @return Hashed password
+     */
     public static String HashPasswordBCrypt(String password){
         return new BCryptPasswordEncoder(13).encode(password);
     }
@@ -26,6 +31,12 @@ public class Passwords {
         return hexString.toString();
     }
 
+    /**
+     * Compares password with hash
+     * @param password String password to compare
+     * @param hash Hash of the password to compare
+     * @return True if password matches the hashed one, otherwise false
+     */
     public static boolean CheckPasswordBCrypt(String password,String hash){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(13);
         return encoder.matches(password,hash);
