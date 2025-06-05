@@ -37,6 +37,7 @@ public class Team {
     public Set<User> getTeammates(){ return this.teammates; }
     public void addTeammate(User user){this.teammates.add(user);}
     public void removeTeammate(User user){this.teammates.remove(user);}
+    public boolean checkTeammate(User user){ return this.teammates.contains(user); }
     public void setTeammates(Set<User> teammates){this.teammates = teammates;}
 
     public Set<Task> getTasks() { return tasks; }

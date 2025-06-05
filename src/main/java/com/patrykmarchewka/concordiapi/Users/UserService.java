@@ -39,6 +39,11 @@ public class UserService {
         );
     }
 
+    /**
+     * Applies CREATE updates for the User given the UserRequestBody details, should be only called from {@link #createUser(UserRequestBody)}
+     * @param user User to modify
+     * @param body UserRequestBody with information to update
+     */
     private void applyCreateUpdates(User user, UserRequestBody body){
         for (UserUpdater updater : updaters()){
             if (updater instanceof UserCREATEUpdater createUpdater){
@@ -47,6 +52,11 @@ public class UserService {
         }
     }
 
+    /**
+     * Applies PUT updates for the User given the UserRequestBody details, should be only called from {@link #putUser(User, UserRequestBody)}
+     * @param user User to modify
+     * @param body UserRequestBody with information to update
+     */
     private void applyPutUpdates(User user, UserRequestBody body){
         for (UserUpdater updater : updaters()){
             if (updater instanceof UserPUTUpdater putUpdater){
@@ -55,6 +65,11 @@ public class UserService {
         }
     }
 
+    /**
+     * Applies PATCH updates for the User given the UserRequestBody details, should be only called from {@link #patchUser(User, UserRequestBody)}
+     * @param user User to modify
+     * @param body UserRequestBody with information to update
+     */
     private void applyPatchUpdates(User user, UserRequestBody body){
         for (UserUpdater updater : updaters()){
             if (updater instanceof  UserPATCHUpdater patchUpdater){
@@ -63,15 +78,33 @@ public class UserService {
         }
     }
 
-
+    /**
+     * Returns User given ID or throws
+     * @param id ID of the user to search for
+     * @return User with the given ID
+     * @throws NotFoundException Thrown when can't find User with provided ID
+     */
     public User getUserByID(Long id){
         return userRepository.findById(id).orElseThrow(NotFoundException::new);
     }
 
+    /**
+     * Returns User given Login or throws
+     * @param Login Login of the user to search for
+     * @return User with the given Login
+     * @throws NotFoundException Thrown when can't find User with provided Login
+     */
     public User getUserByLogin(String Login){
         return userRepository.findByLogin(Login).orElseThrow(NotFoundException::new);
     }
 
+    /**
+     * Returns user given UserRequestLogin or throws
+     * @param body UserRequestLogin with the credentials
+     * @return User with the given credentials
+     * @throws NotFoundException Thrown when can't find User with provided Login due to call to {@link #getUserByLogin(String)}
+     * @throws WrongCredentialsException Thrown when credentials don't match
+     */
     public User getUserByLoginAndPassword(UserRequestLogin body){
         User user = getUserByLogin(body.getLogin());
         if (!Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
@@ -80,49 +113,30 @@ public class UserService {
         return user;
     }
 
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<User> getUsersWithoutTasks(TaskRepository taskRepository){
-        List<User> temp = new ArrayList<>();
-        HashSet<User> assignedUsers = new HashSet<>();
-        for (Task task : taskRepository.findAll()){
-            assignedUsers.addAll(task.getUsers());
-        }
-
-        for (User user : this.getAllUsers()){
-            if (!assignedUsers.contains(user)){
-                temp.add(user);
-            }
-        }
-        return temp;
-
-    }
-
+    /**
+     * Returns whether there is User with provided login
+     * @param login Login to check for
+     * @return True if user with given login exists, otherwise false
+     */
     public boolean checkIfUserExistsByLogin(String login){
         return userRepository.existsByLogin(login);
     }
 
+    /**
+     * Returns whether provided user is in the provided team
+     * @param user User to check for
+     * @param team Team in which to check
+     * @return True if user exists in given team, otherwise false
+     */
     public boolean checkIfUserExistsInATeam(User user, Team team){
-        return user.getTeams().contains(team) && team.getTeammates().contains(user);
+        return user.checkTeam(team) && team.checkTeammate(user);
     }
 
-    public boolean checkIfUserExistsByID(long ID){
-        return userRepository.existsById(ID);
-    }
-
-    public boolean checkIfUserExistsByNameAndLastName(String name){
-        String answer[] = name.split(" ");
-        return userRepository.existsByNameAndLastName(answer[0], answer[1]);
-    }
-
-    public User getUserByNameAndLastName(String fullname){
-        String answer[] = fullname.split(" ");
-        return userRepository.findByNameAndLastName(answer[0], answer[1]);
-    }
-
+    /**
+     * Creates user with specified UserRequestBody details
+     * @param body UserRequestBody with User credentials
+     * @return New created user
+     */
     @Transactional
     public User createUser(UserRequestBody body){
         User user = new User();
@@ -130,31 +144,60 @@ public class UserService {
         return saveUser(user);
     }
 
+    /**
+     * Modifies user entirely with specified UserRequestBody details
+     * @param user User to modify
+     * @param body UserRequestBody with new credentials
+     * @return Modified User
+     */
     @Transactional
     public User putUser(User user, UserRequestBody body){
         applyPutUpdates(user,body);
         return saveUser(user);
     }
 
+    /**
+     * Modifies user partially
+     * @param user User to modify
+     * @param body UserRequestBody with new credentials
+     * @return Modified User
+     */
     @Transactional
     public User patchUser(User user,UserRequestBody body){
         applyPatchUpdates(user, body);
         return saveUser(user);
     }
 
-
+    /**
+     * Deletes specified User
+     * @param user User to delete
+     */
     public void deleteUser(User user){
         userRepository.delete(user);
     }
 
+    /**
+     * Deletes specified User by ID
+     * @param id ID of user to delete
+     */
     public void deleteUserByID(long id){
         userRepository.deleteById(id);
     }
 
+    /**
+     * Saves pending changes to User
+     * @param user User to save
+     * @return User after changes
+     */
     public User saveUser(User user){
         return userRepository.save(user);
     }
-    
+
+    /**
+     * Returns DTO of given Set of Users
+     * @param users Set of Users to get DTO of
+     * @return UserMemberDTO of each User in the set
+     */
     public Set<UserMemberDTO> userMemberDTOSetProcess(Set<User> users){
         Set<UserMemberDTO> ret = new HashSet<>();
         for (User user : users){
@@ -163,17 +206,39 @@ public class UserService {
         return ret;
     }
 
+    /**
+     * Returns DTO of each user with the given UserRole
+     * @param myRole Role of User asking for information
+     * @param param UserRole of users to get
+     * @param team Team in which to search
+     * @return UserMemberDTO of each user with provided role
+     * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
+     */
     public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, Team team){
         Set<User> users = roleRegistry.createUserDTOMapWithParam(team,param).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
         return userMemberDTOSetProcess(users);
     }
 
+    /**
+     * Returns DTO of users in team
+     * @param myRole Role of User asking for information
+     * @param team Team in which to search
+     * @return UserMemberDTO of each user in the team
+     * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
+     */
     public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, Team team){
         Set<User> users = roleRegistry.createUserDTOMapNoParam(team).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
         return userMemberDTOSetProcess(users);
     }
 
 
+    /**
+     * Checks if users belongs in a given team
+     * @param userIDs Set of IDs of Users to check
+     * @param team Team in which to search
+     * @return True if all users are part of given team, otherwise false
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
     public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
         if (userIDs == null || team == null) return false;
         for (int id : userIDs) {
@@ -184,11 +249,20 @@ public class UserService {
         return true;
     }
 
+    /**
+     * Returns teams in which user is part of
+     * @param user User to check
+     * @return Set of teams that user belongs to
+     */
     public Set<Team> getTeams(User user){
         return user.getTeams();
     }
 
-
+    /**
+     * Returns Users with provided IDs
+     * @param userIDs Set of IDs to check for
+     * @return Set of Users with given IDs
+     */
     public Set<User> getUsersFromIDs(Set<Integer> userIDs){
         Set<User> users = new HashSet<>();
         for(int id : userIDs){
@@ -197,18 +271,32 @@ public class UserService {
         return users;
     }
 
+    /**
+     * Adds Task to specified User
+     * @param user User to get added to task
+     * @param task Task to attach to user
+     */
     @Transactional
     public void addTaskToUser(User user, Task task) {
         user.getTasks().add(task);
         saveUser(user);
     }
 
+    /**
+     * Removes Task from specified User
+     * @param user User to get removed from the task
+     * @param task Task to remove from user
+     */
     @Transactional
     public void removeTaskFromUser(User user, Task task){
         user.getTasks().remove(task);
         saveUser(user);
     }
 
+    /**
+     * Removes Task from all users
+     * @param task Task to remove
+     */
     public void removeTaskFromAllUsers(Task task){
         for (User user : task.getUsers()){
             removeTaskFromUser(user,task);
