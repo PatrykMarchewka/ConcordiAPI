@@ -66,6 +66,8 @@ public class User {
     }
 
     public Set<Task> getTasks() { return tasks; }
+    public void addTask(Task task){ this.tasks.add(task); }
+    public void removeTask(Task task){ this.tasks.remove(task); }
 
     public void setTasks(Set<Task> tasks) {this.tasks = tasks;}
 

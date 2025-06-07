@@ -278,7 +278,7 @@ public class UserService {
      */
     @Transactional
     public void addTaskToUser(User user, Task task) {
-        user.getTasks().add(task);
+        user.addTask(task);
         saveUser(user);
     }
 
@@ -289,7 +289,7 @@ public class UserService {
      */
     @Transactional
     public void removeTaskFromUser(User user, Task task){
-        user.getTasks().remove(task);
+        user.removeTask(task);
         saveUser(user);
     }
 
