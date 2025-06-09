@@ -91,12 +91,12 @@ public class Task {
     public void addSubtask(Subtask subtask){subtasks.add(subtask);}
     public void removeSubtask(Subtask subtask){subtasks.remove(subtask);}
 
-    public Set<User> getUsers() {
-        return users;
-    }
+    public Set<User> getUsers() {return users;}
     public void setUsers(Set<User> users){
         this.users = users;
     }
+    public void addUser(User user){ this.users.add(user); }
+    public void removeUser(User user) { this.users.remove(user); }
 
     public Team getTeam(){ return this.team; }
     public void setTeam(Team team){ this.team = team; }

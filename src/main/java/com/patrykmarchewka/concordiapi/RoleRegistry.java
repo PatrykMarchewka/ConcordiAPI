@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -113,37 +112,35 @@ public class RoleRegistry {
     }
 
     /**
-     * Map of User Role and Set of Task DTO to return based on User Role
-     * @param user User to check permissions
-     * @return Set of Task DTO that user is assigned to
+     * Returns Set of Tasks and TaskDTO class based on User Role
+     * @param user User calling the method
+     * @param team Team in which to check
+     * @return Set of all tasks in team or tasks assigned to user and DTO class to specify what information to share
      */
-    public Map<UserRole, Set<TaskDTO>> getMyTasksMap(User user) {
-        Map<UserRole, Set<TaskDTO>> roleActions = new HashMap<>();
+    public Map<UserRole, Pair<Set<Task>,Class<? extends TaskDTO>>> getAllTasksInTeamMap(User user, Team team){
+        Map<UserRole, Pair<Set<Task>,Class<? extends TaskDTO>>> roleActions = new HashMap<>();
 
-        roleActions.put(UserRole.OWNER, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(UserRole.ADMIN, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(UserRole.MANAGER, new HashSet<>(taskService.getMyTasksManager(user)));
-        roleActions.put(UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
-
+        roleActions.put(UserRole.OWNER, new Pair<>(taskService.getAllTasks(team), TaskManagerDTO.class));
+        roleActions.put(UserRole.ADMIN, new Pair<>(taskService.getAllTasks(team),TaskManagerDTO.class));
+        roleActions.put(UserRole.MANAGER, new Pair<>(taskService.getAllTasks(team),TaskManagerDTO.class));
+        roleActions.put(UserRole.MEMBER, new Pair<>(taskService.getAllTasksForUser(user, team), TaskMemberDTO.class));
         return roleActions;
     }
 
     /**
-     * Map of User Role and Set of Task DTO to return based on User Role
-     * @param user User to check permissions
-     * @param team Team to which return tasks of
-     * @return Set of Task DTO in the team
+     * Returns DTO class to specify what information to share about tasks based on UserRole
+     * @return
      */
-    public Map<UserRole, Set<TaskDTO>> getAllTasksMap(User user, Team team) {
-        Map<UserRole,Set<TaskDTO>> roleActions = new HashMap<>();
+    public Map<UserRole, Class<? extends TaskDTO>> getMyTasksMap(){
+        Map<UserRole, Class<? extends TaskDTO>> roleActions = new HashMap<>();
 
-        roleActions.put(UserRole.OWNER, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(UserRole.ADMIN, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(UserRole.MANAGER, new HashSet<>(taskService.getAllTasksManager(team)));
-        roleActions.put(UserRole.MEMBER, new HashSet<>(taskService.getAllTasksMember(user)));
+        roleActions.put(UserRole.OWNER, TaskManagerDTO.class);
+        roleActions.put(UserRole.ADMIN, TaskManagerDTO.class);
+        roleActions.put(UserRole.MANAGER, TaskManagerDTO.class);
+        roleActions.put(UserRole.MEMBER, TaskMemberDTO.class);
 
         return roleActions;
-}
+    }
 
 
 }

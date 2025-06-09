@@ -39,19 +39,24 @@ public class TaskController {
         this.context = context;
     }
 
-    @Operation(summary = "Get all tasks",description = "Get all tasks if Owner/Admin/Manager or just tasks assigned to me if Member")
+    //param, ?inactivedays=5
+    @Operation(summary = "Get all tasks or filter by inactive using parameter",description = "Get all tasks if Owner/Admin/Manager or just tasks assigned to me if Member, can be filtered to inactive only")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks")
-    public ResponseEntity<APIResponse<Set<?>>> getAllTasks(@PathVariable long teamID, Authentication authentication){
+    public ResponseEntity<APIResponse<Set<?>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactivedays){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasksRole(context.getUserRole(), context.getTeam(), context.getUser())));
+        if (inactivedays != null){
+            return ResponseEntity.ok(new APIResponse<>("All inactive tasks avaible",taskService.getInactiveTasks(context.getTeam(), context.getUserRole(),inactivedays)));
+        }
+
+        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasks(context.getUser(), context.getTeam(), context.getUserRole())));
     }
 
     @Operation(summary = "Create new task", description = "Creates a new task with specified information")
@@ -79,7 +84,7 @@ public class TaskController {
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",taskService.getMyTasksRole(context.getUserRole(), context.getUser())));
+        return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me",taskService.getMyTasks(context.getUser(), context.getTeam(), context.getUserRole())));
 
     }
 
