@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/teams/{teamID}")
 @SecurityRequirement(name = "BearerAuth")
@@ -48,7 +50,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
+    public ResponseEntity<APIResponse<Set<UserMemberDTO>>> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
@@ -122,7 +124,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/me")
-    public ResponseEntity<?> leaveTeam(@PathVariable long teamID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> leaveTeam(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
         if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){

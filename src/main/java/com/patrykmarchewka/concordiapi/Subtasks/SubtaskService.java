@@ -45,6 +45,12 @@ public class SubtaskService {
                 new SubtaskStatusUpdater());
     }
 
+    /**
+     * Applies CREATE updates for the Subtask given the SubtaskRequestBody details, should only be called from {@link #createSubtask(SubtaskRequestBody, Supplier)}
+     * @param subtask Subtask to create
+     * @param body SubtaskRequestBody with new values
+     * @param teamID Supplier to pass TeamID
+     */
     private void applyCreateUpdates(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
         for (SubtaskUpdater updater : updaters(teamID)){
             if (updater instanceof SubtaskCREATEUpdater createUpdater){
@@ -53,6 +59,12 @@ public class SubtaskService {
         }
     }
 
+    /**
+     * Applies PUT updates for the Subtask given the SubtaskRequestBody details, should only be called from {@link #putUpdate(Subtask, SubtaskRequestBody, Supplier)}
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody
+     * @param teamID Supplier to pass TeamID
+     */
     private void applyPutUpdates(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
         for (SubtaskUpdater updater : updaters(teamID)){
             if (updater instanceof SubtaskPUTUpdater putUpdater){
@@ -61,6 +73,11 @@ public class SubtaskService {
         }
     }
 
+    /**
+     * Applies PATCH updates for the Subtask given the SubtaskRequestBody details, should only be called from {@link #patchUpdate(Subtask, SubtaskRequestBody)}
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody with new values
+     */
     private void applyPatchUpdates(Subtask subtask, SubtaskRequestBody body){
         for (SubtaskUpdater updater : updaters(null)){
             if (updater instanceof SubtaskPATCHUpdater patchUpdater){

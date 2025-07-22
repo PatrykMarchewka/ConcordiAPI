@@ -36,6 +36,13 @@ public class InvitationController {
 
     }
 
+    /**
+     * Returns information about all invitations generated for the team
+     * @param teamID ID of the team to check in
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO of all invitations for the team
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Check invitations",description = "Check all invitations for given team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -51,6 +58,14 @@ public class InvitationController {
         return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitationService.getInvitationsDTO(context.getTeam())));
     }
 
+    /**
+     * Returns information about specific invitation
+     * @param teamID ID of the team to check in
+     * @param invID ID of the invitation to check for
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO of the specified invitation
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Check invitation", description = "Check specific invitation for given team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -66,6 +81,14 @@ public class InvitationController {
         return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(context.getInvitation(), teamUserRoleService)));
     }
 
+    /**
+     * Generates new invitation
+     * @param teamID ID of the team to generate invitation for
+     * @param body InvitationRequestBody with information about invitation
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO of the generated invitation
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team or when user tries to generate invitation with higher user role
+     */
     @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
     @ApiResponse(responseCode = "201", ref = "201")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -80,6 +103,15 @@ public class InvitationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body),teamUserRoleService)));
     }
 
+    /**
+     * Replaces all invitation information with new values
+     * @param teamID ID of the team to check in
+     * @param invID ID of the invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO after changes
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -94,6 +126,15 @@ public class InvitationController {
         return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.putUpdate(context.getInvitation(), body),teamUserRoleService)));
     }
 
+    /**
+     * Patches invitation with new values
+     * @param teamID ID of the team to check in
+     * @param invID ID of the invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO after changes
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -108,6 +149,14 @@ public class InvitationController {
         return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(context.getInvitation(), body),teamUserRoleService)));
     }
 
+    /**
+     * Deletes invitation
+     * @param teamID ID of the team to check in
+     * @param invID ID of the invitation to delete
+     * @param authentication User credentials to authenticate
+     * @return Message that invitation has been deleted
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Delete invitation", description = "Delete existing invitation for the team")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")

@@ -44,7 +44,7 @@ public class TeamController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/teams")
-    public ResponseEntity<?> myTeams(Authentication authentication){
+    public ResponseEntity<APIResponse<Set<TeamDTO>>> myTeams(Authentication authentication){
         context = context.withUser(authentication);
         return ResponseEntity.ok(new APIResponse<>("Information about all joined teams",teamService.getTeamsDTO(context.getUser())));
     }
@@ -60,9 +60,9 @@ public class TeamController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/teams")
-    public ResponseEntity<?> createTeam(@RequestBody @Valid TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> createTeam(@RequestBody @Valid TeamRequestBody body, Authentication authentication){
         Team team = teamService.createTeam(body,(User) authentication.getPrincipal());
-        return ResponseEntity.status(HttpStatus.CREATED).body("Team created with ID of " + teamService.getID(team));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Team created with ID of " + teamService.getID(team), null));
     }
 
     /**
@@ -77,7 +77,7 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/teams/{ID}")
-    public ResponseEntity<?> getTeam(@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamDTO>> getTeam(@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
         return ResponseEntity.ok(new APIResponse<>("Information about the team", teamService.createTeamDTO(context.getUser(), context.getTeam())));
     }
@@ -121,7 +121,7 @@ public class TeamController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/teams/{ID}")
     @Transactional
-    public ResponseEntity<?> patchTeam(@PathVariable long ID, TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamDTO>> patchTeam(@PathVariable long ID, TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
 
         if(!context.getUserRole().isOwnerOrAdmin()){
@@ -144,7 +144,7 @@ public class TeamController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/teams/{ID}")
     @Transactional
-    public ResponseEntity<?> disbandTeam(@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> disbandTeam(@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
         if (!context.getUserRole().isOwner()){
             throw new NoPrivilegesException();

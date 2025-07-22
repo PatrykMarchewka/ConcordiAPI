@@ -37,6 +37,14 @@ public class SubtaskController {
         this.context = context;
     }
 
+    /**
+     * Returns subtasks attached to the given task
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check in
+     * @param authentication User credentials to authenticate
+     * @return SubtaskDTO with all the subtasks in the task
+     * @throws NoPrivilegesException Thrown when the user role is neither Owner, Admin, nor Manager, and they are not attached to the task.
+     */
     @Operation(summary = "Check subtasks",description = "Check all subtasks for the given team and task")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -50,6 +58,16 @@ public class SubtaskController {
         }
         return ResponseEntity.ok(new APIResponse<>("Subtasks attached to this task",subtaskService.getSubtasksDTO(context.getTask())));
     }
+
+    /**
+     * Creates new subtask
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check for
+     * @param body SubtaskRequestBody with subtask information
+     * @param authentication User credentials to authenticate
+     * @return SubtaskDTO of the created subtask
+     * @throws NoPrivilegesException Thrown when the user role is neither Owner, Admin, nor Manager, and they are not attached to the task.
+     */
     @Operation(summary = "Create new subtask", description = "Create new subtask for the given team and task")
     @ApiResponse(responseCode = "201", ref = "201")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -67,6 +85,15 @@ public class SubtaskController {
 
     }
 
+    /**
+     * Returns information abotu specific subtask
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check in
+     * @param ID ID of the subtask to check for
+     * @param authentication User credentials to authenticate
+     * @return SubtaskDTO of the specified subtask
+     * @throws NoPrivilegesException Thrown when the user role is neither Owner, Admin, nor Manager, and they are not attached to the task.
+     */
     @Operation(summary = "Check specific subtask", description = "Check information about specific subtask for the given team and task")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -82,6 +109,16 @@ public class SubtaskController {
         return ResponseEntity.ok(new APIResponse<>("Subtask details",new SubtaskMemberDTO(subtaskService.getSubtaskByID(taskID,ID))));
     }
 
+    /**
+     * Replaces all subtask information with new values
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check in
+     * @param ID ID of the subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @param authentication User credentials to authenticate
+     * @return SubtaskDTO after changes
+     * @throws NoPrivilegesException Thrown when the user role is neither Owner, Admin, nor Manager, and they are not attached to the task.
+     */
     @Operation(summary = "Edit entire subtask", description = "Edits entire subtask with all required fields")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -97,6 +134,16 @@ public class SubtaskController {
         return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,() -> teamID))));
     }
 
+    /**
+     * Patches subtask information
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check in
+     * @param ID ID of the subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @param authentication User credentials to authenticate
+     * @return SubtaskDTO after changes
+     * @throws NoPrivilegesException Thrown when the user role is neither Owner, Admin, nor Manager, and they are not attached to the task.
+     */
     @Operation(summary = "Edit subtask", description = "Edit subtask fields for the given team and task")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
@@ -112,6 +159,15 @@ public class SubtaskController {
         return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body))));
     }
 
+    /**
+     * Deletes subtask
+     * @param teamID ID of the team to check in
+     * @param taskID ID of the task to check in
+     * @param ID ID of the subtask to delete
+     * @param authentication User credentials to authenticate
+     * @return Message that subtask has been deleted
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
     @Operation(summary = "Delete the subtask",description = "Delete the subtask entirely")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
