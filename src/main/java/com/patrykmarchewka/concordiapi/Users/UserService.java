@@ -29,7 +29,11 @@ public class UserService {
         this.userRepository = userRepository;
         this.roleRegistry = roleRegistry;
     }
-    
+
+    /**
+     * List of all updaters, used in {@link #applyCreateUpdates(User, UserRequestBody)}, {@link #applyPutUpdates(User, UserRequestBody)} and {@link #applyPatchUpdates(User, UserRequestBody)}
+     * @return List with all updaters to execute
+     */
     final List<UserUpdater> updaters(){
         return List.of(
                 new UserLoginUpdater(this),

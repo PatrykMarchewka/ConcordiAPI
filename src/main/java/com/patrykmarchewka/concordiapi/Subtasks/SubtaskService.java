@@ -35,8 +35,11 @@ public class SubtaskService {
         this.teamService = teamService;
     }
 
-
-
+    /**
+     * List of all updaters, used in {@link #applyCreateUpdates(Subtask, SubtaskRequestBody, Supplier)}, {@link #applyPutUpdates(Subtask, SubtaskRequestBody, Supplier)}, {@link #applyPatchUpdates(Subtask, SubtaskRequestBody)}
+     * @param teamID ID of team to pass as supplier for methods down the line
+     * @return List of all updaters to execute
+     */
     final List<SubtaskUpdater> updaters(Supplier<Long> teamID){
         return List.of(
                 new SubtaskTaskUpdater(taskService,teamService,teamID),
@@ -86,10 +89,23 @@ public class SubtaskService {
         }
     }
 
+    /**
+     * Returns subtask based on task ID and subtask ID
+     * @param taskID ID of task to check for
+     * @param subtaskID ID of subtask to check for
+     * @return Subtask with provided ID in provided task
+     * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
+     */
     public Subtask getSubtaskByID(long taskID, long subtaskID){
         return subtaskRepository.findSubtaskByIdAndTaskId(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
     }
 
+    /**
+     * Creates subtask with given body details
+     * @param body SubtaskRequestBody with details of subtask to create
+     * @param teamID ID of team in which to create the subtask
+     * @return Created subtask
+     */
     @Transactional
     public Subtask createSubtask(SubtaskRequestBody body, Supplier<Long> teamID){
         Subtask subtask = new Subtask();
@@ -99,18 +115,28 @@ public class SubtaskService {
     }
 
     /**
-     * Should only be called from TaskService.removeSubtaskFromTaskAndDelete
-     * @param subtask
+     * Should only be called from {@link TaskService#removeSubtaskFromTaskAndDelete(Task, Subtask)}
+     * @param subtask Subtask to delete
      */
     @Transactional
     public void deleteSubtask(Subtask subtask){
         subtaskRepository.delete(subtask);
     }
 
+    /**
+     * Saves pending changes to subtask
+     * @param subtask Subtask to save
+     * @return Subtask after saved changes
+     */
     public Subtask saveSubtask(Subtask subtask){
         return subtaskRepository.save(subtask);
     }
 
+    /**
+     * Returns SubtaskDTOs in given task
+     * @param task Task to check in
+     * @return Set of SubtaskDTO in provided task
+     */
     public Set<SubtaskMemberDTO> getSubtasksDTO(Task task){
         Set<SubtaskMemberDTO> subtasks = new HashSet<>();
         for (Subtask sub : task.getSubtasks()){
@@ -119,6 +145,13 @@ public class SubtaskService {
         return subtasks;
     }
 
+    /**
+     * Edit subtask completely with new values
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @param teamID ID of the team containing the subtask
+     * @return Subtask after changes
+     */
     @Transactional
     public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, Supplier<Long> teamID){
 
@@ -126,22 +159,43 @@ public class SubtaskService {
         return saveSubtask(subtask);
     }
 
+    /**
+     * Unused, checks whether subtask exists provided ID and task ID
+     * @param ID ID of the subtask to check for
+     * @param task ID of the team to check in
+     * @return True if subtask with given ID in task with specified ID exists, otherwise false
+     */
     public boolean checkIfSubtaskExistsByIDAndTask(long ID,Task task){
         return subtaskRepository.existsByIdAndTask(ID, task);
     }
 
+    /**
+     * Checks whether subtask exists by provided ID
+     * @param ID ID of the subtask to check for
+     * @return True if subtask with given ID exists, otherwise false
+     */
     public boolean checkIfSubtaskExistsByID(long ID){
         return subtaskRepository.existsById(ID);
     }
 
-
+    /**
+     * Edits subtask with new values
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @return Subtask after changes
+     */
     @Transactional
     public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body){
         applyPatchUpdates(subtask,body);
         return saveSubtask(subtask);
     }
 
-
+    /**
+     * Cecks whether subtasks with provided IDs exist
+     * @param subtaskIDs Set of IDs to check
+     * @return True if all subtasks with provided IDs exist
+     * @throws  BadRequestException Thrown when one or more subtasks with provided ID don't exist
+     */
     public boolean validateSubtasks(Set<Integer> subtaskIDs){
         if (subtaskIDs == null) return false;
         for (int id : subtaskIDs){
@@ -153,9 +207,9 @@ public class SubtaskService {
     }
 
     /**
-     * Should only be called from TaskService.addSubtaskToTask method
-     * @param subtask
-     * @param task
+     * Sets subtask to specified task ,should only be called from {@link TaskService#addSubtaskToTask(Task, Subtask)}
+     * @param subtask Subtask to change task of
+     * @param task Task to attach
      */
     public void setTaskToSubtask(Subtask subtask, Task task){
         subtask.setTask(task);

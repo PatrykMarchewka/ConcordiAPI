@@ -37,7 +37,11 @@ public class TeamService {
         this.roleRegistry = roleRegistry;
     }
 
-    List<TeamUpdater> updaters(){
+    /**
+     * List of all updaters, used in {@link #applyCreateUpdates(Team, TeamRequestBody)}, {@link #applyPutUpdates(Team, TeamRequestBody)} and {@link #applyPatchUpdates(Team, TeamRequestBody)}
+     * @return List of all updaters to execute
+     */
+    final List<TeamUpdater> updaters(){
         return List.of(new TeamNameUpdater()
         );
     }

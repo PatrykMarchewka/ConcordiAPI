@@ -39,6 +39,11 @@ public class TaskService {
         this.roleRegistry = roleRegistry;
     }
 
+    /**
+     * List of all updaters, used in {@link #applyCreateUpdates(Task, TaskRequestBody)}, {@link #applyPutUpdates(Supplier, Task, TaskRequestBody)} and {@link #applyPatchUpdates(Supplier, Task, TaskRequestBody)}
+     * @param teamSupplier Team to pass as supplier for methods down the line
+     * @return List of all updaters to execute
+     */
     final List<TaskUpdater> updaters(Supplier<Team> teamSupplier){
         return List.of(new TaskNameUpdater(),
                 new TaskDescriptionUpdater(),
