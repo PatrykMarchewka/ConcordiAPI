@@ -24,11 +24,15 @@ FROM eclipse-temurin:21-jdk-alpine
 # Set the working directory in the container
 WORKDIR /app
 
+#Create a non-root user for better security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 # Copy the built JAR from the builder image
-COPY --from=builder /app/build/libs/ConcordiAPI-1.0.0.jar /app/ConcordiAPI-1.0.0.jar
+COPY --from=builder /app/build/libs/ConcordiAPI.jar /app/ConcordiAPI.jar
 
 # Expose port 10000 (as you're using this custom port)
 EXPOSE 10000
 
 # Run the application, setting the port to 10000
-ENTRYPOINT ["java", "-Dserver.port=10000", "-jar", "/app/ConcordiAPI-1.0.0.jar"]
+ENTRYPOINT ["java", "-Dserver.port=10000", "-jar", "/app/ConcordiAPI.jar"]
