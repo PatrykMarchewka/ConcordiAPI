@@ -3,7 +3,6 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters.UserUpdater;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskCREATEUpdater;
-import com.patrykmarchewka.concordiapi.UpdateType;
 
 /**
  * Handles updating the {@code users} field in {@link Task} entity
@@ -16,11 +15,6 @@ public class TaskUserCREATEUpdater implements TaskCREATEUpdater {
         this.taskUserUpdaterHelper = taskUserUpdaterHelper;
     }
 
-
-    @Override
-    public boolean supports(UpdateType updateType) {
-        return updateType == UpdateType.CREATE;
-    }
 
     /**
      * Sets the users assigned to the task

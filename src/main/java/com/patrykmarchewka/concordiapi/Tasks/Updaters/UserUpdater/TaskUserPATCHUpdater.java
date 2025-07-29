@@ -3,7 +3,6 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters.UserUpdater;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskPATCHUpdater;
-import com.patrykmarchewka.concordiapi.UpdateType;
 
 public class TaskUserPATCHUpdater implements TaskPATCHUpdater {
 
@@ -12,11 +11,6 @@ public class TaskUserPATCHUpdater implements TaskPATCHUpdater {
 
     public TaskUserPATCHUpdater(TaskUserUpdaterHelper taskUserUpdaterHelper) {
         this.taskUserUpdaterHelper = taskUserUpdaterHelper;
-    }
-
-    @Override
-    public boolean supports(UpdateType updateType) {
-        return updateType == UpdateType.PATCH;
     }
 
     /**

@@ -5,6 +5,8 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.UpdateType;
 
 public interface TaskPUTUpdater extends TaskUpdater {
-    boolean supports(UpdateType updateType);
+    default boolean supports(UpdateType updateType){
+        return updateType == UpdateType.PUT;
+    }
     void PUTUpdate(Task task, TaskRequestBody body);
 }
