@@ -1,9 +1,11 @@
 package com.patrykmarchewka.concordiapi.Tasks.Updaters.UpdateDateUpdater;
 
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
+import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 
+@Service
 public class TaskUpdateDateUpdaterHelper {
 
     /**

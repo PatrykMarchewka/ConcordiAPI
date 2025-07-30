@@ -5,15 +5,18 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
-
+@Service
 public class TaskSubtaskUpdaterHelper {
 
     private final SubtaskService subtaskService;
     private final TaskService taskService;
 
-
-    public TaskSubtaskUpdaterHelper(SubtaskService subtaskService, TaskService taskService) {
+    @Autowired
+    public TaskSubtaskUpdaterHelper(SubtaskService subtaskService, @Lazy TaskService taskService) {
         this.subtaskService = subtaskService;
         this.taskService = taskService;
     }
