@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
+import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,72 +30,19 @@ public class TaskService {
     private final TeamService teamService;
     private final UserService userService;
     private final RoleRegistry roleRegistry;
+    private final TaskUpdatersService taskUpdatersService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, UserService userService, RoleRegistry roleRegistry){
+    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
         this.taskRepository = taskRepository;
         this.subtaskService = subtaskService;
         this.teamService = teamService;
         this.userService = userService;
         this.roleRegistry = roleRegistry;
+        this.taskUpdatersService = taskUpdatersService;
     }
 
-    /**
-     * List of all updaters, used in {@link #applyCreateUpdates(Task, TaskRequestBody)}, {@link #applyPutUpdates(Supplier, Task, TaskRequestBody)} and {@link #applyPatchUpdates(Supplier, Task, TaskRequestBody)}
-     * @param teamSupplier Team to pass as supplier for methods down the line
-     * @return List of all updaters to execute
-     */
-    final List<TaskUpdater> updaters(Supplier<Team> teamSupplier){
-        return List.of(new TaskNameUpdater(),
-                new TaskDescriptionUpdater(),
-                new TaskTeamUpdater(teamSupplier,teamService),
-                new TaskStatusUpdater(),
-                new TaskUserUpdater(userService,this),
-                new TaskSubtaskUpdater(subtaskService,this),
-                new TaskCreationDateUpdater(),
-                new TaskUpdateDateUpdater());
-    }
 
-    /**
-     * Applies CREATE updates for the Task given the TaskRequestBody details, should be only called from {@link #createTask(TaskRequestBody, Team)}
-     * @param task Task to create
-     * @param body TaskRequestBody with information to update
-     */
-    private void applyCreateUpdates(Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters(null)){
-            if (updater instanceof TaskCREATEUpdater createUpdater){
-                createUpdater.CREATEUpdate(task,body);
-            }
-        }
-    }
-
-    /**
-     * Applies PUT updates for the Task given the TaskRequestBody details, should be only called from {@link #putTask(TaskRequestBody, Supplier, Task)}
-     * @param team Supplier to pass Team later
-     * @param task Task to edit
-     * @param body TaskRequestBody with information to update
-     */
-    private void applyPutUpdates(Supplier<Team> team,Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters(team)){
-            if (updater instanceof TaskPUTUpdater putUpdater){
-                putUpdater.PUTUpdate(task,body);
-            }
-        }
-    }
-
-    /**
-     * Applies PATCH updates for the Task given the TaskRequestBody details, should be only called from {@link #patchTask(Task, TaskRequestBody, Supplier)}
-     * @param team Supplier to pass Team later
-     * @param task Task to edit
-     * @param body TaskRequestBody with information to update
-     */
-    private void applyPatchUpdates(Supplier<Team> team,Task task, TaskRequestBody body){
-        for (TaskUpdater updater : updaters(team)){
-            if (updater instanceof TaskPATCHUpdater patchUpdater){
-                patchUpdater.PATCHUpdate(task,body);
-            }
-        }
-    }
 
     /**
      * Returns all tasks in given team
@@ -163,7 +111,7 @@ public class TaskService {
         userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
-        applyCreateUpdates(task,body);
+        taskUpdatersService.update(task,body,UpdateType.CREATE);
         saveTask(task);
 
         return task;
@@ -172,15 +120,15 @@ public class TaskService {
     /**
      * Edits task completely with all values
      * @param body TaskRequestBody with new values
-     * @param team Team in which task is
+     * @param team Team in which task exists
      * @param task Task to edit
      * @return Edited task
      */
     @Transactional
-    public Task putTask(TaskRequestBody body, Supplier<Team> team, Task task) {
-        userService.validateUsersForTasks(body.getUsers(),team.get());
+    public Task putTask(TaskRequestBody body, Team team, Task task) {
+        userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
-        applyPutUpdates(team,task,body);
+        taskUpdatersService.update(task,body,UpdateType.PUT);
         saveTask(task);
         return task;
     }
@@ -193,10 +141,10 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(Task task, TaskRequestBody body, Supplier<Team> team){
-        userService.validateUsersForTasks(body.getUsers(),team.get());
+    public Task patchTask(Task task, TaskRequestBody body, Team team){
+        userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
-        applyPatchUpdates(team,task, body);
+        taskUpdatersService.update(task,body,UpdateType.PATCH);
         saveTask(task);
         return task;
     }
@@ -401,7 +349,7 @@ public class TaskService {
      * Removes all users from Task
      * @param task Task to remove users from
      */
-    void removeUsersFromTask(Task task){
+    public void removeUsersFromTask(Task task){
         for (User user : task.getUsers()){
             removeUserFromTask(task, user);
         }
@@ -422,7 +370,7 @@ public class TaskService {
      * @param task Task to add users to
      * @param users Set of Users to add to task
      */
-    void addUsersToTask(Task task, Set<User> users){
+    public void addUsersToTask(Task task, Set<User> users){
         for (User user : users){
             addUserToTask(task,user);
         }
