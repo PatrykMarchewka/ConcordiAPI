@@ -4,7 +4,9 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskCREATEUpdater;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TaskStatusCREATEUpdater implements TaskCREATEUpdater {
 
     @Override

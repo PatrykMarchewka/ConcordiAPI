@@ -3,11 +3,15 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters.SubtaskUpdater;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskPUTUpdater;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TaskSubtaskPUTUpdater implements TaskPUTUpdater {
 
     private final TaskSubtaskUpdaterHelper taskSubtaskUpdaterHelper;
 
+    @Autowired
     public TaskSubtaskPUTUpdater(TaskSubtaskUpdaterHelper taskSubtaskUpdaterHelper){
         this.taskSubtaskUpdaterHelper = taskSubtaskUpdaterHelper;
     }

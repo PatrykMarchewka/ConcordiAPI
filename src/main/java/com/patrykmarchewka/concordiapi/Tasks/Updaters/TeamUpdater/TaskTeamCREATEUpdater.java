@@ -3,12 +3,15 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters.TeamUpdater;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskCREATEUpdater;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-
+@Component
 public class TaskTeamCREATEUpdater implements TaskCREATEUpdater {
 
     private final TaskTeamUpdaterHelper taskTeamUpdaterHelper;
 
+    @Autowired
     public TaskTeamCREATEUpdater(TaskTeamUpdaterHelper taskTeamUpdaterHelper) {
         this.taskTeamUpdaterHelper = taskTeamUpdaterHelper;
     }
