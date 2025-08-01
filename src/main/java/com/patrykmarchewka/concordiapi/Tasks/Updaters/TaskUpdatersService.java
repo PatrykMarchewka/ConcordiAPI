@@ -27,7 +27,7 @@ public class TaskUpdatersService {
             case CREATE -> taskUpdatersCREATE.applyCreateUpdates(task, body);
             case PUT -> taskUpdatersPUT.applyPutUpdates(task, body);
             case PATCH -> taskUpdatersPATCH.applyPatchUpdates(task, body);
-            case null, default -> throw new NotImplementedException("Called update type that isn't CREATE/PUT/PATCH");
+            case null, default -> throw new BadRequestException("Called update type that isn't CREATE/PUT/PATCH");
         }
     }
 }
