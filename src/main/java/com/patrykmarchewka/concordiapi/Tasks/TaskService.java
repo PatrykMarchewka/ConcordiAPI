@@ -6,9 +6,14 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.*;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.Pair;
+import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.UpdateType;
+import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -18,8 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.lang.reflect.InvocationTargetException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,7 +115,7 @@ public class TaskService {
         userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
-        taskUpdatersService.update(task,body,UpdateType.CREATE);
+        taskUpdatersService.update(task,body, UpdateType.CREATE);
         saveTask(task);
 
         return task;
