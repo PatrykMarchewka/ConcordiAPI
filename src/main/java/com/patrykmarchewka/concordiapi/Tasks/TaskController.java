@@ -152,7 +152,7 @@ public class TaskController {
         if (!taskService.putTaskRole(context.getUserRole(), context.getTask(), context.getUser())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, () -> context.getTeam(), context.getTask()))));
+        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getTeam(), context.getTask()))));
     }
 
     /**
@@ -175,7 +175,7 @@ public class TaskController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(context.getTask(), body, () -> context.getTeam()))));
+        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(context.getTask(), body, context.getTeam()))));
     }
 
     /**
@@ -197,6 +197,7 @@ public class TaskController {
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
+        taskService.deleteTaskByID(ID, context.getTeam());
         return ResponseEntity.ok().body(new APIResponse<>("Task has been deleted",null));
     }
 
