@@ -1,4 +1,4 @@
-package com.patrykmarchewka.concordiapi.Invitations;
+package com.patrykmarchewka.concordiapi.Invitations.Updaters;
 
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
