@@ -15,6 +15,10 @@ public class TaskUpdateDatePUTUpdater implements TaskPUTUpdaterBasic {
         this.taskUpdateDateUpdaterHelper = taskUpdateDateUpdaterHelper;
     }
 
+    /**
+     * Sets the task update date to current time
+     * @param task Task to edit
+     */
     @Override
     public void PUTUpdate(Task task) {
         taskUpdateDateUpdaterHelper.sharedUpdate(task);

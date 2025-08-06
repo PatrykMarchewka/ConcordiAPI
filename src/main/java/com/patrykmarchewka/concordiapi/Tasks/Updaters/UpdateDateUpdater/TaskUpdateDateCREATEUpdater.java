@@ -16,7 +16,7 @@ public class TaskUpdateDateCREATEUpdater implements TaskCREATEUpdaterBasic {
     }
 
     /**
-     * Sets the task update date to now
+     * Sets the task update date to current time
      * @param task Task to edit
      */
     @Override
