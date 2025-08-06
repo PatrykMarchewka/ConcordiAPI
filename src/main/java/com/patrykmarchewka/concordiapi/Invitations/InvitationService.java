@@ -6,13 +6,14 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.InvitationRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -21,65 +22,16 @@ public class InvitationService {
     private final InvitationRepository invitationRepository;
     private final TeamService teamService;
     private final TeamUserRoleService teamUserRoleService;
+    private final InvitationUpdatersService invitationUpdatersService;
 
     @Autowired
-    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, TeamUserRoleService teamUserRoleService){
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, TeamUserRoleService teamUserRoleService, InvitationUpdatersService invitationUpdatersService){
         this.invitationRepository = invitationRepository;
         this.teamService = teamService;
         this.teamUserRoleService = teamUserRoleService;
-    }
-
-    /**
-     * List of updaters, used in {@link #applyCreateUpdates(Invitation, InvitationRequestBody)}, {@link #applyPutUpdates(Invitation, InvitationRequestBody)}, {@link #applyPatchUpdates(Invitation, InvitationRequestBody)}
-     * @return List of updaters to execute
-     */
-    final List<InvitationUpdater> updaters(){
-        return List.of(
-                new InvitationTeamUpdater(teamService),
-                new InvitationRoleUpdater(),
-                new InvitationUsesUpdater(),
-                new InvitationDueTimeUpdater()
-        );
+        this.invitationUpdatersService = invitationUpdatersService;
     }
     
-    /**
-     * Applies CREATE updates for the Invitation given the InvitationRequestBody, should only be called from {@link #createInvitation(InvitationRequestBody)}
-     * @param invitation Invitation to create
-     * @param body InvitationRequestBody with information to update
-     */
-    void applyCreateUpdates(Invitation invitation, InvitationRequestBody body){
-        for (InvitationUpdater updater : updaters()){
-            if (updater instanceof InvitationCREATEUpdater createUpdater){
-                createUpdater.CREATEUpdate(invitation, body);
-            }
-        }
-    }
-
-    /**
-     * Applies PUT updates for the Invitation given the InvitationRequestBody, should only be called from {@link #putUpdate(Invitation, InvitationRequestBody)}
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with information to update
-     */
-    void applyPutUpdates(Invitation invitation, InvitationRequestBody body){
-        for (InvitationUpdater updater : updaters()){
-            if (updater instanceof  InvitationPUTUpdater putUpdater){
-                putUpdater.PUTUpdate(invitation, body);
-            }
-        }
-    }
-
-    /**
-     * Applies PATCH updates for the Invitation given the InvitationRequestBody, should only be called from {@link #partialUpdate(Invitation, InvitationRequestBody)}
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with information to update
-     */
-    void applyPatchUpdates(Invitation invitation, InvitationRequestBody body){
-        for (InvitationUpdater updater : updaters()){
-            if (updater instanceof InvitationPATCHUpdater patchUpdater){
-                patchUpdater.PATCHUpdate(invitation, body);
-            }
-        }
-    }
 
     /**
      * Creates new invitation with specified data
@@ -89,7 +41,7 @@ public class InvitationService {
     @Transactional
     public Invitation createInvitation(InvitationRequestBody body){
         Invitation invitation = new Invitation();
-        applyCreateUpdates(invitation,body);
+        invitationUpdatersService.update(invitation,body, UpdateType.CREATE);
         return saveInvitation(invitation);
     }
 
@@ -163,8 +115,8 @@ public class InvitationService {
      */
     @Transactional
     public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body){
-            applyPatchUpdates(invitation, body);
-            return saveInvitation(invitation);
+        invitationUpdatersService.update(invitation,body,UpdateType.PATCH);
+        return saveInvitation(invitation);
     }
 
     /**
@@ -175,7 +127,7 @@ public class InvitationService {
      */
     @Transactional
     public Invitation putUpdate(Invitation invitation, InvitationRequestBody body){
-        applyPutUpdates(invitation, body);
+        invitationUpdatersService.update(invitation,body,UpdateType.PUT);
         return saveInvitation(invitation);
     }
 
