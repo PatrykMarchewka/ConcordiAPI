@@ -8,7 +8,9 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Exceptions.*;
+import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
+import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +24,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -69,7 +76,6 @@ public class LoginController {
     @ApiResponse(responseCode = "500", description = "500")
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @Valid UserRequestLogin body){
-        User user = userService.getUserByLoginAndPassword(body);
         String token = new String();
         try {
             token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());

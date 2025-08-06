@@ -3,19 +3,26 @@ package com.patrykmarchewka.concordiapi.Users;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DatabaseModel.*;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
+import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Service
 public class UserService {
@@ -23,63 +30,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRegistry roleRegistry;
+    private final UserUpdatersService userUpdatersService;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRegistry roleRegistry){
+    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService){
         this.userRepository = userRepository;
         this.roleRegistry = roleRegistry;
-    }
-
-    /**
-     * List of all updaters, used in {@link #applyCreateUpdates(User, UserRequestBody)}, {@link #applyPutUpdates(User, UserRequestBody)} and {@link #applyPatchUpdates(User, UserRequestBody)}
-     * @return List with all updaters to execute
-     */
-    final List<UserUpdater> updaters(){
-        return List.of(
-                new UserLoginUpdater(this),
-                new UserPasswordUpdater(),
-                new UserNameUpdater(),
-                new UserLastNameUpdater()
-        );
-    }
-
-    /**
-     * Applies CREATE updates for the User given the UserRequestBody details, should be only called from {@link #createUser(UserRequestBody)}
-     * @param user User to modify
-     * @param body UserRequestBody with information to update
-     */
-    private void applyCreateUpdates(User user, UserRequestBody body){
-        for (UserUpdater updater : updaters()){
-            if (updater instanceof UserCREATEUpdater createUpdater){
-                createUpdater.CREATEUpdate(user,body);
-            }
-        }
-    }
-
-    /**
-     * Applies PUT updates for the User given the UserRequestBody details, should be only called from {@link #putUser(User, UserRequestBody)}
-     * @param user User to modify
-     * @param body UserRequestBody with information to update
-     */
-    private void applyPutUpdates(User user, UserRequestBody body){
-        for (UserUpdater updater : updaters()){
-            if (updater instanceof UserPUTUpdater putUpdater){
-                putUpdater.PUTUpdate(user, body);
-            }
-        }
-    }
-
-    /**
-     * Applies PATCH updates for the User given the UserRequestBody details, should be only called from {@link #patchUser(User, UserRequestBody)}
-     * @param user User to modify
-     * @param body UserRequestBody with information to update
-     */
-    private void applyPatchUpdates(User user, UserRequestBody body){
-        for (UserUpdater updater : updaters()){
-            if (updater instanceof  UserPATCHUpdater patchUpdater){
-                patchUpdater.PATCHUpdate(user, body);
-            }
-        }
+        this.userUpdatersService = userUpdatersService;
     }
 
     /**
@@ -144,7 +101,7 @@ public class UserService {
     @Transactional
     public User createUser(UserRequestBody body){
         User user = new User();
-        applyCreateUpdates(user,body);
+        userUpdatersService.update(user,body, UpdateType.CREATE);
         return saveUser(user);
     }
 
@@ -156,7 +113,7 @@ public class UserService {
      */
     @Transactional
     public User putUser(User user, UserRequestBody body){
-        applyPutUpdates(user,body);
+        userUpdatersService.update(user,body,UpdateType.PUT);
         return saveUser(user);
     }
 
@@ -168,12 +125,12 @@ public class UserService {
      */
     @Transactional
     public User patchUser(User user,UserRequestBody body){
-        applyPatchUpdates(user, body);
+        userUpdatersService.update(user,body,UpdateType.PATCH);
         return saveUser(user);
     }
 
     /**
-     * Deletes specified User
+     * Unused, Deletes specified User
      * @param user User to delete
      */
     public void deleteUser(User user){
@@ -181,7 +138,7 @@ public class UserService {
     }
 
     /**
-     * Deletes specified User by ID
+     * Unused, Deletes specified User by ID
      * @param id ID of user to delete
      */
     public void deleteUserByID(long id){

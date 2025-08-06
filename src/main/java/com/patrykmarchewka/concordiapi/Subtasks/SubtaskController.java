@@ -17,9 +17,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/teams/{teamID}/tasks/{taskID}")
@@ -81,12 +89,12 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,() -> teamID))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,teamID))));
 
     }
 
     /**
-     * Returns information abotu specific subtask
+     * Returns information about specific subtask
      * @param teamID ID of the team to check in
      * @param taskID ID of the task to check in
      * @param ID ID of the subtask to check for
@@ -131,7 +139,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,() -> teamID))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,teamID))));
     }
 
     /**
@@ -156,7 +164,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body,teamID))));
     }
 
     /**

@@ -2,20 +2,23 @@ package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
-import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.*;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
+import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
+import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,64 +30,18 @@ public class TeamService {
     private final TeamUserRoleService teamUserRoleService;
     private final TaskService taskService;
     private final RoleRegistry roleRegistry;
+    private final TeamUpdatersService teamUpdatersService;
 
     @Autowired
-    public TeamService(TeamRepository teamRepository, UserService userService, TeamUserRoleService teamUserRoleService, TaskService taskService, RoleRegistry roleRegistry){
+    public TeamService(TeamRepository teamRepository, UserService userService, TeamUserRoleService teamUserRoleService, TaskService taskService, RoleRegistry roleRegistry, TeamUpdatersService teamUpdatersService){
         this.teamRepository = teamRepository;
         this.userService = userService;
         this.teamUserRoleService = teamUserRoleService;
         this.taskService = taskService;
         this.roleRegistry = roleRegistry;
+        this.teamUpdatersService = teamUpdatersService;
     }
 
-    /**
-     * List of all updaters, used in {@link #applyCreateUpdates(Team, TeamRequestBody)}, {@link #applyPutUpdates(Team, TeamRequestBody)} and {@link #applyPatchUpdates(Team, TeamRequestBody)}
-     * @return List of all updaters to execute
-     */
-    final List<TeamUpdater> updaters(){
-        return List.of(new TeamNameUpdater()
-        );
-    }
-
-
-    /**
-     * Applies CREATE updates for the Team given the TeamRequestBody details, should be only called from {@link #createTeam(TeamRequestBody, User)}
-     * @param team Team to modify
-     * @param body TeamRequestBody with information to update
-     */
-    private void applyCreateUpdates(Team team, TeamRequestBody body){
-        for (TeamUpdater updater : updaters()){
-            if (updater instanceof TeamCREATEUpdater createUpdater){
-                createUpdater.CREATEUpdate(team,body);
-            }
-        }
-    }
-
-    /**
-     * Applies PUT updates for the Team given the TeamRequestBody details, should be only called from {@link #createTeam(TeamRequestBody, User)}
-     * @param team Team to modify
-     * @param body TeamRequestBody with information to update
-     */
-    private void applyPutUpdates(Team team, TeamRequestBody body){
-        for (TeamUpdater updater : updaters()){
-            if (updater instanceof TeamPUTUpdater putUpdater){
-                putUpdater.PUTUpdate(team,body);
-            }
-        }
-    }
-
-    /**
-     * Applies PATCH updates for the Team given the TeamRequestBody details, should be only called from {@link #patchTeam(Team, TeamRequestBody)}
-     * @param team Team to modify
-     * @param body TeamRequestBody with information to update
-     */
-    private void applyPatchUpdates(Team team, TeamRequestBody body){
-        for (TeamUpdater updater : updaters()){
-            if (updater instanceof TeamPATCHUpdater patchUpdater){
-                patchUpdater.PATCHUpdate(team, body);
-            }
-        }
-    }
 
     /**
      * Creates team with specified body details and sets given User as team owner
@@ -95,7 +52,7 @@ public class TeamService {
     @Transactional
     public Team createTeam(TeamRequestBody body, User user){
         Team team = new Team();
-        applyCreateUpdates(team,body);
+        teamUpdatersService.update(team,body, UpdateType.CREATE);
         addUser(team,user, UserRole.OWNER);
         return saveTeam(team);
     }
@@ -108,7 +65,7 @@ public class TeamService {
      */
     @Transactional
     public Team putTeam(Team team, TeamRequestBody body){
-        applyPutUpdates(team, body);
+        teamUpdatersService.update(team,body,UpdateType.PUT);
         return saveTeam(team);
     }
 
@@ -120,7 +77,7 @@ public class TeamService {
      */
     @Transactional
     public Team patchTeam(Team team,TeamRequestBody body){
-        applyPatchUpdates(team, body);
+        teamUpdatersService.update(team,body,UpdateType.PATCH);
         return saveTeam(team);
     }
 
