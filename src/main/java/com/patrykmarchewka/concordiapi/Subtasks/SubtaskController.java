@@ -89,12 +89,12 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,() -> teamID))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,teamID))));
 
     }
 
     /**
-     * Returns information abotu specific subtask
+     * Returns information about specific subtask
      * @param teamID ID of the team to check in
      * @param taskID ID of the task to check in
      * @param ID ID of the subtask to check for
@@ -139,7 +139,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,() -> teamID))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body,teamID))));
     }
 
     /**
@@ -164,7 +164,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask updated",new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body,teamID))));
     }
 
     /**
