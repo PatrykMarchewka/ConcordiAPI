@@ -3,14 +3,19 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters.UserUpdater;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Users.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
+@Service
 public class TaskUserUpdaterHelper {
     protected final TaskService taskService;
     protected final UserService userService;
 
-    protected TaskUserUpdaterHelper(UserService userService, TaskService taskService) {
+    @Autowired
+    protected TaskUserUpdaterHelper(@Lazy UserService userService,@Lazy TaskService taskService) {
         this.taskService = taskService;
         this.userService = userService;
     }
