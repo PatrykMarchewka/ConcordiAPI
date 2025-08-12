@@ -19,6 +19,8 @@ public class SubtaskStatusPATCHUpdater implements SubtaskPATCHUpdater {
 
     @Override
     public void PATCHUpdate(Subtask subtask, SubtaskRequestBody body) {
-        subtaskStatusUpdaterHelper.sharedUpdate(subtask, body);
+        if (body.getTaskStatus() != null) {
+            subtaskStatusUpdaterHelper.sharedUpdate(subtask, body);
+        }
     }
 }

@@ -26,9 +26,9 @@ public class SubtaskUpdatersService {
 
     public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Team> team, UpdateType type){
         switch (type){
-            case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,team.get());
-            case PUT -> subtaskUpdatersPUT.applyPutUpdates(subtask, body, team.get());
-            case PATCH -> subtaskUpdatersPATCH.applyPatchUpdates(subtask, body, team.get());
+            case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,team);
+            case PUT -> subtaskUpdatersPUT.applyPutUpdates(subtask, body, team);
+            case PATCH -> subtaskUpdatersPATCH.applyPatchUpdates(subtask, body, team);
             case null, default -> throw new BadRequestException("Called update type that isn't CREATE/PUT/PATCH");
         }
     }
