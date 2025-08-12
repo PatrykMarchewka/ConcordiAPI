@@ -7,6 +7,8 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMeDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
@@ -127,8 +129,7 @@ public class LoginController {
     @Transactional
     public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody UserRequestBody body, Authentication authentication){
         context = context.withUser(authentication);
-        userService.patchUser(context.getUser(), body);
-        return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(context.getUser())));
+        return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(userService.patchUser(context.getUser(), body))));
     }
 
     /**
@@ -168,12 +169,7 @@ public class LoginController {
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
         context = context.withInvitation(invID);
-        if (context.getInvitation() != null){
-            return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation(), teamUserRoleService)));
-        }
-        else{
-            throw new NotFoundException();
-        }
+        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation(), teamUserRoleService)));
     }
 
     /**
@@ -191,12 +187,14 @@ public class LoginController {
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
         context = context.withUser(authentication).withInvitation(invID);
-        if (context.getInvitation() != null && !context.getUser().checkTeam(context.getTeam())){
-            invitationService.useInvitation(context.getInvitation(), context.getUser());
-            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(context.getTeam(), context.getUser(), teamUserRoleService)));
+        User user = context.getUser();
+        Invitation invitation = context.getInvitation();
+        Team team = invitation.getInvitingTeam();
+
+        if (!user.checkTeam(team)){
+            invitationService.useInvitation(invitation, user);
+            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
         }
-        else{
-            throw new ConflictException("Invitation expired or you are already part of that team");
-        }
+        throw new ConflictException("You are already part of that team");
     }
 }
