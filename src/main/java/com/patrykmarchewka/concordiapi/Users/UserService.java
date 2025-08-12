@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -154,6 +155,10 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public List<User> saveAllUsers(Set<User> users){
+        return userRepository.saveAll(users);
+    }
+
     /**
      * Returns DTO of given Set of Users
      * @param users Set of Users to get DTO of
@@ -230,17 +235,6 @@ public class UserService {
             users.add(getUserByID((long)id));
         }
         return users;
-    }
-
-    /**
-     * Adds Task to specified User
-     * @param user User to get added to task
-     * @param task Task to attach to user
-     */
-    @Transactional
-    public void addTaskToUser(User user, Task task) {
-        user.addTask(task);
-        saveUser(user);
     }
 
     /**

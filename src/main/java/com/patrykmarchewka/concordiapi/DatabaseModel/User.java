@@ -1,7 +1,15 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -24,9 +32,14 @@ public class User {
 
     @ManyToMany
     @JsonManagedReference
-    private Set<Task> tasks = new HashSet<>();
+    @JoinTable(
+            name = "users_tasks",
+            joinColumns = @JoinColumn(name = "user_id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "task_id", nullable = false)
+    )
+    private Set<Task> userTasks = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "teammates")
     @JsonBackReference
     private Set<Team> teams = new HashSet<>();
 
@@ -65,11 +78,10 @@ public class User {
         this.lastName = lastName;
     }
 
-    public Set<Task> getTasks() { return tasks; }
-    public void addTask(Task task){ this.tasks.add(task); }
-    public void removeTask(Task task){ this.tasks.remove(task); }
-
-    public void setTasks(Set<Task> tasks) {this.tasks = tasks;}
+    public Set<Task> getUserTasks() { return userTasks; }
+    public void addTask(Task task){ this.userTasks.add(task); }
+    public void removeTask(Task task){ this.userTasks.remove(task); }
+    public void setUserTasks(Set<Task> tasks) {this.userTasks = tasks;}
 
     public Set<Team> getTeams(){ return this.teams; }
     public void addTeam(Team team){this.teams.add(team);}

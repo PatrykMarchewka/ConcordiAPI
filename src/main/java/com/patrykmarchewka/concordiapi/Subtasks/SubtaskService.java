@@ -54,21 +54,12 @@ public class SubtaskService {
      * @return Created subtask
      */
     @Transactional
-    public Subtask createSubtask(SubtaskRequestBody body, Long teamID){
+    public Subtask createSubtask(SubtaskRequestBody body, long teamID){
         Subtask subtask = new Subtask();
         Supplier<Team> team = () -> teamService.getTeamByID(teamID);
         subtaskUpdatersService.update(subtask,body,team, UpdateType.CREATE);
         saveSubtask(subtask);
         return subtask;
-    }
-
-    /**
-     * Should only be called from {@link TaskService#removeSubtaskFromTaskAndDelete(Task, Subtask)}
-     * @param subtask Subtask to delete
-     */
-    @Transactional
-    public void deleteSubtask(Subtask subtask){
-        subtaskRepository.delete(subtask);
     }
 
     /**
@@ -101,7 +92,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, Long teamID){
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID){
         Supplier<Team> team = () -> teamService.getTeamByID(teamID);
         subtaskUpdatersService.update(subtask,body,team,UpdateType.PUT);
         return saveSubtask(subtask);
@@ -134,7 +125,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, Long teamID){
+    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID){
         Supplier<Team> team = () -> teamService.getTeamByID(teamID);
         subtaskUpdatersService.update(subtask,body,team,UpdateType.PATCH);
         return saveSubtask(subtask);

@@ -2,7 +2,18 @@ package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.patrykmarchewka.concordiapi.TaskStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -17,26 +28,23 @@ public class Task {
     private Long id;
     private String name;
     private String description;
-    @Enumerated(value = EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private TaskStatus taskStatus;
-
-
     private OffsetDateTime creationDate;
-
-
     private OffsetDateTime updateDate;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "task")
     @JsonManagedReference
     private Set<Subtask> subtasks = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "userTasks")
     @JsonBackReference
     private Set<User> users = new HashSet<>();
 
     @ManyToOne
     @JsonBackReference
-    private Team team;
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team assignedTeam;
 
     public long getID() {
         return id;
@@ -98,8 +106,8 @@ public class Task {
     public void addUser(User user){ this.users.add(user); }
     public void removeUser(User user) { this.users.remove(user); }
 
-    public Team getTeam(){ return this.team; }
-    public void setTeam(Team team){ this.team = team; }
+    public Team getAssignedTeam(){ return this.assignedTeam; }
+    public void setAssignedTeam(Team assignedTeam){ this.assignedTeam = assignedTeam; }
 
     public boolean hasUser(User user){return users.contains(user);}
 

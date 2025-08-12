@@ -1,7 +1,14 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 import com.patrykmarchewka.concordiapi.UserRole;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.util.Objects;
 
@@ -12,9 +19,11 @@ public class TeamUserRole {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
     @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Enumerated(EnumType.STRING)

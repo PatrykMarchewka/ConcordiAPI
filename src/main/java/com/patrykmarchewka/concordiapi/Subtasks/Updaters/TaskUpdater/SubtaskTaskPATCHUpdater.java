@@ -22,10 +22,12 @@ public class SubtaskTaskPATCHUpdater implements SubtaskPATCHUpdaterWithTeam {
 
     @Override
     public void PATCHUpdate(Subtask subtask, SubtaskRequestBody body) {
-        if (this.team == null){
-            throw new BadRequestException("The team is set to null");
+        if (body.getTask() != null){
+            if (this.team == null){
+                throw new BadRequestException("The team is set to null");
+            }
+            subtaskTaskUpdaterHelper.sharedUpdate(subtask,body,team);
         }
-        subtaskTaskUpdaterHelper.sharedUpdate(subtask,body,team);
     }
 
     @Override

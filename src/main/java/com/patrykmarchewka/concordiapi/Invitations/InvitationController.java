@@ -106,10 +106,11 @@ public class InvitationController {
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
-        if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles.test(context.getUserRole(),body.getRole())){
+
+        if (!context.getUserRole().isAdminGroup() || teamUserRoleService.checkRoles(context.getUserRole(),body.getRole())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body),teamUserRoleService)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID),teamUserRoleService)));
     }
 
     /**
@@ -132,7 +133,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.putUpdate(context.getInvitation(), body),teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.putUpdate(context.getInvitation(), body, teamID),teamUserRoleService)));
     }
 
     /**
@@ -155,7 +156,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(context.getInvitation(), body),teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(context.getInvitation(), body, teamID),teamUserRoleService)));
     }
 
     /**

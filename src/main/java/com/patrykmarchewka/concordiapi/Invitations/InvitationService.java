@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @Service
 public class InvitationService {
@@ -39,9 +40,10 @@ public class InvitationService {
      * @return Created invitation
      */
     @Transactional
-    public Invitation createInvitation(InvitationRequestBody body){
+    public Invitation createInvitation(InvitationRequestBody body, long teamID){
         Invitation invitation = new Invitation();
-        invitationUpdatersService.update(invitation,body, UpdateType.CREATE);
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body, UpdateType.CREATE, teamSupplier);
         return saveInvitation(invitation);
     }
 
@@ -55,7 +57,7 @@ public class InvitationService {
     public void useInvitation(Invitation invitation,User user) throws Exception {
         invitation.useOne();
         saveInvitation(invitation);
-        teamService.addUser(invitation.getTeam(), user,invitation.getRole());
+        teamService.addUser(invitation.getInvitingTeam(), user,invitation.getRole());
     }
 
     /**
@@ -83,7 +85,7 @@ public class InvitationService {
      * @return All Invitations for the given team
      */
     public Set<Invitation> getAllInvitations(Team team){
-        return invitationRepository.findAllByTeam(team);
+        return invitationRepository.findAllByInvitingTeam(team);
     }
 
     /**
@@ -101,7 +103,7 @@ public class InvitationService {
      */
     public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
-            for (Invitation inv : invitationRepository.findAllByTeam(team)){
+            for (Invitation inv : invitationRepository.findAllByInvitingTeam(team)){
                 invitations.add(new InvitationManagerDTO(inv,teamUserRoleService));
             }
             return invitations;
@@ -114,8 +116,9 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body){
-        invitationUpdatersService.update(invitation,body,UpdateType.PATCH);
+    public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
         return saveInvitation(invitation);
     }
 
@@ -126,8 +129,9 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation putUpdate(Invitation invitation, InvitationRequestBody body){
-        invitationUpdatersService.update(invitation,body,UpdateType.PUT);
+    public Invitation putUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
         return saveInvitation(invitation);
     }
 

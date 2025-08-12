@@ -18,7 +18,6 @@ public class TaskNamePATCHUpdater implements TaskPATCHUpdater {
 
     @Override
     public void PATCHUpdate(Task task, TaskRequestBody body) {
-
         if (body.getName() != null) {
             taskNameUpdaterHelper.sharedUpdate(task, body);
         }

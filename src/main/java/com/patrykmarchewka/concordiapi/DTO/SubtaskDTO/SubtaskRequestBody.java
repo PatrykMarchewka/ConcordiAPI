@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
 
-@JsonIgnoreProperties()
 public class SubtaskRequestBody {
     @NotBlank(groups = OnCreate.class)
     private String name;
@@ -15,6 +14,7 @@ public class SubtaskRequestBody {
     private String description;
     @NotNull(groups = OnCreate.class)
     private long task;
+    private Long task;
     private TaskStatus taskStatus;
 
     public SubtaskRequestBody(@Nullable String name,@Nullable String description, long task,@Nullable TaskStatus taskStatus){
@@ -32,7 +32,7 @@ public class SubtaskRequestBody {
     public String getDescription(){return description;}
     public void setDescription(String description){this.description = description;}
 
-    public long getTask(){return task;}
+    public Long getTask(){return task;}
     public void setTask(long task){this.task = task;}
 
     public TaskStatus getTaskStatus(){return taskStatus;}

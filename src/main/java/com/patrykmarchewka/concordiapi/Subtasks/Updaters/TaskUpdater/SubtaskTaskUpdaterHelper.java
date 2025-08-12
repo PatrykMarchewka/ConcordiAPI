@@ -21,9 +21,6 @@ public class SubtaskTaskUpdaterHelper {
 
 
     void sharedUpdate(Subtask subtask, SubtaskRequestBody body, Team team){
-        if (subtask.getTask() != null){
-            taskService.removeSubtaskFromTask(subtask.getTask(), subtask);
-        }
-        taskService.addSubtaskToTask(taskService.getTaskByIDAndTeam(body.getTask(), team),subtask);
+        taskService.swapSubtaskBetweenTasks(taskService.getTaskByIDAndTeam(body.getTask(), team), subtask);
     }
 }

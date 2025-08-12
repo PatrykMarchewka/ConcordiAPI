@@ -24,7 +24,7 @@ public class TeamMemberDTO implements TeamDTO {
         this.teammateCount = team.getTeammates().size();
         if (user != null){
             Set<TaskMemberDTO> filteredTasks = new HashSet<>();
-            for (Task task : team.getTasks()){
+            for (Task task : team.getTeamTasks()){
                 if (task.getUsers().contains(user)){
                     filteredTasks.add(new TaskMemberDTO(task));
                 }

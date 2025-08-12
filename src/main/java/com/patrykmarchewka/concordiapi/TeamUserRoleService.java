@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
-import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamUserRoleService {
@@ -81,7 +81,7 @@ public class TeamUserRoleService {
      */
     @Transactional(readOnly = true)
     public Set<User> getAllByTeamAndUserRole(Team team, UserRole role){
-        return teamUserRoleRepository.findAllByTeamAndUserRole(team,role);
+        return teamUserRoleRepository.findAllByTeamAndUserRole(team,role).stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -95,9 +95,10 @@ public class TeamUserRoleService {
 
 
     /**
-     * Compares two UserRoles and returns True if first role is same or more privileged than second one, otherwise false <br>
-     * call using {@code checkRoles.test(UserRole r1, UserRole r2)}
+     * Compares two UserRoles and returns True if first role is same or more privileged than second one, otherwise false
      */
-    public BiPredicate<UserRole, UserRole> checkRoles = (mine,other) -> mine.compareTo(other) >= 0;
+    public boolean checkRoles(UserRole mine, UserRole other){
+        return mine.compareTo(other) >= 0;
+    }
 
 }
