@@ -126,7 +126,7 @@ public class TeamService {
         saveTeam(team);
         user.removeTeam(team);
         userService.saveUser(user);
-        for (Task task : team.getTasks()){
+        for (Task task : team.getTeamTasks()){
             if (task.getUsers().contains(user)){
                 taskService.removeUserFromTask(task, user);
             }
@@ -157,10 +157,10 @@ public class TeamService {
      */
     @Transactional
     public void addUser(Team team, User user, UserRole role){
-        team.addTeammate(user);
-        saveTeam(team);
         user.addTeam(team);
         userService.saveUser(user);
+        team.addTeammate(user);
+        saveTeam(team);
         teamUserRoleService.createTMR(user,team,role);
     }
 
@@ -170,7 +170,7 @@ public class TeamService {
      * @param task Task to be added
      */
     public void addTask(Team team, Task task){
-        team.getTasks().add(task);
+        team.addTask(task);
         saveTeam(team);
     }
 

@@ -27,7 +27,7 @@ public class TeamAdminDTO implements TeamDTO {
         for (User teammate : team.getTeammates()){
             teammates.add(new UserMemberDTO(teammate));
         }
-        for (Task task : team.getTasks()){
+        for (Task task : team.getTeamTasks()){
             tasks.add(new TaskManagerDTO(task));
         }
         for (User admin : service.getAllByTeamAndUserRole(team, UserRole.ADMIN)){
@@ -41,7 +41,7 @@ public class TeamAdminDTO implements TeamDTO {
         }
     }
 
-    public TeamAdminDTO(){};
+    public TeamAdminDTO(){}
 
     public long getId() {return id;}
     public void setId(long id){this.id = id;}
