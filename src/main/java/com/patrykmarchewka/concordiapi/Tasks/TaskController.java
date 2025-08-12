@@ -231,7 +231,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (!teamUserRoleService.checkRoles.test(context.getUserRole(),context.getOtherRole())){
+        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
 
@@ -258,7 +258,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (!teamUserRoleService.checkRoles.test(context.getUserRole(),context.getOtherRole())){
+        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
 

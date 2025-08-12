@@ -41,7 +41,7 @@ public class TaskService {
     private final TaskUpdatersService taskUpdatersService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
+    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
         this.taskRepository = taskRepository;
         this.subtaskService = subtaskService;
         this.teamService = teamService;
@@ -58,7 +58,7 @@ public class TaskService {
      * @return Set of tasks in given Team
      */
     public Set<Task> getAllTasks(Team team){
-        return taskRepository.findByTeam(team);
+        return taskRepository.findByAssignedTeam(team);
     }
 
     /**
@@ -119,7 +119,7 @@ public class TaskService {
         userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
-        taskUpdatersService.update(task,body, UpdateType.CREATE);
+        taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
         saveTask(task);
 
         return task;
@@ -136,7 +136,7 @@ public class TaskService {
     public Task putTask(TaskRequestBody body, Team team, Task task) {
         userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
-        taskUpdatersService.update(task,body,UpdateType.PUT);
+        taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         saveTask(task);
         return task;
     }
@@ -152,7 +152,7 @@ public class TaskService {
     public Task patchTask(Task task, TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
         subtaskService.validateSubtasks(body.getSubtasks());
-        taskUpdatersService.update(task,body,UpdateType.PATCH);
+        taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         saveTask(task);
         return task;
     }
@@ -191,33 +191,8 @@ public class TaskService {
      * @throws NotFoundException Thrown when can't find task with specified ID and Team
      */
     public Task getTaskByIDAndTeam(long id, Team team){
-        return taskRepository.findByIdAndTeam(id,team).orElseThrow(() -> new NotFoundException());
+        return taskRepository.findByIdAndAssignedTeam(id,team).orElseThrow(() -> new NotFoundException());
     }
-
-    /**
-     * Adds user to Task
-     * @param task Task to attach to User
-     * @param user User to attach to Task
-     */
-    @Transactional
-    public void addUserToTask(Task task, User user){
-        task.addUser(user);
-        saveTask(task);
-        userService.addTaskToUser(user,task);
-    }
-
-    /**
-     * Removes user from Task
-     * @param task Task to edit
-     * @param user User to remove from Task
-     */
-    @Transactional
-    public void removeUserFromTask(Task task, User user){
-        task.removeUser(user);
-        saveTask(task);
-        userService.removeTaskFromUser(user,task);
-    }
-
     /**
      * Adds subtask to Task
      * @param task Task to edit
@@ -231,26 +206,22 @@ public class TaskService {
     }
 
     /**
-     * Removes subtask from Task but doesn't delete it. If you want to delete the subtask check {@link #removeSubtaskFromTaskAndDelete(Task, Subtask)}
-     * @param task Task to edit
-     * @param subtask Subtask to remove
-     */
-    @Transactional
-    public void removeSubtaskFromTask(Task task, Subtask subtask){
-        task.removeSubtask(subtask);
-        saveTask(task);
-    }
-
-    /**
-     * Removes subtask from Task and deletes the subtask, if you don't want to delete the subtask check {@link #removeSubtaskFromTask(Task, Subtask)}
+     * Removes subtask from Task and deletes the subtask
      * @param task Task to edit
      * @param subtask Subtask to remove and delete
      */
     @Transactional
     public void removeSubtaskFromTaskAndDelete(Task task, Subtask subtask){
-        task.getSubtasks().remove(subtask);
+        task.removeSubtask(subtask);
         saveTask(task);
-        subtaskService.deleteSubtask(subtask);
+    }
+
+    @Transactional
+    public void swapSubtaskBetweenTasks(Task newTask, Subtask subtask){
+        subtask.setTask(newTask);
+        newTask.addSubtask(subtask);
+        saveTask(newTask);
+        subtaskService.saveSubtask(subtask);
     }
 
     /**
@@ -353,15 +324,6 @@ public class TaskService {
         return roleRegistry.putTaskRoleMap(user).getOrDefault(role, t-> false).test(task);
     }
 
-    /**
-     * Removes all users from Task
-     * @param task Task to remove users from
-     */
-    public void removeUsersFromTask(Task task){
-        for (User user : task.getUsers()){
-            removeUserFromTask(task, user);
-        }
-    }
 
     /**
      * Unused, removes all Subtasks from Task
@@ -374,14 +336,64 @@ public class TaskService {
     }
 
     /**
+     * Should only be called from {@link #addUserToTask(Task, User)} or {@link #addUsersToTask(Task, Set)}
+     * @param user User to link with the task
+     * @param task Task to link with the user
+     */
+    private void linkUserAndTask(User user, Task task){
+        task.addUser(user);
+        user.addTask(task);
+    }
+
+    /**
+     * Adds User to specified Task
+     * @param user User to get added to task
+     * @param task Task to attach to user
+     */
+    @Transactional
+    public void addUserToTask(Task task, User user) {
+        linkUserAndTask(user, task);
+        userService.saveUser(user);
+    }
+
+    /**
      * Adds Users to Task
      * @param task Task to add users to
      * @param users Set of Users to add to task
      */
+    @Transactional
     public void addUsersToTask(Task task, Set<User> users){
         for (User user : users){
-            addUserToTask(task,user);
+            linkUserAndTask(user,task);
         }
+        userService.saveAllUsers(users);
+    }
+
+    /**
+     * Removes user from Task
+     * @param task Task to edit
+     * @param user User to remove from Task
+     */
+    @Transactional
+    public void removeUserFromTask(Task task, User user){
+        task.removeUser(user);
+        saveTask(task);
+        userService.removeTaskFromUser(user,task);
+    }
+
+    /**
+     * Removes all users from Task
+     * @param task Task to remove users from
+     */
+    @Transactional
+    public void removeUsersFromTask(Task task){
+        final Set<User> users = Set.copyOf(task.getUsers());
+        task.getUsers().clear();
+        saveTask(task);
+        for (User user : users){
+            user.removeTask(task);
+        }
+        userService.saveAllUsers(users);
     }
 
 }

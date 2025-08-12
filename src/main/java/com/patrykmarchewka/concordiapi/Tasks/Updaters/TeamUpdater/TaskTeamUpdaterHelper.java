@@ -1,7 +1,7 @@
 package com.patrykmarchewka.concordiapi.Tasks.Updaters.TeamUpdater;
 
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -16,8 +16,8 @@ public class TaskTeamUpdaterHelper {
         this.teamService = teamService;
     }
 
-    void sharedUpdate(Task task, TaskRequestBody body){
-        task.setTeam(teamService.getTeamByID(body.getTeam()));
-        teamService.addTask(teamService.getTeamByID(body.getTeam()),task);
+    void sharedUpdate(Task task, Team team){
+        task.setAssignedTeam(team);
+        teamService.addTask(team,task);
     }
 }

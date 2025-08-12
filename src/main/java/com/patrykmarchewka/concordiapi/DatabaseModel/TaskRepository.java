@@ -11,7 +11,6 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     Task findByName(String name);
     Task findById(long id);
 
-    Optional<Task> findByIdAndTeam(long id, Team team);
-
-    Set<Task> findByTeam(Team team);
+    Optional<Task> findByIdAndAssignedTeam(Long id, Team assignedTeam);
+    Set<Task> findByAssignedTeam(Team assignedTeam);
 }

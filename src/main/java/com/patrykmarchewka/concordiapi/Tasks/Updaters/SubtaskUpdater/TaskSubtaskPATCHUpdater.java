@@ -18,6 +18,8 @@ public class TaskSubtaskPATCHUpdater implements TaskPATCHUpdater {
 
     @Override
     public void PATCHUpdate(Task task, TaskRequestBody body) {
-        taskSubtaskUpdaterHelper.sharedUpdate(task, body);
+        if (body.getSubtasks() != null){
+            taskSubtaskUpdaterHelper.sharedUpdate(task, body);
+        }
     }
 }
