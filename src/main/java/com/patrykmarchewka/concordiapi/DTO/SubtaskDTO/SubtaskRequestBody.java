@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +12,6 @@ public class SubtaskRequestBody {
     @NotBlank(groups = OnCreate.class)
     private String description;
     @NotNull(groups = OnCreate.class)
-    private long task;
     private Long task;
     private TaskStatus taskStatus;
 

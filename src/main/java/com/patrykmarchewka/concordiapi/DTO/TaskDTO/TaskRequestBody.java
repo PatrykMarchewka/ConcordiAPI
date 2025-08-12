@@ -4,7 +4,6 @@ import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.lang.Nullable;
 
 import java.util.HashSet;
@@ -15,7 +14,6 @@ public class TaskRequestBody {
     @NotBlank(groups = OnCreate.class)
     private String name;
     private String description;
-    private Set<Integer> users;
     private Set<Integer> users = new HashSet<>();
     private TaskStatus taskStatus;
     private Set<Integer> subtasks;
