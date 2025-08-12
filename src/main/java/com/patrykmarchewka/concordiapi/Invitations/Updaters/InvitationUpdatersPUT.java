@@ -2,10 +2,12 @@ package com.patrykmarchewka.concordiapi.Invitations.Updaters;
 
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
+import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Service
 public class InvitationUpdatersPUT {
@@ -18,7 +20,7 @@ public class InvitationUpdatersPUT {
     }
 
     /**
-     * Applies PUT updates for the Invitation given the InvitationRequestBody, should only be called from {@link com.patrykmarchewka.concordiapi.Invitations.InvitationService#putUpdate(Invitation, InvitationRequestBody)}
+     * Applies PUT updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#update(Invitation, InvitationRequestBody, UpdateType, Supplier)}
      * @param invitation Invitation to edit
      * @param body InvitationRequestBody with information to update
      */
