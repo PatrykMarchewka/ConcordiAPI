@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
+import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
@@ -8,15 +9,15 @@ import jakarta.validation.constraints.Size;
 import org.springframework.lang.Nullable;
 
 public class SubtaskRequestBody {
-    @NotNull(message = "{subtask.name.notnull}")
-    @NotBlank(message = "{subtask.name.notblank}")
+    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.name.generic}")
+    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.name.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
 
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;
 
-    @NotNull(groups = OnPut.class, message = "{subtask.taskstatus.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.taskstatus.generic}")
     private TaskStatus taskStatus;
 
     public SubtaskRequestBody(String name,@Nullable String description,@Nullable TaskStatus taskStatus){
