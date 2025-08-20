@@ -97,7 +97,6 @@ public class TaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks")
-    public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
     public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @ValidateGroup(OnCreate.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAllowedBasic()){
@@ -162,7 +161,6 @@ public class TaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/tasks/{ID}")
-    public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
         if (!taskService.putTaskRole(context.getUserRole(), context.getTask(), context.getUser())){
