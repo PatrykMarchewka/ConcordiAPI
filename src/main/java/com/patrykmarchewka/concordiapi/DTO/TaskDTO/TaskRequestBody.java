@@ -1,28 +1,41 @@
 package com.patrykmarchewka.concordiapi.DTO.TaskDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.lang.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@JsonIgnoreProperties()
 public class TaskRequestBody {
-    @NotBlank(groups = OnCreate.class)
+    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.generic}")
+    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.generic}")
+    @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
+
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
+    @NotBlank(groups = OnPut.class, message = "{notblank.generic}")
+    @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;
+
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private Set<Integer> users = new HashSet<>();
+
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private TaskStatus taskStatus;
-    private Set<Integer> subtasks;
+
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
+    private Set<Integer> subtasks = new HashSet<>();
 
     public TaskRequestBody(String name, @Nullable String description, @Nullable Set<Integer> users, @Nullable TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
         this.name = name;
         this.description = description;
         this.users = users;
-        this.taskStatus = taskStatus;
+        this.taskStatus = (taskStatus != null) ? taskStatus : TaskStatus.NEW;
         this.subtasks = subtasks;
     }
 
