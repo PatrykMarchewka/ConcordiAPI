@@ -9,15 +9,15 @@ import jakarta.validation.constraints.Size;
 import org.springframework.lang.Nullable;
 
 public class SubtaskRequestBody {
-    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.name.generic}")
-    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.name.generic}")
+    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.generic}")
+    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
 
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.taskstatus.generic}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private TaskStatus taskStatus;
 
     public SubtaskRequestBody(String name,@Nullable String description,@Nullable TaskStatus taskStatus){

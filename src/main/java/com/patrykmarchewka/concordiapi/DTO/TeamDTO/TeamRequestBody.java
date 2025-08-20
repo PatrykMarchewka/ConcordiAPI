@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class TeamRequestBody {
-    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.name.generic}")
-    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.name.generic}")
+    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.generic}")
+    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
 

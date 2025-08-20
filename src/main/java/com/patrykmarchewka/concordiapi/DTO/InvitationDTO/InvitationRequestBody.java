@@ -11,15 +11,15 @@ import java.time.OffsetDateTime;
 
 
 public class InvitationRequestBody {
-    @NotNull(groups = OnPut.class, message = "{invitation.uses.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     @Min(value = 1, message = "{min.generic}")
     @Max(value = 32767, message = "{max.generic}")
     private Short uses = 1;
 
-    @NotNull(groups = OnPut.class, message = "{invitation.role.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private UserRole role = UserRole.MEMBER;
 
-    @NotNull(groups = OnPut.class, message = "{invitation.duedate.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     @Future(message = "{future.generic}")
     private OffsetDateTime dueDate;
 

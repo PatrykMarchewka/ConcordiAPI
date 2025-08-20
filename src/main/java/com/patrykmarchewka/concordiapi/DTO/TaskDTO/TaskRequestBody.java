@@ -12,23 +12,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TaskRequestBody {
-    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.name.generic}")
-    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.name.generic}")
+    @NotNull(groups = {OnCreate.class, OnPut.class},message = "{notnull.generic}")
+    @NotBlank(groups = {OnCreate.class, OnPut.class},message = "{notblank.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
 
-    @NotNull(groups = OnPut.class, message = "{task.description.notnull}")
-    @NotBlank(groups = OnPut.class, message = "{task.description.notblank}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
+    @NotBlank(groups = OnPut.class, message = "{notblank.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;
 
-    @NotNull(groups = OnPut.class, message = "{task.users.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private Set<Integer> users = new HashSet<>();
 
-    @NotNull(groups = OnPut.class, message = "{notnull.taskstatus.generic}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private TaskStatus taskStatus;
 
-    @NotNull(groups = OnPut.class, message = "{task.subtasks.notnull}")
+    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private Set<Integer> subtasks = new HashSet<>();
 
     public TaskRequestBody(String name, @Nullable String description, @Nullable Set<Integer> users, @Nullable TaskStatus taskStatus, @Nullable Set<Integer> subtasks){

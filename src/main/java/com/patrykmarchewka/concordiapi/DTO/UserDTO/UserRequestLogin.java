@@ -4,13 +4,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class UserRequestLogin {
-    @NotNull(message = "{notnull.login.generic}")
-    @NotBlank(message = "{notblank.login.generic}")
+    @NotNull(message = "{notnull.generic}")
+    @NotBlank(message = "{notblank.generic}")
     @Size(min = 1,max = 255, message = "{size.generic}")
     private String login;
 
-    @NotNull(message = "{notnull.password.generic}")
-    @NotBlank(message = "{notblank.password.generic}")
+    @NotNull(message = "{notnull.generic}")
+    @NotBlank(message = "{notblank.generic}")
     @Size(min = 1,max = 255, message = "{size.generic}")
     private String password;
 
