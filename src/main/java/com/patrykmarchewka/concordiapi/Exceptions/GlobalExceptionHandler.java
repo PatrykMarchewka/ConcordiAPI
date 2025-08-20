@@ -9,11 +9,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    //Wrong data
-    //Conflict data
-
-
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<APIResponse<String>> handleGeneric(Exception ex){
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new APIResponse<>("Unexpected error!",ex.getMessage()));
