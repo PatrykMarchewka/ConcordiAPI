@@ -3,8 +3,10 @@ package com.patrykmarchewka.concordiapi.Subtasks;
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
+import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
+import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
@@ -16,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -78,11 +79,12 @@ public class SubtaskController {
      */
     @Operation(summary = "Create new subtask", description = "Create new subtask for the given team and task")
     @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/subtasks")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @ValidateGroup(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withTask(taskID).withRole();
 
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
@@ -129,11 +131,12 @@ public class SubtaskController {
      */
     @Operation(summary = "Edit entire subtask", description = "Edits entire subtask with all required fields")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/subtasks/{ID}")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(taskID);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
@@ -154,11 +157,12 @@ public class SubtaskController {
      */
     @Operation(summary = "Edit subtask", description = "Edit subtask fields for the given team and task")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/subtasks/{ID}")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateGroup SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(taskID);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();

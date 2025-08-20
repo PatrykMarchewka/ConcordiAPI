@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMeDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
+import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
@@ -19,13 +20,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,12 +71,13 @@ public class LoginController {
      * @throws JWTException Thrown when token can't be generated
      */
     @Operation(summary = "Login user", description = "Authenticate the user and return JWT Token")
-    @ApiResponse(responseCode = "200",description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
-    @ApiResponse(responseCode = "409", description = "409")
-    @ApiResponse(responseCode = "500", description = "500")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "409", ref = "409")
+    @ApiResponse(responseCode = "500", ref = "500")
     @PostMapping("/login")
-    public ResponseEntity<APIResponse<String>> login(@RequestBody @Valid UserRequestLogin body){
+    public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateGroup(OnCreate.class) UserRequestLogin body){
         String token = new String();
         try {
             token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());
@@ -93,10 +93,11 @@ public class LoginController {
      * @return UserMemberDTO with provided credentials
      */
     @Operation(summary = "Create new user", description = "Create new user with provided credentials")
-    @ApiResponse(responseCode = "201", description = "201")
-    @ApiResponse(responseCode = "409", description = "409")
+    @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "400", ref = "400")
+    @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/signup")
-    public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @Validated(OnCreate.class) UserRequestBody body){
+    public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @ValidateGroup(OnCreate.class) UserRequestBody body){
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body))));
     }
 
@@ -106,12 +107,13 @@ public class LoginController {
      * @return UserMeDTO with all information about the account
      */
     @Operation(summary = "Information about me", description = "Return information about currently logged in user")
-    @ApiResponse(responseCode = "200", description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO((User)authentication.getPrincipal(),teamUserRoleService)));
+        context = context.withUser(authentication);
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(context.getUser(), teamUserRoleService)));
     }
 
     /**
@@ -121,13 +123,14 @@ public class LoginController {
      * @return UserMemberDTO with changed data
      */
     @Operation(summary = "Edit information about me", description = "Edit information about currently logged in user")
-    @ApiResponse(responseCode = "200",description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
-    @ApiResponse(responseCode = "409", description = "409")
+    @ApiResponse(responseCode = "200",ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "409", ref = "409")
     @SecurityRequirement(name = "BearerAuth")
     @PatchMapping("/me")
     @Transactional
-    public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody UserRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody @ValidateGroup UserRequestBody body, Authentication authentication){
         context = context.withUser(authentication);
         return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(userService.patchUser(context.getUser(), body))));
     }
@@ -139,9 +142,9 @@ public class LoginController {
      * @throws JWTException Thrown when token can't be generated
      */
     @Operation(summary = "Generate new token", description = "Generates new JWT token")
-    @ApiResponse(responseCode = "200",description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
-    @ApiResponse(responseCode = "500", description = "500")
+    @ApiResponse(responseCode = "200",ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "500", ref = "500")
     @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/me/refresh")
     public ResponseEntity<APIResponse<String>> refreshToken(Authentication authentication){
@@ -162,9 +165,9 @@ public class LoginController {
      * @throws NotFoundException Thrown when invitation with the provided UUID can't be found
      */
     @Operation(summary = "Check invitation", description = "Returns information about provided invitation")
-    @ApiResponse(responseCode = "200", description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
-    @ApiResponse(responseCode = "404", description = "404")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "404", ref = "404")
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
@@ -181,9 +184,9 @@ public class LoginController {
      */
     @Operation(summary = "Join team using invitation", description = "Joins team using the provided invitation")
     @SecurityRequirement(name = "BearerAuth")
-    @ApiResponse(responseCode = "200", description = "200")
-    @ApiResponse(responseCode = "401", description = "401")
-    @ApiResponse(responseCode = "409", description = "409")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
         context = context.withUser(authentication).withInvitation(invID);

@@ -4,13 +4,15 @@ import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
+import com.patrykmarchewka.concordiapi.DTO.OnCreate;
+import com.patrykmarchewka.concordiapi.DTO.OnPut;
+import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -100,14 +102,15 @@ public class InvitationController {
      */
     @Operation(summary = "Create new invitation",description = "Create new invitation for the team")
     @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/invitations")
-    public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @ValidateGroup(OnCreate.class) InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (!context.getUserRole().isAdminGroup() || teamUserRoleService.checkRoles(context.getUserRole(),body.getRole())){
+        if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles(context.getUserRole(),body.getRole())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID),teamUserRoleService)));
@@ -124,11 +127,12 @@ public class InvitationController {
      */
     @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup(OnPut.class) InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
@@ -147,11 +151,12 @@ public class InvitationController {
      */
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Valid InvitationRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();

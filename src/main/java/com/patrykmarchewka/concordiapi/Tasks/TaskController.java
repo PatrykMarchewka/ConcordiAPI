@@ -4,9 +4,11 @@ package com.patrykmarchewka.concordiapi.Tasks;
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
+import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
+import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Users.UserService;
@@ -18,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -91,11 +92,13 @@ public class TaskController {
      */
     @Operation(summary = "Create new task", description = "Creates a new task with specified information")
     @ApiResponse(responseCode = "201", ref = "201")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks")
     public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @ValidateGroup(OnCreate.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
@@ -135,7 +138,6 @@ public class TaskController {
     @Operation(summary = "Get information about task",description = "Get information about specific task by its ID")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
-    @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<Object>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
@@ -155,11 +157,13 @@ public class TaskController {
      */
     @Operation(summary = "Edit completely task",description = "Edits the entire task with all required fields")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @Validated(OnCreate.class) TaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
         if (!taskService.putTaskRole(context.getUserRole(), context.getTask(), context.getUser())){
             throw new NoPrivilegesException();
@@ -178,11 +182,12 @@ public class TaskController {
      */
     @Operation(summary = "Edit task",description = "Edit task fields")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/tasks/{ID}")
-    public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody TaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody @ValidateGroup TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
@@ -231,7 +236,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
+        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
 
@@ -258,7 +263,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
+        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
 
