@@ -78,9 +78,10 @@ public class LoginController {
     @ApiResponse(responseCode = "500", ref = "500")
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateGroup(OnCreate.class) UserRequestLogin body){
-        String token = new String();
+        String token;
+        User user = userService.getUserByLoginAndPassword(body);
         try {
-            token = JSONWebToken.GenerateJWToken(body.getLogin(),body.getPassword());
+            token = JSONWebToken.GenerateJWToken(user.getID());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new JWTException(e.getMessage(),e);
         }
@@ -151,7 +152,7 @@ public class LoginController {
         context = context.withUser(authentication);
         String response;
         try {
-            response = JSONWebToken.GenerateJWToken(context.getUser().getLogin(),context.getUser().getPassword());
+            response = JSONWebToken.GenerateJWToken(context.getUser().getID());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new JWTException(e.getMessage(),e);
         }

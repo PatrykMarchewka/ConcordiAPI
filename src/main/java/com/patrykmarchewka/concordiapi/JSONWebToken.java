@@ -108,19 +108,18 @@ public class JSONWebToken {
 
     /**
      * Generates Json Web Token from given login and password String <br>
-     * Generated token is valud for 1 hour since creation
-     * @param login String with user login
-     * @param password String with user password
+     * Generated token is valid for 1 hour since creation
+     * @param uID ID of user requesting the token
      * @return Encoded JsonWebToken
      * @throws NoSuchAlgorithmException Thrown when it can't use HMacSHA256 from javax.Mac class
      * @throws InvalidKeyException Thrown when key is invalid
      */
-    public static String GenerateJWToken(String login, String password) throws NoSuchAlgorithmException, InvalidKeyException {
+    public static String GenerateJWToken(Long uID) throws NoSuchAlgorithmException, InvalidKeyException {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
         long issuedAt = System.currentTimeMillis()/1000;
         long expiry = issuedAt + 3600; //60 = 1 minute, 3600 = 1 hour,
-        String payload = String.format("{\"login\":\"%s\",\"password\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",login,password,issuedAt,expiry);
+        String payload = String.format("{\"uID\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",uID,issuedAt,expiry);
         String encodedPayload = Base64Encoding(payload);
         String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,secret_key);
         return encodedHeader + "." + encodedPayload + "." + signature;
