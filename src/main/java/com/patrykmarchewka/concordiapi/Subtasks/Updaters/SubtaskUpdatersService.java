@@ -25,10 +25,11 @@ public class SubtaskUpdatersService {
     }
 
     public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Team> team, UpdateType type){
+    public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Task> task, UpdateType type){
         switch (type){
-            case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,team);
-            case PUT -> subtaskUpdatersPUT.applyPutUpdates(subtask, body, team);
-            case PATCH -> subtaskUpdatersPATCH.applyPatchUpdates(subtask, body, team);
+            case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,task);
+            case PUT -> subtaskUpdatersPUT.applyPutUpdates(subtask, body);
+            case PATCH -> subtaskUpdatersPATCH.applyPatchUpdates(subtask, body);
             case null, default -> throw new BadRequestException("Called update type that isn't CREATE/PUT/PATCH");
         }
     }

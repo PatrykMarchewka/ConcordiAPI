@@ -28,12 +28,14 @@ public class SubtaskService {
     private final SubtaskRepository subtaskRepository;
     private final TeamService teamService;
     private final SubtaskUpdatersService subtaskUpdatersService;
+    private final TaskService taskService;
 
     @Autowired
-    public SubtaskService(SubtaskRepository subtaskRepository, @Lazy TeamService teamService, SubtaskUpdatersService subtaskUpdatersService){
+    public SubtaskService(SubtaskRepository subtaskRepository, @Lazy TeamService teamService, SubtaskUpdatersService subtaskUpdatersService, @Lazy TaskService taskService){
         this.subtaskRepository = subtaskRepository;
         this.teamService = teamService;
         this.subtaskUpdatersService = subtaskUpdatersService;
+        this.taskService = taskService;
     }
 
     /**
@@ -54,10 +56,11 @@ public class SubtaskService {
      * @return Created subtask
      */
     @Transactional
-    public Subtask createSubtask(SubtaskRequestBody body, long teamID){
+    public Subtask createSubtask(SubtaskRequestBody body, long teamID, long taskID){
         Subtask subtask = new Subtask();
-        Supplier<Team> team = () -> teamService.getTeamByID(teamID);
-        subtaskUpdatersService.update(subtask,body,team, UpdateType.CREATE);
+        Team team = teamService.getTeamByID(teamID);
+        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
+        subtaskUpdatersService.update(subtask,body,task, UpdateType.CREATE);
         saveSubtask(subtask);
         return subtask;
     }
@@ -92,9 +95,10 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID){
-        Supplier<Team> team = () -> teamService.getTeamByID(teamID);
-        subtaskUpdatersService.update(subtask,body,team,UpdateType.PUT);
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
+        Team team = teamService.getTeamByID(teamID);
+        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
+        subtaskUpdatersService.update(subtask,body,task,UpdateType.PUT);
         return saveSubtask(subtask);
     }
 
@@ -125,9 +129,10 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID){
-        Supplier<Team> team = () -> teamService.getTeamByID(teamID);
-        subtaskUpdatersService.update(subtask,body,team,UpdateType.PATCH);
+    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
+        Team team = teamService.getTeamByID(teamID);
+        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
+        subtaskUpdatersService.update(subtask,body,task,UpdateType.PATCH);
         return saveSubtask(subtask);
     }
 

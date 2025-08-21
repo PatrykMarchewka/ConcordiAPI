@@ -1,35 +1,28 @@
 package com.patrykmarchewka.concordiapi.Subtasks.Updaters.TaskUpdater;
 
-import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
-import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskCREATEUpdaterWithTeam;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskCREATEUpdaterBasicWithTask;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SubtaskTaskCREATEUpdater implements SubtaskCREATEUpdaterWithTeam {
+public class SubtaskTaskCREATEUpdater implements SubtaskCREATEUpdaterBasicWithTask {
 
-
-    private Team team;
-    private final SubtaskTaskUpdaterHelper subtaskTaskUpdaterHelper;
-
-    @Autowired
-    public SubtaskTaskCREATEUpdater(SubtaskTaskUpdaterHelper subtaskTaskUpdaterHelper) {
-        this.subtaskTaskUpdaterHelper = subtaskTaskUpdaterHelper;
-    }
+    private Task task;
 
     @Override
-    public void CREATEUpdate(Subtask subtask, SubtaskRequestBody body) {
-        if (this.team == null){
-            throw new BadRequestException("The team is set to null");
+    public void CREATEUpdate(Subtask subtask) {
+        if (this.task == null){
+            throw new BadRequestException("The task is set to null");
         }
-        subtaskTaskUpdaterHelper.sharedUpdate(subtask,body,team);
+        subtask.setTask(task);
     }
 
     @Override
-    public void setTeam(Team team) {
-        this.team = team;
+    public void setTask(Task task) {
+        this.task = task;
     }
+
+
 }

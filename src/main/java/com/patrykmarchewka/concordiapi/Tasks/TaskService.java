@@ -216,13 +216,6 @@ public class TaskService {
         saveTask(task);
     }
 
-    @Transactional
-    public void swapSubtaskBetweenTasks(Task newTask, Subtask subtask){
-        subtask.setTask(newTask);
-        newTask.addSubtask(subtask);
-        saveTask(newTask);
-        subtaskService.saveSubtask(subtask);
-    }
 
     /**
      * Returns TaskDTO of either all tasks in team or all tasks in team assigned to user based on UserRole
