@@ -389,7 +389,6 @@ public class TaskService {
     public void removeUsersFromTask(Task task){
         final Set<User> users = Set.copyOf(task.getUsers());
         task.getUsers().clear();
-        saveTask(task);
         for (User user : users){
             user.removeTask(task);
         }
