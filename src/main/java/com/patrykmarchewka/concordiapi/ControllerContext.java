@@ -4,7 +4,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -63,11 +63,11 @@ public class ControllerContext {
      * Requires withTeam to be called before
      * @param taskID long to convert into Task object
      * @return Task
-     * @throws BadRequestException Thrown when called before {@link #withTeam(long)}
+     * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)}
      */
     public ControllerContext withTask(long taskID){
         if (team == null){
-            throw new BadRequestException("Cannot call withTask before specifying team!");
+            throw new ImpossibleStateException("Cannot call withTask before specifying team!");
         }
         this.task = taskService.getTaskByIDAndTeam(taskID,team);
         return this;
@@ -76,11 +76,11 @@ public class ControllerContext {
     /**
      * Requires withUser and withTeam to be called before
      * @return UserRole
-     * @throws BadRequestException Thrown when called before {@link #withTeam(long)} and {@link #withUser(Authentication)}
+     * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)} and {@link #withUser(Authentication)}
      */
     public ControllerContext withRole(){
         if (user == null || team == null){
-            throw new BadRequestException("Cannot call withRole before specifying user and team!");
+            throw new ImpossibleStateException("Cannot call withRole before specifying user and team!");
         }
         this.userRole = teamUserRoleService.getRole(user,team);
         return this;
@@ -90,11 +90,11 @@ public class ControllerContext {
      * Requires withTeam to be called before
      * @param otherUser User to get UserRole
      * @return UserRole
-     * @throws BadRequestException Thrown when called before {@link #withTeam(long)}
+     * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)}
      */
     public ControllerContext withOtherRole(User otherUser){
         if (team == null){
-            throw new BadRequestException("Cannot call withOtherRole before specifying team!");
+            throw new ImpossibleStateException("Cannot call withOtherRole before specifying team!");
         }
         this.otherRole = teamUserRoleService.getRole(otherUser,team);
         return this;

@@ -60,4 +60,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new APIResponse<>("Validation failed", errors));
     }
 
+    @ExceptionHandler(ImpossibleStateException.class)
+    public ResponseEntity<APIResponse<String>> handleImpossible(ImpossibleStateException ex){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new APIResponse<>(ex.getMessage(), null));
+    }
 }
