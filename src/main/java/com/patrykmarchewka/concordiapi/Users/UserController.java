@@ -91,7 +91,7 @@ public class UserController {
     @GetMapping("/users/{ID}")
     public ResponseEntity<APIResponse<UserMemberDTO>> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
-        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
+        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
@@ -114,7 +114,7 @@ public class UserController {
     public ResponseEntity<APIResponse<String>> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
 
-        if (teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
+        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
         }
 
@@ -163,7 +163,7 @@ public class UserController {
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<APIResponse<String>> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
-        if (!context.getUserRole().isOwnerOrAdmin() || teamUserRoleService.checkRoles(context.getUserRole(), newRole)){
+        if (!context.getUserRole().isOwnerOrAdmin() || !teamUserRoleService.checkRoles(context.getUserRole(), newRole)){
             throw new NoPrivilegesException();
         }
         teamUserRoleService.setRole(userService.getUserByID(ID), context.getTeam(), newRole);

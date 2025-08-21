@@ -4,6 +4,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRoleRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +39,7 @@ public class TeamUserRoleService {
      * @return TeamUserRole which holds given User, Team and UserRole information
      */
     public TeamUserRole getByUserAndTeam(User user, Team team){
-        return teamUserRoleRepository.findByUserAndTeam(user,team);
+        return teamUserRoleRepository.findByUserAndTeam(user,team).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -98,7 +99,7 @@ public class TeamUserRoleService {
      * Compares two UserRoles and returns True if first role is same or more privileged than second one, otherwise false
      */
     public boolean checkRoles(UserRole mine, UserRole other){
-        return mine.compareTo(other) >= 0;
+        return mine.compareTo(other) <= 0;
     }
 
 }
