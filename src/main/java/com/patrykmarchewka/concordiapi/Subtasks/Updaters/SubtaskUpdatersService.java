@@ -24,7 +24,6 @@ public class SubtaskUpdatersService {
         this.subtaskUpdatersPATCH = subtaskUpdatersPATCH;
     }
 
-    public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Team> team, UpdateType type){
     public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Task> task, UpdateType type){
         switch (type){
             case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,task);
