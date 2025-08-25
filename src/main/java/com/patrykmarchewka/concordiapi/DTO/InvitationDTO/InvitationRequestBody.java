@@ -19,7 +19,6 @@ public class InvitationRequestBody {
     @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private UserRole role = UserRole.MEMBER;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     @Future(message = "{future.generic}")
     private OffsetDateTime dueDate;
 

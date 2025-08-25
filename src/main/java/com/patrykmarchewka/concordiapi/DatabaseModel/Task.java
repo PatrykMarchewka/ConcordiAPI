@@ -3,6 +3,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,14 +27,19 @@ public class Task {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false)
     private String description;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TaskStatus taskStatus;
+    @Column(nullable = false)
     private OffsetDateTime creationDate;
     private OffsetDateTime updateDate;
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "task")
+    @Column(nullable = false)
     @JsonManagedReference
     private Set<Subtask> subtasks = new HashSet<>();
 

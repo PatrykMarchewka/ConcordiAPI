@@ -25,23 +25,27 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String login;
+    @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false)
     private String lastName;
 
     @ManyToMany
-    @JsonManagedReference
     @JoinTable(
             name = "users_tasks",
             joinColumns = @JoinColumn(name = "user_id", nullable = false),
             inverseJoinColumns = @JoinColumn(name = "task_id", nullable = false)
     )
+    @JsonManagedReference
     private Set<Task> userTasks = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "user")
+    @Column(nullable = false)
     @JsonManagedReference
     private Set<TeamUserRole> teamRoles = new HashSet<>();
 

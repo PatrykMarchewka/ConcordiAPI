@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.patrykmarchewka.concordiapi.UserRole;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -21,11 +22,13 @@ public class Invitation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String UUID;
     @ManyToOne
-    @JsonBackReference
     @JoinColumn(name = "team_id", nullable = false)
+    @JsonBackReference
     private Team invitingTeam;
+    @Column(nullable = false)
     private short uses;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserRole role;
     private OffsetDateTime dueTime;
 

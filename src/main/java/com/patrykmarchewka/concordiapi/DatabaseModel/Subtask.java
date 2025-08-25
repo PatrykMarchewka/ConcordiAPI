@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.patrykmarchewka.concordiapi.TaskStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,15 +20,17 @@ public class Subtask {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
     private String description;
 
     @ManyToOne
-    @JsonBackReference
     @JoinColumn(name = "task_id", nullable = false)
+    @JsonBackReference
     private Task task;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TaskStatus taskStatus;
 
 

@@ -17,7 +17,6 @@ public class TaskRequestBody {
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String name;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     @NotBlank(groups = OnPut.class, message = "{notblank.generic}")
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;

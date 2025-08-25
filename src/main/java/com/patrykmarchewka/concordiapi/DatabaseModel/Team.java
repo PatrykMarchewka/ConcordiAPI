@@ -2,6 +2,7 @@ package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,17 +23,21 @@ public class Team {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "team")
+    @Column(nullable = false)
     @JsonManagedReference
     private Set<TeamUserRole> userRoles = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "assignedTeam")
+    @Column(nullable = false)
     @JsonManagedReference
     private Set<Task> teamTasks = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "invitingTeam")
+    @Column(nullable = false)
     @JsonManagedReference
     private Set<Invitation> invitations = new HashSet<>();
 
