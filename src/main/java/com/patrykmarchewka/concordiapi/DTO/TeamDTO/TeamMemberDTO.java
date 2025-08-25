@@ -21,7 +21,7 @@ public class TeamMemberDTO implements TeamDTO {
     public TeamMemberDTO(Team team, User user, TeamUserRoleService service){
         this.id = team.getId();
         this.name = team.getName();
-        this.teammateCount = team.getTeammates().size();
+        this.teammateCount = team.getUserRoles().size();
         if (user != null){
             Set<TaskMemberDTO> filteredTasks = new HashSet<>();
             for (Task task : team.getTeamTasks()){

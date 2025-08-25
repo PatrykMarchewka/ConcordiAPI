@@ -195,7 +195,7 @@ public class LoginController {
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
 
-        if (!user.checkTeam(team)){
+        if (!userService.checkIfUserExistsInATeam(user,team)){
             invitationService.useInvitation(invitation, user);
             return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
         }

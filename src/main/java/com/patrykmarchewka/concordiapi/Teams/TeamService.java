@@ -5,6 +5,7 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
+import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
@@ -26,16 +27,14 @@ import java.util.stream.Collectors;
 public class TeamService {
 
     private final TeamRepository teamRepository;
-    private final UserService userService;
     private final TeamUserRoleService teamUserRoleService;
     private final TaskService taskService;
     private final RoleRegistry roleRegistry;
     private final TeamUpdatersService teamUpdatersService;
 
     @Autowired
-    public TeamService(TeamRepository teamRepository, UserService userService, TeamUserRoleService teamUserRoleService, TaskService taskService, RoleRegistry roleRegistry, TeamUpdatersService teamUpdatersService){
+    public TeamService(TeamRepository teamRepository, TeamUserRoleService teamUserRoleService, TaskService taskService, RoleRegistry roleRegistry, TeamUpdatersService teamUpdatersService){
         this.teamRepository = teamRepository;
-        this.userService = userService;
         this.teamUserRoleService = teamUserRoleService;
         this.taskService = taskService;
         this.roleRegistry = roleRegistry;
@@ -122,16 +121,15 @@ public class TeamService {
      */
     @Transactional
     public void removeUser(Team team, User user){
-        team.removeTeammate(user);
-        saveTeam(team);
-        user.removeTeam(team);
-        userService.saveUser(user);
+        TeamUserRole tmr = teamUserRoleService.getByUserAndTeam(user, team);
+        team.removeUserRole(tmr);
+        user.removeTeamRole(tmr);
         for (Task task : team.getTeamTasks()){
             if (task.getUsers().contains(user)){
                 taskService.removeUserFromTask(task, user);
             }
         }
-        teamUserRoleService.deleteTMR(teamUserRoleService.getByUserAndTeam(user,team));
+        teamUserRoleService.deleteTMR(tmr);
         if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
             deleteTeam(team);
         }
@@ -157,11 +155,9 @@ public class TeamService {
      */
     @Transactional
     public void addUser(Team team, User user, UserRole role){
-        user.addTeam(team);
-        userService.saveUser(user);
-        team.addTeammate(user);
-        saveTeam(team);
-        teamUserRoleService.createTMR(user,team,role);
+        TeamUserRole tmr = teamUserRoleService.createTMR(user,team,role);
+        user.addTeamRole(tmr);
+        team.addUserRole(tmr);
     }
 
     /**
@@ -181,7 +177,7 @@ public class TeamService {
      * @return Set of TeamDTO based on User Role
      */
     public Set<TeamDTO> getTeamsDTO(User user){
-        return userService.getTeams(user).stream().map(team -> createTeamDTO(user,team)).collect(Collectors.toSet());
+        return user.getTeams().stream().map(team -> createTeamDTO(user,team)).collect(Collectors.toSet());
     }
 
 

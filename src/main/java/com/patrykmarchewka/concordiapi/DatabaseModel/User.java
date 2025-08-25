@@ -1,6 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,11 +9,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Users")
@@ -39,9 +41,9 @@ public class User {
     )
     private Set<Task> userTasks = new HashSet<>();
 
-    @ManyToMany(mappedBy = "teammates")
-    @JsonBackReference
-    private Set<Team> teams = new HashSet<>();
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "user")
+    @JsonManagedReference
+    private Set<TeamUserRole> teamRoles = new HashSet<>();
 
 
     public long getID() {
@@ -83,12 +85,12 @@ public class User {
     public void removeTask(Task task){ this.userTasks.remove(task); }
     public void setUserTasks(Set<Task> tasks) {this.userTasks = tasks;}
 
-    public Set<Team> getTeams(){ return this.teams; }
-    public void addTeam(Team team){this.teams.add(team);}
-    public void removeTeam(Team team){this.teams.remove(team);}
-    public boolean checkTeam(Team team){return this.teams.contains(team);}
-    public void setTeams(Set<Team> teams){this.teams = teams;}
+    public Set<Team> getTeams(){return this.teamRoles.stream().map(TeamUserRole::getTeam).collect(Collectors.toUnmodifiableSet());}
 
+    public Set<TeamUserRole> getTeamRoles() { return this.teamRoles; }
+    public void addTeamRole(TeamUserRole tmr){this.teamRoles.add(tmr);}
+    public void removeTeamRole(TeamUserRole tmr){this.teamRoles.remove(tmr);}
+    public void setTeamRoles(Set<TeamUserRole> teamRoles) { this.teamRoles = teamRoles; }
 
     @Override
     public boolean equals(Object o) {

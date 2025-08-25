@@ -32,12 +32,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRegistry roleRegistry;
     private final UserUpdatersService userUpdatersService;
+    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService){
+    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService, TeamUserRoleService teamUserRoleService){
         this.userRepository = userRepository;
         this.roleRegistry = roleRegistry;
         this.userUpdatersService = userUpdatersService;
+        this.teamUserRoleService = teamUserRoleService;
     }
 
     /**
@@ -91,7 +93,13 @@ public class UserService {
      * @return True if user exists in given team, otherwise false
      */
     public boolean checkIfUserExistsInATeam(User user, Team team){
-        return user.checkTeam(team) && team.checkTeammate(user);
+        try{
+            teamUserRoleService.getByUserAndTeam(user, team);
+            return true;
+        }
+        catch (NotFoundException e){
+            return false;
+        }
     }
 
     /**
@@ -213,15 +221,6 @@ public class UserService {
             }
         }
         return true;
-    }
-
-    /**
-     * Returns teams in which user is part of
-     * @param user User to check
-     * @return Set of teams that user belongs to
-     */
-    public Set<Team> getTeams(User user){
-        return user.getTeams();
     }
 
     /**

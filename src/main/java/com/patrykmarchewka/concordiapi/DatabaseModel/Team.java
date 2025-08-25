@@ -6,15 +6,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Teams")
@@ -25,14 +23,10 @@ public class Team {
     private Long id;
 
     private String name;
-    @ManyToMany
+
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "team")
     @JsonManagedReference
-    @JoinTable(
-            name = "teams_users",
-            joinColumns = @JoinColumn(name = "team_id", nullable = false),
-            inverseJoinColumns = @JoinColumn(name = "user_id", nullable = false)
-    )
-    private Set<User> teammates = new HashSet<>();
+    private Set<TeamUserRole> userRoles = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "assignedTeam")
     @JsonManagedReference
@@ -53,6 +47,13 @@ public class Team {
     public void removeTeammate(User user){this.teammates.remove(user);}
     public boolean checkTeammate(User user){ return this.teammates.contains(user); }
     public void setTeammates(Set<User> teammates){this.teammates = teammates;}
+    public Set<User> getTeammates(){ return this.getUserRoles().stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
+
+    public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
+    public void addUserRole(TeamUserRole tmr){this.userRoles.add(tmr);}
+    public void removeUserRole(TeamUserRole tmr){this.userRoles.remove(tmr);}
+    public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
+    public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
     public Set<Task> getTeamTasks() { return teamTasks; }
     public void addTask(Task task){ this.teamTasks.add(task); }
