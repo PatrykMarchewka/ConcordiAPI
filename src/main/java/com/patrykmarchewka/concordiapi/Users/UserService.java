@@ -13,6 +13,7 @@ import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
@@ -53,25 +54,28 @@ public class UserService {
     }
 
     /**
-     * Returns User given Login or throws
+     * Returns user with given login or null
      * @param Login Login of the user to search for
-     * @return User with the given Login
-     * @throws NotFoundException Thrown when can't find User with provided Login
+     * @return User with the given login or null value
      */
     public User getUserByLogin(String Login){
-        return userRepository.findByLogin(Login).orElseThrow(NotFoundException::new);
+        return userRepository.findByLogin(Login).orElse(null);
     }
 
     /**
      * Returns user given UserRequestLogin or throws
      * @param body UserRequestLogin with the credentials
      * @return User with the given credentials
-     * @throws NotFoundException Thrown when can't find User with provided Login due to call to {@link #getUserByLogin(String)}
      * @throws WrongCredentialsException Thrown when credentials don't match
      */
     public User getUserByLoginAndPassword(UserRequestLogin body){
         User user = getUserByLogin(body.getLogin());
-        if (!Passwords.CheckPasswordBCrypt(body.getPassword(),user.getPassword())){
+
+        //If user doesnt exist, we still run hash check
+        //This is done to prevent timing attacks that could reveal valid usernames
+        String hash = (user != null) ? user.getPassword() : "$2a$13$abcdefghijklmnopqrstuvwxyz";
+
+        if (!Passwords.CheckPasswordBCrypt(body.getPassword(),hash)){
             throw new WrongCredentialsException();
         }
         return user;
