@@ -57,7 +57,7 @@ public class JWTFilter extends OncePerRequestFilter {
             } catch (JsonProcessingException e) {
                 throw new JWTException(e.getMessage(), e.getCause());
             }
-            long exp = Long.valueOf(payload.get("exp").toString());
+            long exp = Long.parseLong(payload.get("exp").toString());
             long now = System.currentTimeMillis() / 1000;
             if (now > exp) {
                 throw new JWTAuthenticationException("Token expired");
