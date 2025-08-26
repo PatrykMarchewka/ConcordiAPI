@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,7 +27,7 @@ public class Team {
     @Column(nullable = false)
     private String name;
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "team")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "team")
     @Column(nullable = false)
     @JsonManagedReference
     private Set<TeamUserRole> userRoles = new HashSet<>();
@@ -50,15 +51,11 @@ public class Team {
     public Set<User> getTeammates(){ return this.getUserRoles().stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
 
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
-    public void addUserRole(TeamUserRole tmr){this.userRoles.add(tmr);}
-    public void removeUserRole(TeamUserRole tmr){this.userRoles.remove(tmr);}
-    public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
     public Set<Task> getTeamTasks() { return teamTasks; }
     public void addTask(Task task){ this.teamTasks.add(task); }
     public void removeTask(Task task){ this.teamTasks.remove(task); }
-
     public void setTeamTasks(Set<Task> tasks) {
         this.teamTasks = tasks;
     }
@@ -66,6 +63,21 @@ public class Team {
     public Set<Invitation> getInvitations(){ return this.invitations; }
     public void setInvitations(Set<Invitation> invitations){this.invitations = invitations;}
 
+
+    public TeamUserRole addUserRole(User user, UserRole role) {
+        TeamUserRole tmr = new TeamUserRole(user, this, role);
+        user.addTeamRole(tmr);
+        this.userRoles.add(tmr);
+        return tmr;
+    }
+
+    public Team removeUserRole(TeamUserRole role){
+        role.getUser().removeTeamRole(role);
+        this.userRoles.remove(role);
+        return this;
+    }
+
+    public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
 
     @Override
     public boolean equals(Object o) {

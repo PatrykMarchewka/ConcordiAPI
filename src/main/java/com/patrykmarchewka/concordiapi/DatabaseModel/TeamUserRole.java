@@ -37,6 +37,15 @@ public class TeamUserRole {
     @Column(name = "user_role", nullable = false)
     private UserRole userRole;
 
+
+    public TeamUserRole(){}
+
+    public TeamUserRole(User user, Team team, UserRole role){
+        this.user = user;
+        this.team = team;
+        this.userRole = role;
+    }
+
     public Long getID() {return id;}
     public void setId(Long id) {this.id = id;}
 
