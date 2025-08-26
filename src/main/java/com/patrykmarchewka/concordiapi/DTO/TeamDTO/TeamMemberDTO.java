@@ -5,7 +5,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.util.HashSet;

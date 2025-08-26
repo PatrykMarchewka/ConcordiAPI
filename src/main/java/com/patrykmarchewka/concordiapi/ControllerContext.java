@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

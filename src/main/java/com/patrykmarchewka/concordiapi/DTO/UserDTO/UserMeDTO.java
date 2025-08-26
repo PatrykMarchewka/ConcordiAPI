@@ -3,7 +3,7 @@ package com.patrykmarchewka.concordiapi.DTO.UserDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 
 import java.util.HashSet;
 import java.util.Set;

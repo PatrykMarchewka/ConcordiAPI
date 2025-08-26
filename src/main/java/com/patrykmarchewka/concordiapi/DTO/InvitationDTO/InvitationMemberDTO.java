@@ -2,7 +2,7 @@ package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
-import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 public class InvitationMemberDTO {

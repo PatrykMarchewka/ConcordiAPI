@@ -4,7 +4,7 @@ import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
-import com.patrykmarchewka.concordiapi.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.UserRole;
 import io.swagger.v3.oas.annotations.Operation;

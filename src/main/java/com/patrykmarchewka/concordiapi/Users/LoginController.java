@@ -1,5 +1,7 @@
-package com.patrykmarchewka.concordiapi;
+package com.patrykmarchewka.concordiapi.Users;
 
+import com.patrykmarchewka.concordiapi.APIResponse;
+import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
@@ -15,7 +17,8 @@ import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
-import com.patrykmarchewka.concordiapi.Users.UserService;
+import com.patrykmarchewka.concordiapi.JSONWebToken;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
