@@ -1,6 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -29,17 +28,14 @@ public class Team {
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "team")
     @Column(nullable = false)
-    @JsonManagedReference
     private Set<TeamUserRole> userRoles = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "assignedTeam")
     @Column(nullable = false)
-    @JsonManagedReference
     private Set<Task> teamTasks = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "invitingTeam")
     @Column(nullable = false)
-    @JsonManagedReference
     private Set<Invitation> invitations = new HashSet<>();
 
     public long getId(){ return this.id; }

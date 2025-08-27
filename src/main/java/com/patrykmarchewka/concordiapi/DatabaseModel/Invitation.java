@@ -1,5 +1,4 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +22,6 @@ public class Invitation {
     private String UUID;
     @ManyToOne
     @JoinColumn(name = "team_id", nullable = false)
-    @JsonBackReference
     private Team invitingTeam;
     @Column(nullable = false)
     private short uses;
