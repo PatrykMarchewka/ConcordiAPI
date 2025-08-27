@@ -13,7 +13,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
@@ -33,14 +32,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRegistry roleRegistry;
     private final UserUpdatersService userUpdatersService;
-    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService, TeamUserRoleService teamUserRoleService){
+    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService){
         this.userRepository = userRepository;
         this.roleRegistry = roleRegistry;
         this.userUpdatersService = userUpdatersService;
-        this.teamUserRoleService = teamUserRoleService;
     }
 
     /**
@@ -88,22 +85,6 @@ public class UserService {
      */
     public boolean checkIfUserExistsByLogin(String login){
         return userRepository.existsByLogin(login);
-    }
-
-    /**
-     * Returns whether provided user is in the provided team
-     * @param user User to check for
-     * @param team Team in which to check
-     * @return True if user exists in given team, otherwise false
-     */
-    public boolean checkIfUserExistsInATeam(User user, Team team){
-        try{
-            teamUserRoleService.getByUserAndTeam(user, team);
-            return true;
-        }
-        catch (NotFoundException e){
-            return false;
-        }
     }
 
     /**
@@ -220,8 +201,8 @@ public class UserService {
     public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
         if (userIDs == null || team == null) return false;
         for (int id : userIDs) {
-            if (!checkIfUserExistsInATeam(getUserByID((long) id), team)) {
-                throw new BadRequestException("Cannot add user to this task that is not part of the team");
+            if (!team.checkUser(getUserByID((long) id))) {
+                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
             }
         }
         return true;
