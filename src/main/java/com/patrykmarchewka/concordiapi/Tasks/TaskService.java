@@ -116,9 +116,8 @@ public class TaskService {
         userService.validateUsersForTasks(body.getUsers(),team);
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
-        saveTask(task);
 
-        return task;
+        return saveTask(task);
     }
 
     /**
@@ -132,8 +131,7 @@ public class TaskService {
     public Task putTask(TaskRequestBody body, Team team, Task task) {
         userService.validateUsersForTasks(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
-        saveTask(task);
-        return task;
+        return saveTask(task);
     }
 
     /**
@@ -147,8 +145,7 @@ public class TaskService {
     public Task patchTask(Task task, TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
-        saveTask(task);
-        return task;
+        return saveTask(task);
     }
 
 
@@ -156,14 +153,12 @@ public class TaskService {
      * Deletes task with the specified ID
      * @param ID ID of the task to delete
      * @param team Team in which to delete
-     * @return Deleted task
      */
     @Transactional
-    public Task deleteTaskByID(long ID, Team team){
+    public void deleteTaskByID(long ID, Team team){
         Task task = getTaskByIDAndTeam(ID,team);
-        userService.removeTaskFromAllUsers(task);
-        teamService.removeTaskFromTeam(team,task);
-        return task;
+        team.removeTask(task);
+        teamService.saveTeam(team);
     }
 
     /**

@@ -54,8 +54,6 @@ public class Team {
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
     public Set<Task> getTeamTasks() { return teamTasks; }
-    public void addTask(Task task){ this.teamTasks.add(task); }
-    public void removeTask(Task task){ this.teamTasks.remove(task); }
     public void setTeamTasks(Set<Task> tasks) {
         this.teamTasks = tasks;
     }
@@ -78,6 +76,20 @@ public class Team {
     }
 
     public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
+
+
+    public void addTask(Task task){
+        task.setAssignedTeam(this);
+        this.teamTasks.add(task);
+    }
+    public void removeTask(Task task){
+        this.teamTasks.remove(task);
+    }
+
+
+
+
+
 
     @Override
     public boolean equals(Object o) {

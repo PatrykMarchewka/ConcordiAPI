@@ -194,17 +194,6 @@ public class TeamService {
     }
 
 
-    /**
-     * Removes task from team and saves team
-     * @param team Team to remove task from
-     * @param task Task to be removed
-     */
-    public void removeTaskFromTeam(Team team, Task task){
-        team.removeTask(task);
-        saveTeam(team);
-    }
-
-
 
 
 
