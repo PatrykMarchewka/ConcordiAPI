@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Pair;
@@ -37,14 +38,16 @@ public class TaskService {
     private final UserService userService;
     private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
+    private final UserTaskRepository userTaskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
         this.taskRepository = taskRepository;
         this.teamService = teamService;
         this.userService = userService;
         this.roleRegistry = roleRegistry;
         this.taskUpdatersService = taskUpdatersService;
+        this.userTaskRepository = userTaskRepository;
     }
 
 
@@ -306,23 +309,13 @@ public class TaskService {
     }
 
     /**
-     * Should only be called from {@link #addUserToTask(Task, User)} or {@link #addUsersToTask(Task, Set)}
-     * @param user User to link with the task
-     * @param task Task to link with the user
-     */
-    private void linkUserAndTask(User user, Task task){
-        task.addUser(user);
-        user.addTask(task);
-    }
-
-    /**
      * Adds User to specified Task
      * @param user User to get added to task
      * @param task Task to attach to user
      */
     @Transactional
     public void addUserToTask(Task task, User user) {
-        linkUserAndTask(user, task);
+        task.addUserTask(user);
         userService.saveUser(user);
     }
 
@@ -334,7 +327,7 @@ public class TaskService {
     @Transactional
     public void addUsersToTask(Task task, Set<User> users){
         for (User user : users){
-            linkUserAndTask(user,task);
+            task.addUserTask(user);
         }
         userService.saveAllUsers(users);
     }
@@ -346,9 +339,8 @@ public class TaskService {
      */
     @Transactional
     public void removeUserFromTask(Task task, User user){
-        task.removeUser(user);
+        task.removeUserTask(userTaskRepository.getByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
         saveTask(task);
-        userService.removeTaskFromUser(user,task);
     }
 
     /**
@@ -357,12 +349,8 @@ public class TaskService {
      */
     @Transactional
     public void removeUsersFromTask(Task task){
-        final Set<User> users = Set.copyOf(task.getUsers());
-        task.getUsers().clear();
-        for (User user : users){
-            user.removeTask(task);
-        }
-        userService.saveAllUsers(users);
+        task.getUserTasks().clear();
+        saveTask(task);
     }
 
 }

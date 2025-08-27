@@ -3,7 +3,6 @@ package com.patrykmarchewka.concordiapi.Users;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
@@ -219,27 +218,6 @@ public class UserService {
             users.add(getUserByID((long)id));
         }
         return users;
-    }
-
-    /**
-     * Removes Task from specified User
-     * @param user User to get removed from the task
-     * @param task Task to remove from user
-     */
-    @Transactional
-    public void removeTaskFromUser(User user, Task task){
-        user.removeTask(task);
-        saveUser(user);
-    }
-
-    /**
-     * Removes Task from all users
-     * @param task Task to remove
-     */
-    public void removeTaskFromAllUsers(Task task){
-        for (User user : task.getUsers()){
-            removeTaskFromUser(user,task);
-        }
     }
 
 
