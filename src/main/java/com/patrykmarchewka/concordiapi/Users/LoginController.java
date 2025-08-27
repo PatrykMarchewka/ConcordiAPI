@@ -197,11 +197,7 @@ public class LoginController {
         User user = context.getUser();
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
-
-        if (!userService.checkIfUserExistsInATeam(user,team)){
-            invitationService.useInvitation(invitation, user);
-            return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
-        }
-        throw new ConflictException("You are already part of that team");
+        invitationService.useInvitation(invitation, user);
+        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
     }
 }
