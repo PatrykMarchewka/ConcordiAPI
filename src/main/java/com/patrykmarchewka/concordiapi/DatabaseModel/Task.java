@@ -102,8 +102,7 @@ public class Task {
         this.subtasks = subtasks;
     }
 
-    public void addSubtask(Subtask subtask){subtasks.add(subtask);}
-    public void removeSubtask(Subtask subtask){subtasks.remove(subtask);}
+
 
     public Set<User> getUsers() {return users;}
     public void setUsers(Set<User> users){
@@ -116,6 +115,15 @@ public class Task {
     public void setAssignedTeam(Team assignedTeam){ this.assignedTeam = assignedTeam; }
 
     public boolean hasUser(User user){return users.contains(user);}
+
+
+
+    public Subtask addSubtask(Subtask subtask){
+        subtask.setTask(this);
+        this.subtasks.add(subtask);
+        return subtask;
+    }
+    public void removeSubtask(Subtask subtask){this.subtasks.remove(subtask);}
 
 
 

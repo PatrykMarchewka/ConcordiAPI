@@ -6,7 +6,6 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.SubtaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
@@ -61,8 +60,7 @@ public class SubtaskService {
         Team team = teamService.getTeamByID(teamID);
         Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
         subtaskUpdatersService.update(subtask,body,task, UpdateType.CREATE);
-        saveSubtask(subtask);
-        return subtask;
+        return saveSubtask(subtask);
     }
 
     /**
@@ -113,15 +111,6 @@ public class SubtaskService {
     }
 
     /**
-     * Checks whether subtask exists by provided ID
-     * @param ID ID of the subtask to check for
-     * @return True if subtask with given ID exists, otherwise false
-     */
-    public boolean checkIfSubtaskExistsByID(long ID){
-        return subtaskRepository.existsById(ID);
-    }
-
-    /**
      * Edits subtask with new values
      * @param subtask Subtask to edit
      * @param body SubtaskRequestBody with new values
@@ -134,32 +123,6 @@ public class SubtaskService {
         Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
         subtaskUpdatersService.update(subtask,body,task,UpdateType.PATCH);
         return saveSubtask(subtask);
-    }
-
-    /**
-     * Checks whether subtasks with provided IDs exist
-     * @param subtaskIDs Set of IDs to check
-     * @return True if all subtasks with provided IDs exist
-     * @throws  BadRequestException Thrown when one or more subtasks with provided ID don't exist
-     */
-    public boolean validateSubtasks(Set<Integer> subtaskIDs){
-        if (subtaskIDs == null) return false;
-        for (int id : subtaskIDs){
-            if (!checkIfSubtaskExistsByID(id)){
-                throw new BadRequestException("Tried to add subtask that doesn't exist");
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Sets subtask to specified task ,should only be called from {@link TaskService#addSubtaskToTask(Task, Subtask)}
-     * @param subtask Subtask to change task of
-     * @param task Task to attach
-     */
-    public void setTaskToSubtask(Subtask subtask, Task task){
-        subtask.setTask(task);
-        saveSubtask(subtask);
     }
 
 

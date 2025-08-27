@@ -12,7 +12,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Pair;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
-import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -34,16 +33,14 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final SubtaskService subtaskService;
     private final TeamService teamService;
     private final UserService userService;
     private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
         this.taskRepository = taskRepository;
-        this.subtaskService = subtaskService;
         this.teamService = teamService;
         this.userService = userService;
         this.roleRegistry = roleRegistry;
@@ -117,7 +114,6 @@ public class TaskService {
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
         saveTask(task);
@@ -135,7 +131,6 @@ public class TaskService {
     @Transactional
     public Task putTask(TaskRequestBody body, Team team, Task task) {
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         saveTask(task);
         return task;
@@ -151,7 +146,6 @@ public class TaskService {
     @Transactional
     public Task patchTask(Task task, TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         saveTask(task);
         return task;
@@ -192,17 +186,6 @@ public class TaskService {
      */
     public Task getTaskByIDAndTeam(long id, Team team){
         return taskRepository.findByIdAndAssignedTeam(id,team).orElseThrow(() -> new NotFoundException());
-    }
-    /**
-     * Adds subtask to Task
-     * @param task Task to edit
-     * @param subtask Subtask to add
-     */
-    @Transactional
-    public void addSubtaskToTask(Task task, Subtask subtask){
-        task.addSubtask(subtask);
-        saveTask(task);
-        subtaskService.setTaskToSubtask(subtask,task);
     }
 
     /**
@@ -323,9 +306,8 @@ public class TaskService {
      * @param task Task to remove subtasks from
      */
     private void removeSubtasksFromTask(Task task){
-        for (Subtask subtask : task.getSubtasks()){
-            removeSubtaskFromTaskAndDelete(task,subtask);
-        }
+        task.getSubtasks().clear();
+        saveTask(task);
     }
 
     /**
