@@ -5,6 +5,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.InvitationRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
@@ -51,13 +52,17 @@ public class InvitationService {
      * Uses invitation and adds user to the team
      * @param invitation Invitation to use
      * @param user User using the invitation
-     * @throws Exception Thrown when user can't join the specified team (Invitation expired?)
+     * @throws ConflictException Thrown when user tries to join a team they are already part of
+     * @throws Exception Thrown when user can't join the specified team due to invitation being no longer usable
      */
     @Transactional(rollbackFor = Exception.class)
     public void useInvitation(Invitation invitation,User user) throws Exception {
+        if (invitation.getInvitingTeam().checkUser(user)){
+            throw new ConflictException("You are already part of that team!");
+        }
         invitation.useOne();
         saveInvitation(invitation);
-        teamService.addUser(invitation.getInvitingTeam(), user,invitation.getRole());
+        invitation.getInvitingTeam().addUserRole(user, invitation.getRole());
     }
 
     /**
@@ -77,15 +82,6 @@ public class InvitationService {
      */
     public Invitation getInvitationByUUID(String UUID){
         return invitationRepository.findByUUID(UUID).orElseThrow(NotFoundException::new);
-    }
-
-    /**
-     * Returns all invitations in the team
-     * @param team Team to check for
-     * @return All Invitations for the given team
-     */
-    public Set<Invitation> getAllInvitations(Team team){
-        return invitationRepository.findAllByInvitingTeam(team);
     }
 
     /**

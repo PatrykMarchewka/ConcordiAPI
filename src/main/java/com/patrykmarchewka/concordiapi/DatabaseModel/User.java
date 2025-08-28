@@ -6,9 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -35,18 +32,12 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @ManyToMany
-    @JoinTable(
-            name = "users_tasks",
-            joinColumns = @JoinColumn(name = "user_id", nullable = false),
-            inverseJoinColumns = @JoinColumn(name = "task_id", nullable = false)
-    )
-    @JsonManagedReference
-    private Set<Task> userTasks = new HashSet<>();
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "assignedUser")
+    @Column(nullable = false)
+    private Set<UserTask> userTasks = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "user")
     @Column(nullable = false)
-    @JsonManagedReference
     private Set<TeamUserRole> teamRoles = new HashSet<>();
 
 
@@ -84,10 +75,10 @@ public class User {
         this.lastName = lastName;
     }
 
-    public Set<Task> getUserTasks() { return userTasks; }
-    public void addTask(Task task){ this.userTasks.add(task); }
-    public void removeTask(Task task){ this.userTasks.remove(task); }
-    public void setUserTasks(Set<Task> tasks) {this.userTasks = tasks;}
+    public Set<UserTask> getUserTasks() { return userTasks; }
+    public void addUserTask(UserTask task){ this.userTasks.add(task); }
+    public void removeUserTask(UserTask task){ this.userTasks.remove(task); }
+    public void setUserTasks(Set<UserTask> tasks) {this.userTasks = tasks;}
 
     public Set<Team> getTeams(){return this.teamRoles.stream().map(TeamUserRole::getTeam).collect(Collectors.toUnmodifiableSet());}
 

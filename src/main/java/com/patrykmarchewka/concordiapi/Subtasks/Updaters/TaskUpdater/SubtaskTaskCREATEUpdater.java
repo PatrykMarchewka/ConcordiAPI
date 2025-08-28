@@ -16,7 +16,7 @@ public class SubtaskTaskCREATEUpdater implements SubtaskCREATEUpdaterBasicWithTa
         if (this.task == null){
             throw new BadRequestException("The task is set to null");
         }
-        subtask.setTask(task);
+        task.addSubtask(subtask);
     }
 
     @Override

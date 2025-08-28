@@ -1,6 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,17 +24,24 @@ public class TeamUserRole {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "team_id", nullable = false)
-    @JsonBackReference
     private Team team;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role", nullable = false)
     private UserRole userRole;
+
+
+    public TeamUserRole(){}
+
+    public TeamUserRole(User user, Team team, UserRole role){
+        this.user = user;
+        this.team = team;
+        this.userRole = role;
+    }
 
     public Long getID() {return id;}
     public void setId(Long id) {this.id = id;}

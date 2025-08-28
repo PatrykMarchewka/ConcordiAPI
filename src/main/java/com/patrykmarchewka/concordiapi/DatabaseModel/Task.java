@@ -1,6 +1,4 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -20,6 +17,7 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Tasks")
@@ -40,15 +38,13 @@ public class Task {
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "task")
     @Column(nullable = false)
-    @JsonManagedReference
     private Set<Subtask> subtasks = new HashSet<>();
 
-    @ManyToMany(mappedBy = "userTasks")
-    @JsonBackReference
-    private Set<User> users = new HashSet<>();
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "assignedTask")
+    @Column(nullable = false)
+    private Set<UserTask> userTasks = new HashSet<>();
 
     @ManyToOne
-    @JsonBackReference
     @JoinColumn(name = "team_id", nullable = false)
     private Team assignedTeam;
 
@@ -102,20 +98,38 @@ public class Task {
         this.subtasks = subtasks;
     }
 
-    public void addSubtask(Subtask subtask){subtasks.add(subtask);}
-    public void removeSubtask(Subtask subtask){subtasks.remove(subtask);}
-
-    public Set<User> getUsers() {return users;}
-    public void setUsers(Set<User> users){
-        this.users = users;
-    }
-    public void addUser(User user){ this.users.add(user); }
-    public void removeUser(User user) { this.users.remove(user); }
+    public Set<UserTask> getUserTasks() { return userTasks; }
+    public Set<User> getUsers() {return userTasks.stream().map(UserTask::getAssignedUser).collect(Collectors.toUnmodifiableSet());}
+    public boolean hasUser(User user){return userTasks.stream().map(UserTask::getAssignedUser).anyMatch(u -> u.equals(user));}
+    public void setUserTasks(Set<UserTask> userTasks) { this.userTasks = userTasks; }
 
     public Team getAssignedTeam(){ return this.assignedTeam; }
     public void setAssignedTeam(Team assignedTeam){ this.assignedTeam = assignedTeam; }
 
-    public boolean hasUser(User user){return users.contains(user);}
+
+
+
+
+    public Subtask addSubtask(Subtask subtask){
+        subtask.setTask(this);
+        this.subtasks.add(subtask);
+        return subtask;
+    }
+    public void removeSubtask(Subtask subtask){this.subtasks.remove(subtask);}
+
+    public UserTask addUserTask(User user){
+        UserTask userTask = new UserTask(user,this);
+
+        user.addUserTask(userTask);
+        this.userTasks.add(userTask);
+
+        return userTask;
+    }
+
+    public void removeUserTask(UserTask userTask){
+        userTask.getAssignedUser().removeUserTask(userTask);
+        this.userTasks.remove(userTask);
+    }
 
 
 

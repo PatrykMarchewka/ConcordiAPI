@@ -11,11 +11,9 @@ import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
-import com.patrykmarchewka.concordiapi.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
-import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +50,7 @@ public class TeamService {
     public Team createTeam(TeamRequestBody body, User user){
         Team team = new Team();
         teamUpdatersService.update(team,body, UpdateType.CREATE);
-        addUser(team,user, UserRole.OWNER);
+        team.addUserRole(user,UserRole.OWNER);
         return saveTeam(team);
     }
 
@@ -123,13 +121,12 @@ public class TeamService {
     public void removeUser(Team team, User user){
         TeamUserRole tmr = teamUserRoleService.getByUserAndTeam(user, team);
         team.removeUserRole(tmr);
-        user.removeTeamRole(tmr);
         for (Task task : team.getTeamTasks()){
             if (task.getUsers().contains(user)){
                 taskService.removeUserFromTask(task, user);
             }
         }
-        teamUserRoleService.deleteTMR(tmr);
+        saveTeam(team);
         if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
             deleteTeam(team);
         }
@@ -145,29 +142,6 @@ public class TeamService {
         for (User user : team.getTeammates()){
             removeUser(team,user);
         }
-    }
-
-    /**
-     * Adds user to the team and saves their role
-     * @param team Team to add user to
-     * @param user User to be added
-     * @param role Role of the user to hold in the team
-     */
-    @Transactional
-    public void addUser(Team team, User user, UserRole role){
-        TeamUserRole tmr = teamUserRoleService.createTMR(user,team,role);
-        user.addTeamRole(tmr);
-        team.addUserRole(tmr);
-    }
-
-    /**
-     * Adds task to the team, doesn't add it to any user
-     * @param team Team to add the task to
-     * @param task Task to be added
-     */
-    public void addTask(Team team, Task task){
-        team.addTask(task);
-        saveTeam(team);
     }
 
 
@@ -191,17 +165,6 @@ public class TeamService {
     public TeamDTO createTeamDTO(User user, Team team){
         UserRole role = teamUserRoleService.getRole(user,team);
         return roleRegistry.createTeamDTOMap().getOrDefault(role, (t, u) -> { throw new NoPrivilegesException(); }).apply(team, user);
-    }
-
-
-    /**
-     * Removes task from team and saves team
-     * @param team Team to remove task from
-     * @param task Task to be removed
-     */
-    public void removeTaskFromTeam(Team team, Task task){
-        team.removeTask(task);
-        saveTeam(team);
     }
 
 

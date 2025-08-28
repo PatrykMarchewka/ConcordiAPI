@@ -1,4 +1,4 @@
-package com.patrykmarchewka.concordiapi;
+package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
@@ -23,15 +23,6 @@ public class TeamUserRoleService {
         this.teamUserRoleRepository = teamUserRoleRepository;
     }
 
-    @Transactional
-    public TeamUserRole createTMR(User user, Team team, UserRole role){
-        TeamUserRole tmr = new TeamUserRole();
-        tmr.setTeam(team);
-        tmr.setUser(user);
-        tmr.setUserRole(role);
-        return saveTMR(tmr);
-    }
-
     /**
      * Gets the TeamUserRole object with the given parameters <br>
      * If you want to get UserRole and not just whole object use {@link #getRole(User, Team)} instead
@@ -41,14 +32,6 @@ public class TeamUserRoleService {
      */
     public TeamUserRole getByUserAndTeam(User user, Team team){
         return teamUserRoleRepository.findByUserAndTeam(user,team).orElseThrow(NotFoundException::new);
-    }
-
-    /**
-     * Deletes the entire TeamUserRole object
-     * @param tmr TeamUserRole to delete
-     */
-    public void deleteTMR(TeamUserRole tmr){
-        teamUserRoleRepository.delete(tmr);
     }
 
     /**

@@ -8,11 +8,11 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Pair;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
-import com.patrykmarchewka.concordiapi.Subtasks.SubtaskService;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -34,20 +34,20 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final SubtaskService subtaskService;
     private final TeamService teamService;
     private final UserService userService;
     private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
+    private final UserTaskRepository userTaskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, SubtaskService subtaskService, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
         this.taskRepository = taskRepository;
-        this.subtaskService = subtaskService;
         this.teamService = teamService;
         this.userService = userService;
         this.roleRegistry = roleRegistry;
         this.taskUpdatersService = taskUpdatersService;
+        this.userTaskRepository = userTaskRepository;
     }
 
 
@@ -117,12 +117,10 @@ public class TaskService {
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
-        saveTask(task);
 
-        return task;
+        return saveTask(task);
     }
 
     /**
@@ -135,10 +133,8 @@ public class TaskService {
     @Transactional
     public Task putTask(TaskRequestBody body, Team team, Task task) {
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
-        saveTask(task);
-        return task;
+        return saveTask(task);
     }
 
     /**
@@ -151,10 +147,8 @@ public class TaskService {
     @Transactional
     public Task patchTask(Task task, TaskRequestBody body, Team team){
         userService.validateUsersForTasks(body.getUsers(),team);
-        subtaskService.validateSubtasks(body.getSubtasks());
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
-        saveTask(task);
-        return task;
+        return saveTask(task);
     }
 
 
@@ -162,14 +156,12 @@ public class TaskService {
      * Deletes task with the specified ID
      * @param ID ID of the task to delete
      * @param team Team in which to delete
-     * @return Deleted task
      */
     @Transactional
-    public Task deleteTaskByID(long ID, Team team){
+    public void deleteTaskByID(long ID, Team team){
         Task task = getTaskByIDAndTeam(ID,team);
-        userService.removeTaskFromAllUsers(task);
-        teamService.removeTaskFromTeam(team,task);
-        return task;
+        team.removeTask(task);
+        teamService.saveTeam(team);
     }
 
     /**
@@ -192,17 +184,6 @@ public class TaskService {
      */
     public Task getTaskByIDAndTeam(long id, Team team){
         return taskRepository.findByIdAndAssignedTeam(id,team).orElseThrow(() -> new NotFoundException());
-    }
-    /**
-     * Adds subtask to Task
-     * @param task Task to edit
-     * @param subtask Subtask to add
-     */
-    @Transactional
-    public void addSubtaskToTask(Task task, Subtask subtask){
-        task.addSubtask(subtask);
-        saveTask(task);
-        subtaskService.setTaskToSubtask(subtask,task);
     }
 
     /**
@@ -323,19 +304,8 @@ public class TaskService {
      * @param task Task to remove subtasks from
      */
     private void removeSubtasksFromTask(Task task){
-        for (Subtask subtask : task.getSubtasks()){
-            removeSubtaskFromTaskAndDelete(task,subtask);
-        }
-    }
-
-    /**
-     * Should only be called from {@link #addUserToTask(Task, User)} or {@link #addUsersToTask(Task, Set)}
-     * @param user User to link with the task
-     * @param task Task to link with the user
-     */
-    private void linkUserAndTask(User user, Task task){
-        task.addUser(user);
-        user.addTask(task);
+        task.getSubtasks().clear();
+        saveTask(task);
     }
 
     /**
@@ -345,7 +315,7 @@ public class TaskService {
      */
     @Transactional
     public void addUserToTask(Task task, User user) {
-        linkUserAndTask(user, task);
+        task.addUserTask(user);
         userService.saveUser(user);
     }
 
@@ -357,7 +327,7 @@ public class TaskService {
     @Transactional
     public void addUsersToTask(Task task, Set<User> users){
         for (User user : users){
-            linkUserAndTask(user,task);
+            task.addUserTask(user);
         }
         userService.saveAllUsers(users);
     }
@@ -369,9 +339,8 @@ public class TaskService {
      */
     @Transactional
     public void removeUserFromTask(Task task, User user){
-        task.removeUser(user);
+        task.removeUserTask(userTaskRepository.getByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
         saveTask(task);
-        userService.removeTaskFromUser(user,task);
     }
 
     /**
@@ -380,12 +349,8 @@ public class TaskService {
      */
     @Transactional
     public void removeUsersFromTask(Task task){
-        final Set<User> users = Set.copyOf(task.getUsers());
-        task.getUsers().clear();
-        for (User user : users){
-            user.removeTask(task);
-        }
-        userService.saveAllUsers(users);
+        task.getUserTasks().clear();
+        saveTask(task);
     }
 
 }

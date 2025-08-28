@@ -27,15 +27,11 @@ public class TaskRequestBody {
     @NotNull(groups = OnPut.class, message = "{notnull.generic}")
     private TaskStatus taskStatus;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
-    private Set<Integer> subtasks = new HashSet<>();
-
-    public TaskRequestBody(String name, @Nullable String description, @Nullable Set<Integer> users, @Nullable TaskStatus taskStatus, @Nullable Set<Integer> subtasks){
+    public TaskRequestBody(String name, @Nullable String description, @Nullable Set<Integer> users, @Nullable TaskStatus taskStatus){
         this.name = name;
         this.description = description;
         this.users = users;
         this.taskStatus = (taskStatus != null) ? taskStatus : TaskStatus.NEW;
-        this.subtasks = subtasks;
     }
 
     public TaskRequestBody(){}
@@ -51,7 +47,4 @@ public class TaskRequestBody {
 
     public TaskStatus getTaskStatus(){return taskStatus;}
     public void setTaskStatus(TaskStatus taskStatus){this.taskStatus = taskStatus;}
-
-    public Set<Integer> getSubtasks(){return subtasks;}
-    public void setSubtasks(Set<Integer> subtasks){this.subtasks = subtasks;}
 }
