@@ -117,7 +117,7 @@ public class LoginController {
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
         context = context.withUser(authentication);
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(context.getUser(), teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(userService.getUserWithTeams(context.getUser()), teamUserRoleService)));
     }
 
     /**

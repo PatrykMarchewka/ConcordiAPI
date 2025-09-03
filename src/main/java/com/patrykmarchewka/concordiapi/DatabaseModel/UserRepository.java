@@ -11,4 +11,11 @@ public interface UserRepository extends JpaRepository<User,Long> {
     
     Optional<User> findByLogin(String login);
 
+    @Query("""
+        SELECT u from User u
+        left join fetch u.teamRoles tr
+        left join fetch tr.team
+        where u.id = :id
+""")
+    Optional<User>findUserWithTeamsByID(@Param("id") Long id);
 }

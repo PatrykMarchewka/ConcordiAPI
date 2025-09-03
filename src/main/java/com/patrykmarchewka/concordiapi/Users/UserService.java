@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
@@ -220,5 +221,8 @@ public class UserService {
         return users;
     }
 
+    public User getUserWithTeams(User user){
+        return userRepository.findUserWithTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
 
 }
