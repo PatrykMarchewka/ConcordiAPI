@@ -93,7 +93,7 @@ public class TeamService {
      * @return Team that has the specified ID
      */
     public Team getTeamByID(long id){
-        return teamRepository.getTeamById(id).orElseThrow(NotFoundException::new);
+        return teamRepository.findTeamById(id).orElseThrow(NotFoundException::new);
     }
 
     /**

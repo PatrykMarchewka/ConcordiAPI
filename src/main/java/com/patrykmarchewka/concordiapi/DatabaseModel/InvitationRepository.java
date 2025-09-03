@@ -8,5 +8,5 @@ import java.util.Set;
 public interface InvitationRepository extends JpaRepository<Invitation,String> {
     Optional<Invitation> findByUUID(String uuid);
 
-    Set<Invitation> findAllByInvitingTeam(Team invitingTeam);
+    Set<Invitation> getAllByInvitingTeam(Team invitingTeam);
 }

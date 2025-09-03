@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface TeamUserRoleRepository extends JpaRepository<TeamUserRole,Long> {
-
     Optional<TeamUserRole> findByUserAndTeam(User user, Team team);
-
-    Set<TeamUserRole> findAllByTeamAndUserRole(Team team, UserRole userRole);
+    Set<TeamUserRole> getAllByTeamAndUserRole(Team team, UserRole userRole);
 }

@@ -99,7 +99,7 @@ public class InvitationService {
      */
     public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
-            for (Invitation inv : invitationRepository.findAllByInvitingTeam(team)){
+            for (Invitation inv : invitationRepository.getAllByInvitingTeam(team)){
                 invitations.add(new InvitationManagerDTO(inv,teamUserRoleService));
             }
             return invitations;

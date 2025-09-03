@@ -66,7 +66,7 @@ public class TeamUserRoleService {
      */
     @Transactional(readOnly = true)
     public Set<User> getAllByTeamAndUserRole(Team team, UserRole role){
-        return teamUserRoleRepository.findAllByTeamAndUserRole(team,role).stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet());
+        return teamUserRoleRepository.getAllByTeamAndUserRole(team,role).stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet());
     }
 
     /**

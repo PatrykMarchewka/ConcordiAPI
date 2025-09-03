@@ -6,6 +6,5 @@ import java.util.Optional;
 
 public interface TeamRepository  extends JpaRepository<Team,Long> {
     Team getTeamByName(String name);
-
-    Optional<Team> getTeamById(long id);
+    Optional<Team> findTeamById(Long id);
 }
