@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,5 +18,16 @@ public interface UserRepository extends JpaRepository<User,Long> {
         left join fetch tr.team
         where u.id = :id
 """)
-    Optional<User>findUserWithTeamsByID(@Param("id") Long id);
+    Optional<User>findUserWithTeamRolesAndTeamsByID(@Param("id") Long id);
+
+    @Query("""
+    SELECT u from User u
+    left join fetch u.userTasks ut
+    where u.id = :id
+""")
+    Optional<User>findUserWithUserTasksByID(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"teamRoles", "teamRoles.team", "userTasks"})
+    @Query("SELECT u from User u where u.id = :id")
+    Optional<User> findUserFullByID(@Param("id") Long id);
 }

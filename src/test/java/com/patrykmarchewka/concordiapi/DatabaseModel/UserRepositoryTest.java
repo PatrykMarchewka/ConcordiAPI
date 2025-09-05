@@ -9,7 +9,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestConstructor;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Transactional
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 public class UserRepositoryTest implements UserTestHelper{
 
@@ -31,10 +29,11 @@ public class UserRepositoryTest implements UserTestHelper{
     @AfterEach
     void cleanUp(){
         userRepository.deleteAll();
+        userRepository.flush();
     }
 
     @Test
-    void shouldSaveAndRetrieveUserCorrectly() {
+    void shouldSaveAndRetrieveUserCorrectlyBasic() {
         long id = createUser("TEST",userRepository).getID();
 
         User found = userRepository.findByLogin("TEST").orElse(null);
@@ -46,9 +45,55 @@ public class UserRepositoryTest implements UserTestHelper{
         assertEquals("Doe", found.getLastName());
         assertNotEquals("d", found.getPassword());
         assertTrue(Passwords.CheckPasswordBCrypt("d", found.getPassword()));
+    }
+
+    @Test
+    void shouldReturnUserWithTeams(){
+        long id = createUser("TEST",userRepository).getID();
+
+        User found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
+
+        assertNotNull(found);
         assertTrue(found.getTeams().isEmpty());
-        assertTrue(found.getUserTasks().isEmpty());
         assertTrue(found.getTeamRoles().isEmpty());
+    }
+
+    @Test
+    void shouldReturnUserWithTasks(){
+        long id = createUser("TEST", userRepository).getID();
+
+        User found = userRepository.findUserWithUserTasksByID(id).orElse(null);
+
+        assertNotNull(found);
+        assertTrue(found.getUserTasks().isEmpty());
+    }
+
+    @Test
+    void shouldSaveAndRetrieveUserCorrectlyFull(){
+        long id = createUser("TEST",userRepository).getID();
+
+        User found = userRepository.findUserFullByID(id).orElse(null);
+
+        assertNotNull(found);
+        assertEquals(id, found.getID());
+        assertEquals("TEST", found.getLogin());
+        assertEquals("John", found.getName());
+        assertEquals("Doe", found.getLastName());
+        assertNotEquals("d", found.getPassword());
+        assertTrue(Passwords.CheckPasswordBCrypt("d", found.getPassword()));
+
+        assertTrue(found.getTeams().isEmpty());
+        assertTrue(found.getTeamRoles().isEmpty());
+        assertTrue(found.getUserTasks().isEmpty());
+    }
+
+    @Test
+    void shouldReturnUserByLogin(){
+        createUser("TEST",userRepository);
+
+        User found = userRepository.findByLogin("TEST").orElse(null);
+
+        assertNotNull(found);
     }
 
     @Test
@@ -67,10 +112,17 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserByID(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserWithTeamsByID(id).orElse(null);
+        User found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
 
 
         assertNotNull(found);
+    }
+
+    @Test
+    void shouldReturnNullForNonExistingUserID(){
+        User found = userRepository.findUserWithTeamRolesAndTeamsByID(999L).orElse(null);
+
+        assertNull(found);
     }
 
     @Test
