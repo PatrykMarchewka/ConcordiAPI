@@ -51,22 +51,13 @@ public class UserService {
     }
 
     /**
-     * Returns user with given login or null
-     * @param Login Login of the user to search for
-     * @return User with the given login or null value
-     */
-    public User getUserByLogin(String Login){
-        return userRepository.findByLogin(Login).orElse(null);
-    }
-
-    /**
      * Returns user given UserRequestLogin or throws
      * @param body UserRequestLogin with the credentials
      * @return User with the given credentials
      * @throws WrongCredentialsException Thrown when credentials don't match
      */
     public User getUserByLoginAndPassword(UserRequestLogin body){
-        User user = getUserByLogin(body.getLogin());
+        User user = userRepository.findByLogin(body.getLogin()).orElse(null);
 
         //If user doesnt exist, we still run hash check
         //This is done to prevent timing attacks that could reveal valid usernames
@@ -129,14 +120,6 @@ public class UserService {
      */
     public void deleteUser(User user){
         userRepository.delete(user);
-    }
-
-    /**
-     * Unused, Deletes specified User by ID
-     * @param id ID of user to delete
-     */
-    public void deleteUserByID(long id){
-        userRepository.deleteById(id);
     }
 
     /**
@@ -222,7 +205,15 @@ public class UserService {
     }
 
     public User getUserWithTeams(User user){
-        return userRepository.findUserWithTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+        return userRepository.findUserWithTeamRolesAndTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public User getUserWithUserTasks(User user){
+        return userRepository.findUserWithUserTasksByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public User getUserFull(User user){
+        return userRepository.findUserFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
     }
 
 }
