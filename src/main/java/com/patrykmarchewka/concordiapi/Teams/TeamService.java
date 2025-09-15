@@ -5,8 +5,8 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
-import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
@@ -14,6 +14,7 @@ import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,15 +80,6 @@ public class TeamService {
     }
 
     /**
-     * Gives the ID of the specified team
-     * @param team Team to get ID of
-     * @return ID of the specified team
-     */
-    public long getID(Team team){
-        return team.getId();
-    }
-
-    /**
      * Gives the Team based on provided ID
      * @param id ID of the team to get of
      * @return Team that has the specified ID
@@ -118,19 +110,42 @@ public class TeamService {
      * @param user User to be removed
      */
     @Transactional
-    public void removeUser(Team team, User user){
-        TeamUserRole tmr = teamUserRoleService.getByUserAndTeam(user, team);
-        team.removeUserRole(tmr);
+    public Team removeUser(Team team, User user){
+        Team newteam = getTeamFull(team);
+        removeTeamUserRoleForUser(newteam, user);
+        removeTeamTasksForUser(newteam, user);
+        return deleteTeamIfEmpty(newteam);
+    }
+
+    public void removeTeamUserRoleForUser(Team team, User user){
+        if (!Hibernate.isInitialized(team.getUserRoles())){
+            throw new ImpossibleStateException("Cannot access userRoles for given team");
+        }
+        team.removeUserRole(teamUserRoleService.getByUserAndTeam(user, team));
+        saveTeam(team);
+    }
+
+    public void removeTeamTasksForUser(Team team, User user){
+        if (!Hibernate.isInitialized(team.getTeamTasks())){
+            throw new ImpossibleStateException("Cannot access teamTasks for given team");
+        }
         for (Task task : team.getTeamTasks()){
             if (task.getUsers().contains(user)){
                 taskService.removeUserFromTask(task, user);
             }
         }
         saveTeam(team);
+    }
+
+    public Team deleteTeamIfEmpty(Team team){
+        if (!Hibernate.isInitialized(team.getTeammates()) || !Hibernate.isInitialized(team.getInvitations())){
+            throw new ImpossibleStateException("Cannot access userRoles and/or invitations for given team");
+        }
         if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
             deleteTeam(team);
+            return null;
         }
-
+        return team;
     }
 
     /**
@@ -167,8 +182,21 @@ public class TeamService {
         return roleRegistry.createTeamDTOMap().getOrDefault(role, (t, u) -> { throw new NoPrivilegesException(); }).apply(team, user);
     }
 
+    public Team getTeamWithUserRoles(Team team){
+        return teamRepository.findTeamWithUserRolesAndUsersByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
 
+    public Team getTeamWithTeamTasks(Team team){
+        return teamRepository.findTeamWithTeamTasksByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
 
+    public Team getTeamWithInvitations(Team team){
+        return teamRepository.findTeamWithInvitationsByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
+
+    public Team getTeamFull(Team team){
+        return teamRepository.findTeamFullByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
 
 
 
