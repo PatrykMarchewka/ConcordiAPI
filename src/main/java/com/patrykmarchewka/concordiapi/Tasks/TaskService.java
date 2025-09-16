@@ -9,6 +9,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
+import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Pair;
@@ -58,7 +59,7 @@ public class TaskService {
      * @return Set of tasks in given Team
      */
     public Set<Task> getAllTasks(Team team){
-        return taskRepository.findByAssignedTeam(team);
+        return taskRepository.getByAssignedTeam(team);
     }
 
     /**
@@ -105,7 +106,7 @@ public class TaskService {
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTime.now()) > days).collect(Collectors.toSet());
+        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTime.now()) >= days).collect(Collectors.toSet());
     }
 
     /**
@@ -145,7 +146,7 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(Task task, TaskRequestBody body, Team team){
+    public Task patchTask(TaskRequestBody body, Team team, Task task){
         userService.validateUsersForTasks(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         return saveTask(task);
@@ -173,6 +174,15 @@ public class TaskService {
     public Task saveTask(Task task){
         task.setUpdateDate(OffsetDateTime.now());
         return taskRepository.save(task);
+    }
+
+    /**
+     * Unused, saves all tasks
+     * @param tasks Set of tasks to save
+     */
+    @Transactional
+    public void saveAllTasks(Set<Task> tasks){
+        taskRepository.saveAll(tasks);
     }
 
     /**
@@ -316,7 +326,7 @@ public class TaskService {
     @Transactional
     public void addUserToTask(Task task, User user) {
         task.addUserTask(user);
-        userService.saveUser(user);
+        saveTask(task);
     }
 
     /**
@@ -329,7 +339,7 @@ public class TaskService {
         for (User user : users){
             task.addUserTask(user);
         }
-        userService.saveAllUsers(users);
+        saveTask(task);
     }
 
     /**
@@ -339,7 +349,7 @@ public class TaskService {
      */
     @Transactional
     public void removeUserFromTask(Task task, User user){
-        task.removeUserTask(userTaskRepository.getByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
+        task.removeUserTask(userTaskRepository.findByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
         saveTask(task);
     }
 
@@ -352,5 +362,19 @@ public class TaskService {
         task.getUserTasks().clear();
         saveTask(task);
     }
+
+    public Task getTaskWithUserTasks(Task task){
+        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    public Task getTaskWithSubtasks(Task task){
+        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    public Task getTaskFull(Task task){
+        return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+
 
 }
