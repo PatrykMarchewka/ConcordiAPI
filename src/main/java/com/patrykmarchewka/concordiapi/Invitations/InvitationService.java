@@ -49,6 +49,32 @@ public class InvitationService {
     }
 
     /**
+     * Edits Invitation completely with new values
+     * @param invitation Invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @return Invitation after changes
+     */
+    @Transactional
+    public Invitation putInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
+        return saveInvitation(invitation);
+    }
+
+    /**
+     * Edits Invitation with new values
+     * @param invitation Invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @return Invitation after changes
+     */
+    @Transactional
+    public Invitation patchInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
+        return saveInvitation(invitation);
+    }
+
+    /**
      * Uses invitation and adds user to the team
      * @param invitation Invitation to use
      * @param user User using the invitation
@@ -104,31 +130,4 @@ public class InvitationService {
             }
             return invitations;
     }
-
-    /**
-     * Edits Invitation with new values
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with new values
-     * @return Invitation after changes
-     */
-    @Transactional
-    public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
-        return saveInvitation(invitation);
-    }
-
-    /**
-     * Edits Invitation completely with new values
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with new values
-     * @return Invitation after changes
-     */
-    @Transactional
-    public Invitation putUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
-        return saveInvitation(invitation);
-    }
-
 }
