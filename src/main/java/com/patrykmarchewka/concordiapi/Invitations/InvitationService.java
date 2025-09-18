@@ -130,4 +130,12 @@ public class InvitationService {
             }
             return invitations;
     }
+
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+        invitationRepository.deleteAll();
+        invitationRepository.flush();
+    }
 }

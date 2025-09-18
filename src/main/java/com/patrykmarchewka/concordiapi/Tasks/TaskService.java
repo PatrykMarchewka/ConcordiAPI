@@ -375,6 +375,12 @@ public class TaskService {
         return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
 
-
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+       taskRepository.deleteAll();
+       taskRepository.flush();
+    }
 
 }

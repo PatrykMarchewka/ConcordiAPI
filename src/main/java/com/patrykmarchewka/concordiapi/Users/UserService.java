@@ -216,4 +216,12 @@ public class UserService {
         return userRepository.findUserFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
     }
 
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+        userRepository.deleteAll();
+        userRepository.flush();
+    }
+
 }

@@ -199,6 +199,11 @@ public class TeamService {
     }
 
 
-
-
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll() {
+        teamRepository.deleteAll();
+        teamRepository.flush();
+    }
 }

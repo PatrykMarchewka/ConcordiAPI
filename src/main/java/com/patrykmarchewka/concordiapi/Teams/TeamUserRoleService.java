@@ -86,4 +86,12 @@ public class TeamUserRoleService {
         return mine.compareTo(other) <= 0;
     }
 
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+        teamUserRoleRepository.deleteAll();
+        teamUserRoleRepository.flush();
+    }
+
 }

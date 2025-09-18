@@ -126,4 +126,11 @@ public class SubtaskService {
     }
 
 
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+        subtaskRepository.deleteAll();
+        subtaskRepository.flush();
+    }
 }
