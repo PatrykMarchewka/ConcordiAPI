@@ -48,12 +48,9 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @AfterEach
     void cleanUp(){
-        taskRepository.deleteAll();
-        taskRepository.flush();
-        teamRepository.deleteAll();
-        teamRepository.flush();
-        userRepository.deleteAll();
-        userRepository.flush();
+        taskService.deleteAll();
+        teamService.deleteAll();
+        userService.deleteAll();
     }
 
     @Test

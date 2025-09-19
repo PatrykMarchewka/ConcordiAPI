@@ -44,12 +44,9 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @AfterEach
     void cleanUp(){
-        teamUserRoleRepository.deleteAll();
-        teamUserRoleRepository.flush();
-        teamRepository.deleteAll();
-        teamRepository.flush();
-        userRepository.deleteAll();
-        userRepository.flush();
+        teamUserRoleService.deleteAll();
+        teamService.deleteAll();
+        userService.deleteAll();
     }
 
     @Test

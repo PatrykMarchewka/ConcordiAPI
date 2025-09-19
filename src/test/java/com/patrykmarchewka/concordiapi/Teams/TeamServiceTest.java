@@ -43,10 +43,8 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @AfterEach
     void cleanUp(){
-        teamRepository.deleteAll();
-        teamRepository.flush();
-        userRepository.deleteAll();
-        userRepository.flush();
+        teamService.deleteAll();
+        userService.deleteAll();
     }
 
     @Test

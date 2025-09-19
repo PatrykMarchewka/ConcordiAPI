@@ -34,8 +34,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @AfterEach
     void cleanUp(){
-        userRepository.deleteAll();
-        userRepository.flush();
+        userService.deleteAll();
     }
 
 
