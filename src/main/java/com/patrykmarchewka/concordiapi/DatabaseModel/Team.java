@@ -72,6 +72,7 @@ public class Team {
     }
 
     public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
+    public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
 
 
     public void addTask(Task task){

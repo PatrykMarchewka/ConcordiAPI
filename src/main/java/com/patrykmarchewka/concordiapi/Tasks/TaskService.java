@@ -363,6 +363,23 @@ public class TaskService {
         saveTask(task);
     }
 
+    /**
+     * Checks if users belongs in a given team
+     * @param userIDs Set of IDs of Users to check
+     * @param team Team in which to search
+     * @return True if all users are part of given team, otherwise false
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
+    public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
+        if (userIDs == null || team == null) return false;
+        for (int id : userIDs) {
+            if (!team.checkUser(id)) {
+                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
+            }
+        }
+        return true;
+    }
+
     public Task getTaskWithUserTasks(Task task){
         return taskRepository.findTaskWithUserTasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
