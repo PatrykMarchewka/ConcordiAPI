@@ -9,7 +9,9 @@ import com.patrykmarchewka.concordiapi.TaskStatus;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TaskManagerDTO implements TaskDTO {
     private long id;
@@ -61,4 +63,16 @@ public class TaskManagerDTO implements TaskDTO {
 
     public String getUpdateDate(){return updateDate;}
     public void setUpdateDate(OffsetDateTime updateDate){this.updateDate = updateDate.toString();}
+
+    @Override
+    public boolean equalsTask(Task task) {
+        return Objects.equals(id, task.getID()) &&
+                Objects.equals(name, task.getName()) &&
+                Objects.equals(description, task.getDescription()) &&
+                Objects.equals(taskStatus, task.getTaskStatus()) &&
+                Objects.equals(subtasks, task.getSubtasks().stream().map(SubtaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())) &&
+                Objects.equals(users, task.getUsers().stream().map(UserMemberDTO::new).collect(Collectors.toUnmodifiableSet())) &&
+                Objects.equals(creationDate, task.getCreationDate().toString()) &&
+                Objects.equals(updateDate, task.getUpdateDate().toString());
+    }
 }
