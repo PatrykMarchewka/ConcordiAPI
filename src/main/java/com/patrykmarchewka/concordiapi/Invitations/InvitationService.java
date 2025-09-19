@@ -5,6 +5,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.InvitationRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
@@ -79,16 +80,20 @@ public class InvitationService {
      * @param invitation Invitation to use
      * @param user User using the invitation
      * @throws ConflictException Thrown when user tries to join a team they are already part of
-     * @throws Exception Thrown when user can't join the specified team due to invitation being no longer usable
+     * @throws BadRequestException Thrown when user can't join the specified team due to invitation being no longer usable
      */
     @Transactional(rollbackFor = Exception.class)
     public void useInvitation(Invitation invitation,User user) throws Exception {
         if (invitation.getInvitingTeam().checkUser(user)){
+    @Transactional
+    public Invitation useInvitation(Invitation invitation,User user){
+        Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
+        if (team.checkUser(user)){
             throw new ConflictException("You are already part of that team!");
         }
         invitation.useOne();
-        saveInvitation(invitation);
-        invitation.getInvitingTeam().addUserRole(user, invitation.getRole());
+        teamService.addUser(team, user, invitation.getRole());
+        return saveInvitation(invitation);
     }
 
     /**
