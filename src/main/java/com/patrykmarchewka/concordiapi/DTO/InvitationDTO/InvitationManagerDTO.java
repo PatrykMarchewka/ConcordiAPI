@@ -45,7 +45,7 @@ public class InvitationManagerDTO implements InvitationDTO{
     @Override
     public boolean equalsInvitation(Invitation invitation) {
         return Objects.equals(UUID, invitation.getUUID()) &&
-                Objects.equals(team.getId(), invitation.getInvitingTeam().getID()) &&
+                Objects.equals(team.getID(), invitation.getInvitingTeam().getID()) &&
                 Objects.equals(role, invitation.getRole()) &&
                 Objects.equals(uses, invitation.getUses()) &&
                 Objects.equals(dueTime, (invitation.getDueTime() != null) ? invitation.getDueTime().toString() : null);
