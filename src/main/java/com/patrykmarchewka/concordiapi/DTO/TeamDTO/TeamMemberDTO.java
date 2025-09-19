@@ -2,14 +2,13 @@ package com.patrykmarchewka.concordiapi.DTO.TeamDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
-import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TeamMemberDTO implements TeamDTO {
     private long id;
@@ -18,22 +17,15 @@ public class TeamMemberDTO implements TeamDTO {
     private Set<TaskMemberDTO> tasks = new HashSet<>();
     private Set<UserMemberDTO> owners = new HashSet<>();
 
-    public TeamMemberDTO(Team team, User user, TeamUserRoleService service){
-        this.id = team.getId();
+    public TeamMemberDTO(Team team, User user){
+        this.id = team.getID();
         this.name = team.getName();
         this.teammateCount = team.getUserRoles().size();
         if (user != null){
-            Set<TaskMemberDTO> filteredTasks = new HashSet<>();
-            for (Task task : team.getTeamTasks()){
-                if (task.getUsers().contains(user)){
-                    filteredTasks.add(new TaskMemberDTO(task));
-                }
-            }
-            this.tasks = filteredTasks;
+            this.tasks = team.getTeamTasks().stream().filter(t -> t.getUsers().contains(user)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
         }
-        for (User user1 : service.getAllByTeamAndUserRole(team, UserRole.OWNER)){
-            this.owners.add(new UserMemberDTO(user1));
-        }
+
+        this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
     }
 
     public TeamMemberDTO(){}
