@@ -9,6 +9,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
@@ -19,7 +20,6 @@ import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
-import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -36,16 +36,14 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TeamService teamService;
-    private final UserService userService;
     private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
     private final UserTaskRepository userTaskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
         this.taskRepository = taskRepository;
         this.teamService = teamService;
-        this.userService = userService;
         this.roleRegistry = roleRegistry;
         this.taskUpdatersService = taskUpdatersService;
         this.userTaskRepository = userTaskRepository;
@@ -117,7 +115,7 @@ public class TaskService {
      */
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
-        userService.validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasks(body.getUsers(),team);
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
 
@@ -133,7 +131,7 @@ public class TaskService {
      */
     @Transactional
     public Task putTask(TaskRequestBody body, Team team, Task task) {
-        userService.validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasks(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         return saveTask(task);
     }
@@ -147,7 +145,7 @@ public class TaskService {
      */
     @Transactional
     public Task patchTask(TaskRequestBody body, Team team, Task task){
-        userService.validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasks(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         return saveTask(task);
     }
