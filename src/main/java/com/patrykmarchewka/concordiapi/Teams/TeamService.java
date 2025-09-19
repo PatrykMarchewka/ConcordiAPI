@@ -189,19 +189,19 @@ public class TeamService {
     }
 
     public Team getTeamWithUserRoles(Team team){
-        return teamRepository.findTeamWithUserRolesAndUsersByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithUserRolesAndUsersByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public Team getTeamWithTeamTasks(Team team){
-        return teamRepository.findTeamWithTeamTasksByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithTeamTasksByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public Team getTeamWithInvitations(Team team){
-        return teamRepository.findTeamWithInvitationsByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithInvitationsByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public Team getTeamFull(Team team){
-        return teamRepository.findTeamFullByID(team.getId()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamFullByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
 

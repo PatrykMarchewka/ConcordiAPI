@@ -21,7 +21,7 @@ public class TeamAdminDTO implements TeamDTO {
     private Map<UserRole, Set<UserMemberDTO>> usersByRole = new EnumMap<>(UserRole.class);
 
     public TeamAdminDTO(Team team, TeamUserRoleService service){
-        this.id = team.getId();
+        this.id = team.getID();
         this.name = team.getName();
         for (Task task : team.getTeamTasks()){
             tasks.add(new TaskManagerDTO(task));

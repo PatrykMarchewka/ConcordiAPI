@@ -38,7 +38,7 @@ public class Team {
     @Column(nullable = false)
     private Set<Invitation> invitations = new HashSet<>();
 
-    public long getId(){ return this.id; }
+    public long getID(){ return this.id; }
 
     public String getName(){ return this.name; }
 
