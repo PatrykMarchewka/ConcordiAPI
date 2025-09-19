@@ -44,4 +44,13 @@ public class TeamMemberDTO implements TeamDTO {
 
     public Set<UserMemberDTO> getOwners(){return owners;}
     public void setOwners(Set<UserMemberDTO> owners){this.owners = owners;}
+
+    @Override
+    public boolean equalsTeam(Team team) {
+        return Objects.equals(id, team.getID()) &&
+                Objects.equals(name, team.getName()) &&
+                team.getTeamTasks().stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet()).containsAll(tasks) &&
+                Objects.equals(owners, team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet()));
+
+    }
 }
