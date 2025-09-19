@@ -56,9 +56,6 @@ public class InvitationService {
      * @throws ConflictException Thrown when user tries to join a team they are already part of
      * @throws BadRequestException Thrown when user can't join the specified team due to invitation being no longer usable
      */
-    @Transactional(rollbackFor = Exception.class)
-    public void useInvitation(Invitation invitation,User user) throws Exception {
-        if (invitation.getInvitingTeam().checkUser(user)){
     @Transactional
     public Invitation useInvitation(Invitation invitation,User user){
         Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
