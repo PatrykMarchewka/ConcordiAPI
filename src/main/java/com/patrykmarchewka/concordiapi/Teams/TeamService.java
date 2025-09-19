@@ -111,6 +111,12 @@ public class TeamService {
         teamRepository.delete(team);
     }
 
+    @Transactional
+    public Team addUser(Team team, User user, UserRole role){
+        team.addUserRole(user, role);
+        return saveTeam(team);
+    }
+
     /**
      * Removes specified user from the team, removes the user from tasks attached to the team and removes role mention for that user. <br>
      * If the team would end up empty without any pending invitations the team gets deleted too

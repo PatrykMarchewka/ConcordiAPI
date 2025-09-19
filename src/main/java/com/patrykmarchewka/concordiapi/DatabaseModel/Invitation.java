@@ -1,4 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,9 +46,9 @@ public class Invitation {
     public OffsetDateTime getDueTime() {return dueTime;}
     public void setDueTime(OffsetDateTime dueTime) {this.dueTime = dueTime;}
 
-    public void useOne() throws Exception {
+    public void useOne() {
         if ((this.getDueTime() != null && OffsetDateTime.now().isAfter(this.getDueTime())) || this.getUses() <= 0){
-            throw new Exception("Invitation expired");
+            throw new BadRequestException("Invitation expired");
         }
         else{
             this.uses -= 1;
