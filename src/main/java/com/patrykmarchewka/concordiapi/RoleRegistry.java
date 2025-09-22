@@ -45,10 +45,10 @@ public class RoleRegistry {
      */
     public Map<UserRole, BiFunction<Team, User, TeamDTO>> createTeamDTOMap() {
         return Map.of(
-            UserRole.OWNER, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
-            UserRole.ADMIN, (team, user) -> new TeamAdminDTO(team, teamUserRoleService),
-            UserRole.MANAGER, (team, user) -> new TeamManagerDTO(team, teamUserRoleService),
-            UserRole.MEMBER, (team, user) -> new TeamMemberDTO(team, user, teamUserRoleService)
+            UserRole.OWNER, (team, user) -> new TeamAdminDTO(team),
+            UserRole.ADMIN, (team, user) -> new TeamAdminDTO(team),
+            UserRole.MANAGER, (team, user) -> new TeamManagerDTO(team),
+            UserRole.MEMBER, TeamMemberDTO::new
     );
 }
 
