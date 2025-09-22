@@ -1,5 +1,7 @@
 package com.patrykmarchewka.concordiapi.Teams;
 
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
@@ -19,6 +21,7 @@ import org.springframework.test.context.TestConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -171,5 +174,24 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
         found = teamService.getTeamWithTeamTasks(found);
 
         assertTrue(found.getTeamTasks().isEmpty());
+    }
+
+    @Test
+    void shouldGetTeamsDTO(){
+        TeamRequestBody body1 = createTeamRequestBody("Nowy");
+        Team team1 = teamService.createTeam(body1, user);
+
+        Set<TeamDTO> found = teamService.getTeamsDTO(user);
+
+        assertTrue(found.stream().anyMatch(t -> t.equalsTeam(team)));
+        assertTrue(found.stream().anyMatch(t -> t.equalsTeam(team1)));
+    }
+
+    @Test
+    void shouldCreateTeamDTO(){
+        TeamDTO teamDTO = teamService.createTeamDTO(user, team);
+
+        assertInstanceOf(TeamAdminDTO.class, teamDTO);
+        assertTrue(teamDTO.equalsTeam(team));
     }
 }
