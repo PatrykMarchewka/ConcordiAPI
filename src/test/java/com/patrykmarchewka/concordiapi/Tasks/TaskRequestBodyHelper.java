@@ -22,4 +22,11 @@ public interface TaskRequestBodyHelper {
         body.setUsers(userIDs);
         return body;
     }
+
+    default TaskRequestBody createTaskRequestBodyPATCH(TaskStatus taskStatus, Set<Integer> userIDs){
+        TaskRequestBody body = new TaskRequestBody();
+        body.setTaskStatus(taskStatus);
+        body.setUsers(userIDs);
+        return body;
+    }
 }
