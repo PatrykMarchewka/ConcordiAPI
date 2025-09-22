@@ -3,10 +3,8 @@ package com.patrykmarchewka.concordiapi.Teams;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
@@ -31,14 +29,10 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     private final TeamService teamService;
     private final UserService userService;
-    private final TeamRepository teamRepository;
-    private final UserRepository userRepository;
 
-    public TeamServiceTest(TeamService teamService, UserService userService, TeamRepository teamRepository, UserRepository userRepository) {
+    public TeamServiceTest(TeamService teamService, UserService userService) {
         this.teamService = teamService;
         this.userService = userService;
-        this.teamRepository = teamRepository;
-        this.userRepository = userRepository;
     }
 
     @AfterEach
