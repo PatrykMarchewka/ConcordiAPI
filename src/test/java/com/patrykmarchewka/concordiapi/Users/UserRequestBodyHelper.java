@@ -20,4 +20,10 @@ public interface UserRequestBodyHelper {
         userRequestBody.setPassword(password);
         return userRequestBody;
     }
+
+    default UserRequestBody createUserRequestBodyPATCH(String name){
+        UserRequestBody body = new UserRequestBody();
+        body.setName(name);
+        return body;
+    }
 }
