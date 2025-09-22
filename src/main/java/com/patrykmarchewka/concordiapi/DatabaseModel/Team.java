@@ -11,6 +11,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -68,6 +69,11 @@ public class Team {
     public Team removeUserRole(TeamUserRole role){
         role.getUser().removeTeamRole(role);
         this.userRoles.remove(role);
+
+        role.setTeam(null);
+        role.setUser(null);
+        role.setUserRole(null);
+
         return this;
     }
 
@@ -75,12 +81,27 @@ public class Team {
     public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
 
 
-    public void addTask(Task task){
+    public Task addTask(Task task){
         task.setAssignedTeam(this);
         this.teamTasks.add(task);
+        return task;
     }
-    public void removeTask(Task task){
-        this.teamTasks.remove(task);
+
+    public Team removeTask(Task task){
+        task.setAssignedTeam(null);
+//        Iterates through entire set looking for the one to remove and after removing stops
+//        faster than .removeIf() since it doesnt scan entire Set everytime but only until hit
+//        Iterator because hibernate defaults to PersistentSet and .remove() doesnt count it as same item in Set
+
+        Iterator<Task> iterator = this.teamTasks.iterator();
+        while (iterator.hasNext()){
+            Task t = iterator.next();
+            if (t.getID() == task.getID()){
+                iterator.remove();
+                break;
+            }
+        }
+        return this;
     }
 
 
