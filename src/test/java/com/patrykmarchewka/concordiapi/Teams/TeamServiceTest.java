@@ -11,6 +11,7 @@ import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,9 +31,20 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     private final TeamService teamService;
     private final UserService userService;
 
+    private User user;
+    private Team team;
+
     public TeamServiceTest(TeamService teamService, UserService userService) {
         this.teamService = teamService;
         this.userService = userService;
+    }
+
+    @BeforeEach
+    void initialize() {
+        TeamRequestBody body = createTeamRequestBody("TEST");
+        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
+        user = userService.createUser(userRequestBody);
+        team = teamService.createTeam(body, user);
     }
 
     @AfterEach
@@ -43,14 +55,9 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectly(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
+        Team found = teamService.getTeamByID(team.getID());
 
-        Team found = teamService.getTeamByID(id);
-
-        assertEquals(id, found.getId());
+        assertEquals(team.getID(), found.getID());
         assertEquals("TEST", found.getName());
         assertThrows(LazyInitializationException.class, () -> found.getUserRoles().isEmpty());
         assertThrows(LazyInitializationException.class, () -> found.getTeammates().isEmpty());
@@ -65,71 +72,48 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldPutTeam(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
 
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         teamService.putTeam(found,newBody);
-        Team newFound = teamService.getTeamByID(id);
+        Team newFound = teamService.getTeamByID(team.getID());
 
-        assertEquals(id, newFound.getId());
+        assertEquals(team.getID(), newFound.getID());
         assertEquals("NEWTEST", newFound.getName());
     }
 
     @Test
     void shouldPatchTeam(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
 
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         teamService.patchTeam(found,newBody);
-        Team newFound = teamService.getTeamByID(id);
+        Team newFound = teamService.getTeamByID(team.getID());
 
-        assertEquals(id, newFound.getId());
+        assertEquals(team.getID(), newFound.getID());
         assertEquals("NEWTEST", newFound.getName());
     }
 
     @Test
     void shouldDeleteTeam(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
-
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         teamService.deleteTeam(found);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(id));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
     }
 
     @Test
     void shouldDeleteTeamByUserLeaving(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        Team team = teamService.createTeam(body,user);
-
         teamService.removeUser(team, user);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getId()));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
     }
 
     @Test
     void shouldRemoveUserFromTeam(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
         UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-        User user = userService.createUser(userRequestBody);
         User user1 = userService.createUser(userRequestBody1);
-        Team team = teamService.createTeam(body,user);
-        team.addUserRole(user1, UserRole.ADMIN);
-        teamService.saveTeam(team);
+        teamService.addUser(team, user1, UserRole.ADMIN);
         Map<User, UserRole> expected = new HashMap<>(Map.of(
                 user, UserRole.OWNER,
                 user1, UserRole.ADMIN
@@ -153,30 +137,20 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldDeleteTeamByEveryoneLeaving(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
         UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-        User user = userService.createUser(userRequestBody);
         User user1 = userService.createUser(userRequestBody1);
-        Team team = teamService.createTeam(body,user);
-        team.addUserRole(user1,UserRole.ADMIN);
-        teamService.saveTeam(team);
+        teamService.addUser(team, user1, UserRole.ADMIN);
 
         Team found = teamService.getTeamWithUserRoles(team);
 
         teamService.removeAllUsers(found);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getId()));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getID()));
     }
 
     @Test
     void shouldReturnTeamWithUserRoles(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
-
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         found = teamService.getTeamWithUserRoles(found);
 
         assertEquals(1, found.getUserRoles().size());
@@ -185,12 +159,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldReturnTeamWithInvitations(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
-
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         found = teamService.getTeamWithInvitations(found);
 
         assertTrue(found.getInvitations().isEmpty());
@@ -198,12 +167,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldReturnTeamWithTeamTasks(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        long id = teamService.createTeam(body, user).getId();
-
-        Team found = teamService.getTeamByID(id);
+        Team found = teamService.getTeamByID(team.getID());
         found = teamService.getTeamWithTeamTasks(found);
 
         assertTrue(found.getTeamTasks().isEmpty());
