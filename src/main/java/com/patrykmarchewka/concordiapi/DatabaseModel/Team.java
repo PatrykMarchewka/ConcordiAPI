@@ -93,7 +93,7 @@ public class Team {
         if (this == o) return true;
         if (!(o instanceof Team)) return false;
         Team team = (Team) o;
-        return id != null && id.equals(team.getId());
+        return id != null && id.equals(team.getID());
     }
 
     @Override
