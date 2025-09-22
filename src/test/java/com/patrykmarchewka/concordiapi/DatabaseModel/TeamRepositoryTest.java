@@ -32,18 +32,18 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectlyBasic(){
-        long id = createTeam(teamRepository).getId();
+        long id = createTeam(teamRepository).getID();
 
         Team found = teamRepository.findTeamById(id).orElse(null);
 
         assertNotNull(found);
-        assertEquals(id, found.getId());
+        assertEquals(id, found.getID());
         assertEquals("Testing", found.getName());
     }
 
     @Test
     void shouldReturnTeamWithTeamTasks(){
-        long id = createTeam(teamRepository).getId();
+        long id = createTeam(teamRepository).getID();
 
         Team found = teamRepository.findTeamWithTeamTasksByID(id).orElse(null);
 
@@ -59,7 +59,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldReturnTeamWithUserRolesAndUsers(){
-        long id = createTeam(teamRepository).getId();
+        long id = createTeam(teamRepository).getID();
 
         Team found = teamRepository.findTeamWithUserRolesAndUsersByID(id).orElse(null);
 
@@ -76,7 +76,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldReturnTeamWithInvitations(){
-        long id = createTeam(teamRepository).getId();
+        long id = createTeam(teamRepository).getID();
 
         Team found = teamRepository.findTeamWithInvitationsByID(id).orElse(null);
 
@@ -92,12 +92,12 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectlyFull(){
-        long id = createTeam(teamRepository).getId();
+        long id = createTeam(teamRepository).getID();
 
         Team found = teamRepository.findTeamFullByID(id).orElse(null);
 
         assertNotNull(found);
-        assertEquals(id, found.getId());
+        assertEquals(id, found.getID());
         assertEquals("Testing", found.getName());
         assertTrue(found.getTeamTasks().isEmpty());
         assertTrue(found.getTeammates().isEmpty());
