@@ -2,7 +2,6 @@ package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.time.OffsetDateTime;
@@ -16,9 +15,9 @@ public class InvitationManagerDTO implements InvitationDTO{
     private short uses;
     private String dueTime;
 
-    public InvitationManagerDTO(Invitation invitation, TeamUserRoleService teamUserRoleService){
+    public InvitationManagerDTO(Invitation invitation){
         this.UUID = invitation.getUUID();
-        this.team = new TeamMemberDTO(invitation.getInvitingTeam(), null,teamUserRoleService);
+        this.team = new TeamMemberDTO(invitation.getInvitingTeam(), null);
         this.role = invitation.getRole();
         this.uses = invitation.getUses();
         this.dueTime = (invitation.getDueTime() != null) ? invitation.getDueTime().toString() : null;

@@ -9,7 +9,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +23,12 @@ public class InvitationService {
 
     private final InvitationRepository invitationRepository;
     private final TeamService teamService;
-    private final TeamUserRoleService teamUserRoleService;
     private final InvitationUpdatersService invitationUpdatersService;
 
     @Autowired
-    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, TeamUserRoleService teamUserRoleService, InvitationUpdatersService invitationUpdatersService){
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService){
         this.invitationRepository = invitationRepository;
         this.teamService = teamService;
-        this.teamUserRoleService = teamUserRoleService;
         this.invitationUpdatersService = invitationUpdatersService;
     }
     
@@ -128,7 +125,7 @@ public class InvitationService {
     public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
             for (Invitation inv : invitationRepository.getAllByInvitingTeam(team)){
-                invitations.add(new InvitationManagerDTO(inv,teamUserRoleService));
+                invitations.add(new InvitationManagerDTO(inv));
             }
             return invitations;
     }

@@ -18,7 +18,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.JSONWebToken;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,14 +42,12 @@ import java.security.NoSuchAlgorithmException;
 public class LoginController {
 
     private final UserService userService;
-    private final TeamUserRoleService teamUserRoleService;
     private final InvitationService invitationService;
     private ControllerContext context;
 
     @Autowired
-    public LoginController(UserService userService, TeamUserRoleService teamUserRoleService, InvitationService invitationService, ControllerContext context){
+    public LoginController(UserService userService, InvitationService invitationService, ControllerContext context){
         this.userService = userService;
-        this.teamUserRoleService = teamUserRoleService;
         this.invitationService = invitationService;
         this.context = context;
     }
@@ -117,7 +114,7 @@ public class LoginController {
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
         context = context.withUser(authentication);
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(userService.getUserWithTeams(context.getUser()), teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(userService.getUserWithTeams(context.getUser()))));
     }
 
     /**
@@ -176,7 +173,7 @@ public class LoginController {
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
         context = context.withInvitation(invID);
-        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation(), teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation())));
     }
 
     /**
@@ -198,6 +195,6 @@ public class LoginController {
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
         invitationService.useInvitation(invitation, user);
-        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user)));
     }
 }

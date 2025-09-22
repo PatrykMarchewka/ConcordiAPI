@@ -3,7 +3,6 @@ package com.patrykmarchewka.concordiapi.DTO.UserDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,12 +14,12 @@ public class UserMeDTO {
     private Set<TeamMemberDTO> teams = new HashSet<>();
 
 
-    public UserMeDTO(User user, TeamUserRoleService teamUserRoleService){
+    public UserMeDTO(User user){
         this.id = user.getID();
         this.name = user.getName();
         this.lastName = user.getLastName();
         for (Team team : user.getTeams()){
-            this.teams.add(new TeamMemberDTO(team,user,teamUserRoleService));
+            this.teams.add(new TeamMemberDTO(team,user));
         }
     }
 
