@@ -45,7 +45,7 @@ public class Team {
 
     public void setName(String name){ this.name = name; }
 
-    public Set<User> getTeammates(){ return this.getUserRoles().stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
+    public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
 
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
