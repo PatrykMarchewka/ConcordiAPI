@@ -3,7 +3,9 @@ package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 
-public class SubtaskMemberDTO {
+import java.util.Objects;
+
+public class SubtaskMemberDTO implements SubtaskDTO{
     private long id;
     private String name;
     private String description;
@@ -35,4 +37,12 @@ public class SubtaskMemberDTO {
 
     public TaskStatus getTaskStatus(){return taskStatus;}
     public void setTaskStatus(TaskStatus taskStatus) {this.taskStatus = taskStatus;}
+
+    @Override
+    public boolean equalsSubtask(Subtask subtask){
+        return Objects.equals(id, subtask.getID()) &&
+                Objects.equals(name, subtask.getName()) &&
+                Objects.equals(description, subtask.getDescription()) &&
+                Objects.equals(taskStatus, subtask.getTaskStatus());
+    }
 }
