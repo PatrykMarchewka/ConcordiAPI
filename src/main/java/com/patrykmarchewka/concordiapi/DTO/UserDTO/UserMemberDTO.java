@@ -1,7 +1,9 @@
 package com.patrykmarchewka.concordiapi.DTO.UserDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 
-public class UserMemberDTO {
+import java.util.Objects;
+
+public class UserMemberDTO implements UserDTO{
     private long id;
     private String name;
     private String lastName;
@@ -28,4 +30,13 @@ public class UserMemberDTO {
 
     public String getLastName(){return lastName;}
     public void setLastName(String lastName){this.lastName = lastName;}
+
+    @Override
+    public boolean equalsUser(User user) {
+        return Objects.equals(id, user.getID()) &&
+                Objects.equals(name, user.getName()) &&
+                Objects.equals(lastName, user.getLastName());
+    }
+
+
 }
