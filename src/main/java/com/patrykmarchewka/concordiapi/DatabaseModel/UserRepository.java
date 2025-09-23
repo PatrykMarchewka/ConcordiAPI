@@ -18,16 +18,16 @@ public interface UserRepository extends JpaRepository<User,Long> {
         LEFT JOIN FETCH tr.team
         WHERE u.id = :id
 """)
-    Optional<User>findUserWithTeamRolesAndTeamsByID(@Param("id") Long id);
+    Optional<User>findUserWithTeamRolesAndTeamsByID(@Param("id") long id);
 
     @Query("""
     SELECT u FROM User u
     LEFT JOIN FETCH u.userTasks
     WHERE u.id = :id
 """)
-    Optional<User>findUserWithUserTasksByID(@Param("id") Long id);
+    Optional<User>findUserWithUserTasksByID(@Param("id") long id);
 
     @EntityGraph(attributePaths = {"teamRoles", "teamRoles.team", "userTasks"})
     @Query("SELECT u FROM User u WHERE u.id = :id")
-    Optional<User> findUserFullByID(@Param("id") Long id);
+    Optional<User> findUserFullByID(@Param("id") long id);
 }
