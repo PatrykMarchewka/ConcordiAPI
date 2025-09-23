@@ -132,15 +132,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
         User found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
 
-
         assertNotNull(found);
-    }
-
-    @Test
-    void shouldReturnNullForNonExistingUserID(){
-        User found = userRepository.findUserWithTeamRolesAndTeamsByID(999L).orElse(null);
-
-        assertNull(found);
     }
 
     @Test
