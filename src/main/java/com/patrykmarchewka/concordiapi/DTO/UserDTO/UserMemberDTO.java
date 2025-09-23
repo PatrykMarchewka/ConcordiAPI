@@ -38,5 +38,19 @@ public class UserMemberDTO implements UserDTO{
                 Objects.equals(lastName, user.getLastName());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserMemberDTO userMemberDTO)) return false;
+        return Objects.equals(id, userMemberDTO.getID()) &&
+                Objects.equals(name, userMemberDTO.getName()) &&
+                Objects.equals(lastName, userMemberDTO.getLastName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName);
+    }
+
 
 }
