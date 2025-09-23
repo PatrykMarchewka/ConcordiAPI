@@ -1,14 +1,20 @@
 package com.patrykmarchewka.concordiapi.Users;
 
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
+import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
+import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.UserRole;
 import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,31 +28,36 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginHelper{
+public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginHelper, TeamRequestBodyHelper {
 
     private final UserService userService;
-    private final UserRepository userRepository;
+    private final TeamService teamService;
 
-    public UserServiceTest(UserService userService, UserRepository userRepository) {
+    private User user;
+
+    public UserServiceTest(UserService userService, TeamService teamService) {
         this.userService = userService;
-        this.userRepository = userRepository;
+        this.teamService = teamService;
+    }
+
+    @BeforeEach
+    void initialize(){
+        UserRequestBody body = createUserRequestBody("JaneD");
+        user = userService.createUser(body);
     }
 
     @AfterEach
     void cleanUp(){
+        teamService.deleteAll();
         userService.deleteAll();
     }
 
-
     @Test
     void shouldSaveAndRetrieveUserCorrectlyBasic(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        long id = userService.createUser(body).getID();
-
-        User found = userService.getUserByID(id);
+        User found = userService.getUserByID(user.getID());
 
         assertNotNull(found);
-        assertEquals(id, found.getID());
+        assertEquals(user.getID(), found.getID());
         assertEquals("Jane", found.getName());
         assertEquals("Doe", found.getLastName());
         assertEquals("JaneD", found.getLogin());
@@ -64,14 +75,12 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldSaveAndRetrieveUserByLoginAndPassword(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        long id = userService.createUser(body).getID();
-        UserRequestLogin loginBody = createUserRequestLogin(body.getLogin(), body.getPassword());
+        UserRequestLogin loginBody = createUserRequestLogin(user.getLogin(), "d");
 
         User found = userService.getUserByLoginAndPassword(loginBody);
 
         assertNotNull(found);
-        assertEquals(id, found.getID());
+        assertEquals(user.getID(), found.getID());
         assertEquals("Jane", found.getName());
         assertEquals("Doe", found.getLastName());
         assertEquals("JaneD", found.getLogin());
@@ -80,10 +89,14 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @Test
-    void shouldReturnTrueForExistingUser(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        userService.createUser(body);
+    void shouldThrowForIncorrectLoginAndPassword(){
+        UserRequestLogin loginBody = createUserRequestLogin("JaneD", "doe");
 
+        assertThrows(WrongCredentialsException.class, () -> userService.getUserByLoginAndPassword(loginBody));
+    }
+
+    @Test
+    void shouldReturnTrueForExistingUser(){
         boolean found = userService.checkIfUserExistsByLogin("JaneD");
 
         assertTrue(found);
@@ -91,17 +104,15 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldPutUser(){
-        UserRequestBody body = createUserRequestBody("JaneD");
         UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
-        long id = userService.createUser(body).getID();
 
-        User found = userService.getUserByID(id);
+        User found = userService.getUserByID(user.getID());
         userService.putUser(found,newBody);
-        User newFound = userService.getUserByID(id);
+        User newFound = userService.getUserByID(user.getID());
 
 
         assertNotNull(newFound);
-        assertEquals(id, newFound.getID());
+        assertEquals(user.getID(), newFound.getID());
         assertEquals("NotJane", newFound.getName());
         assertEquals("NotDoe", newFound.getLastName());
         assertEquals("NotJaneD", newFound.getLogin());
@@ -111,16 +122,31 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldPatchUser(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
-        long id = userService.createUser(body).getID();
+        UserRequestBody newBody = createUserRequestBodyPATCH("NotJane");
 
-        User found = userService.getUserByID(id);
+        User found = userService.getUserByID(user.getID());
         userService.patchUser(found, newBody);
-        User newFound = userService.getUserByID(id);
+        User newFound = userService.getUserByID(user.getID());
 
         assertNotNull(newFound);
-        assertEquals(id, newFound.getID());
+        assertEquals(user.getID(), newFound.getID());
+        assertEquals("NotJane", found.getName());
+        assertEquals("Doe", found.getLastName());
+        assertEquals("JaneD", found.getLogin());
+        assertNotEquals("d", found.getPassword());
+        assertTrue(Passwords.CheckPasswordBCrypt("d",found.getPassword()));
+    }
+
+    @Test
+    void shouldPatchUserFull(){
+        UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
+
+        User found = userService.getUserByID(user.getID());
+        userService.patchUser(found,newBody);
+        User newFound = userService.getUserByID(user.getID());
+
+        assertNotNull(newFound);
+        assertEquals(user.getID(), newFound.getID());
         assertEquals("NotJane", newFound.getName());
         assertEquals("NotDoe", newFound.getLastName());
         assertEquals("NotJaneD", newFound.getLogin());
@@ -130,20 +156,15 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldDeleteUser(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        long id = userService.createUser(body).getID();
-
-        User found = userService.getUserByID(id);
+        User found = userService.getUserByID(user.getID());
         userService.deleteUser(found);
 
-        assertThrows(NotFoundException.class, () -> userService.getUserByID(id));
+        assertThrows(NotFoundException.class, () -> userService.getUserByID(user.getID()));
     }
 
     @Test
     void shouldReturnSetOfUserMemberDTO(){
-        UserRequestBody body = createUserRequestBody("JaneD");
         UserRequestBody otherBody = createUserRequestBody("John", "Doe", "JohnD", "dd");
-        User user = userService.createUser(body);
         User user1 = userService.createUser(otherBody);
         Set<User> setUsers = Set.of(user,user1);
 
@@ -159,10 +180,40 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @Test
+    void shouldReturnUserDTOWithParam(){
+        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
+        Team team = teamService.createTeam(teamRequestBody, user);
+
+        Set<UserMemberDTO> found = userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.OWNER, team);
+
+        assertEquals(1, found.size());
+        assertTrue(found.contains(new UserMemberDTO(user)));
+    }
+
+    @Test
+    void shouldReturnEmptySetUserDTOWithParam(){
+        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
+        Team team = teamService.createTeam(teamRequestBody, user);
+
+        Set<UserMemberDTO> found = userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.MEMBER, team);
+
+        assertTrue(found.isEmpty());
+    }
+
+    @Test
+    void shouldReturnUserDTOWithoutParam(){
+        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
+        Team team = teamService.createTeam(teamRequestBody, user);
+
+        Set<UserMemberDTO> found = userService.userMemberDTOSetNoParam(UserRole.OWNER, team);
+
+        assertEquals(1, found.size());
+        assertTrue(found.contains(new UserMemberDTO(user)));
+    }
+
+    @Test
     void shouldReturnUsersWithIDs(){
-        UserRequestBody body = createUserRequestBody("JaneD");
         UserRequestBody otherBody = createUserRequestBody("JohnD");
-        User user = userService.createUser(body);
         User user1 = userService.createUser(otherBody);
         Set<Integer> setIDs = Set.of((int)user.getID(), (int)user1.getID());
 
@@ -177,9 +228,6 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithTeams(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        User user = userService.createUser(body);
-
         User found = userService.getUserWithTeams(user);
 
         assertTrue(found.getTeams().isEmpty());
@@ -188,9 +236,6 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithUserTasks(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        User user = userService.createUser(body);
-
         User found = userService.getUserWithUserTasks(user);
 
         assertTrue(found.getUserTasks().isEmpty());
@@ -198,9 +243,6 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldSaveAndRetrieveUserCorrectlyFull(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        User user = userService.createUser(body);
-
         User found = userService.getUserFull(user);
 
         assertEquals(user.getID(), found.getID());
