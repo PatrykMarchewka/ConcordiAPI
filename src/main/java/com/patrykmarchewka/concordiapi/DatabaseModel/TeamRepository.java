@@ -20,14 +20,14 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
 
     @Query("""
     SELECT t FROM Team t
-    LEFT JOIN FETCH t.teamTasks tt
+    LEFT JOIN FETCH t.teamTasks
     WHERE t.id = :id
 """)
     Optional<Team> findTeamWithTeamTasksByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
-    LEFT JOIN FETCH t.invitations i
+    LEFT JOIN FETCH t.invitations
     WHERE t.id = :id
 """)
     Optional<Team> findTeamWithInvitationsByID(@Param("id") long id);
