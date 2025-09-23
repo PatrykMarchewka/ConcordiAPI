@@ -59,6 +59,12 @@ public class UserRepositoryTest implements UserTestHelper{
     }
 
     @Test
+    void shouldReturnTrueForNonExistingUserWithNoTeamRoles(){
+        Optional<User> found = userRepository.findUserWithTeamRolesAndTeamsByID(0);
+        assertTrue(found.isEmpty());
+    }
+
+    @Test
     void shouldReturnUserWithTasks(){
         long id = createUser("TEST", userRepository).getID();
 
@@ -66,6 +72,12 @@ public class UserRepositoryTest implements UserTestHelper{
 
         assertNotNull(found);
         assertTrue(found.getUserTasks().isEmpty());
+    }
+
+    @Test
+    void shouldReturnTrueForNonExistingUserWithNoUserTasks(){
+        Optional<User> found = userRepository.findUserWithUserTasksByID(0);
+        assertTrue(found.isEmpty());
     }
 
     @Test
@@ -85,6 +97,12 @@ public class UserRepositoryTest implements UserTestHelper{
         assertTrue(found.getTeams().isEmpty());
         assertTrue(found.getTeamRoles().isEmpty());
         assertTrue(found.getUserTasks().isEmpty());
+    }
+
+    @Test
+    void shouldReturnTrueForNonExistingUser(){
+        Optional<User> found = userRepository.findUserFullByID(0);
+        assertTrue(found.isEmpty());
     }
 
     @Test
