@@ -115,7 +115,7 @@ public class UserRepositoryTest implements UserTestHelper{
     }
 
     @Test
-    void shouldReturnTrueForNonExistingUser() {
+    void shouldReturnTrueForNonExistingUserByLogin() {
         Optional<User> found = userRepository.findByLogin("NonExistingUser");
         assertTrue(found.isEmpty());
     }
