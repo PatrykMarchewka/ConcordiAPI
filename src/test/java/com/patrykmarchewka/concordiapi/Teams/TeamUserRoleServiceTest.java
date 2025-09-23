@@ -3,15 +3,13 @@ package com.patrykmarchewka.concordiapi.Teams;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
-import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRoleRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,17 +27,22 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
     private final TeamUserRoleService teamUserRoleService;
     private final TeamService teamService;
     private final UserService userService;
-    private final TeamUserRoleRepository teamUserRoleRepository;
-    private final TeamRepository teamRepository;
-    private final UserRepository userRepository;
 
-    public TeamUserRoleServiceTest(TeamUserRoleService teamUserRoleService, TeamService teamService, UserService userService, TeamUserRoleRepository teamUserRoleRepository, TeamRepository teamRepository, UserRepository userRepository) {
+    private User user;
+    private Team team;
+
+    public TeamUserRoleServiceTest(TeamUserRoleService teamUserRoleService, TeamService teamService, UserService userService) {
         this.teamUserRoleService = teamUserRoleService;
         this.teamService = teamService;
         this.userService = userService;
-        this.teamUserRoleRepository = teamUserRoleRepository;
-        this.teamRepository = teamRepository;
-        this.userRepository = userRepository;
+    }
+
+    @BeforeEach
+    void initialize(){
+        TeamRequestBody body = createTeamRequestBody("TEST");
+        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
+        user = userService.createUser(userRequestBody);
+        team = teamService.createTeam(body, user);
     }
 
     @AfterEach
@@ -51,11 +54,6 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldSaveAndRetrieveTeamUserRoleCorrectly(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        Team team = teamService.createTeam(body, user);
-
         TeamUserRole found = teamUserRoleService.getByUserAndTeam(user, team);
 
         assertNotNull(found.getID());
@@ -66,11 +64,6 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldGetRoleFromUser(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        Team team = teamService.createTeam(body, user);
-
         UserRole role = teamUserRoleService.getRole(user, team);
 
         assertEquals(UserRole.OWNER, role);
@@ -78,11 +71,6 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldSetRoleToUser(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        User user = userService.createUser(userRequestBody);
-        Team team = teamService.createTeam(body, user);
-
         teamUserRoleService.setRole(user, team, UserRole.ADMIN);
         UserRole role = teamUserRoleService.getRole(user, team);
 
@@ -91,14 +79,9 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
    @Test
    void shouldGetAllUsersByRoleAndTeam(){
-       TeamRequestBody body = createTeamRequestBody("TEST");
-       UserRequestBody userRequestBody = createUserRequestBody("JaneD");
        UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-       User user = userService.createUser(userRequestBody);
        User user1 = userService.createUser(userRequestBody1);
-       Team team = teamService.createTeam(body,user);
-       team.addUserRole(user1,UserRole.OWNER);
-       teamService.saveTeam(team);
+       teamService.addUser(team, user1, UserRole.OWNER);
 
        Set<User> found = teamUserRoleService.getAllByTeamAndUserRole(team, UserRole.OWNER);
 
