@@ -13,7 +13,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.Pair;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.TaskStatus;
@@ -25,8 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.lang.reflect.InvocationTargetException;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -212,24 +209,10 @@ public class TaskService {
      * @param team Team in which to check for
      * @param role Role of the user in a team
      * @return Set of TaskDTO with information about the tasks
-     * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getAllTasks(User user, Team team, UserRole role){
-        Pair<Set<Task>, Class<? extends TaskDTO>> pair = roleRegistry.getAllTasksInTeamMap(user, team).get(role);
-
-        return pair.getFirst().stream().map(task -> {
-            try {
-                return pair.getSecond().getDeclaredConstructor(task.getClass()).newInstance(task);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return roleRegistry.getAllTasksMap(user,team).get(role).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -241,21 +224,9 @@ public class TaskService {
      * @return Set of TaskDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getMyTasks(User user,Team team, UserRole role){
-        Class<? extends TaskDTO> taskClass = roleRegistry.getMyTasksMap().get(role);
-        return getAllTasksForUser(user, team).stream().map(item -> {
-            try {
-                return taskClass.getDeclaredConstructor(item.getClass()).newInstance(item);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return getAllTasksForUser(user, team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -266,25 +237,13 @@ public class TaskService {
      * @return Set of TaskDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getInactiveTasks(Team team, UserRole role, Integer days){
-        Class<? extends TaskDTO> taskClass = roleRegistry.getMyTasksMap().get(role);
-        return getAllTasksNoUpdatesIn(days,team).stream().map(task -> {
-            try {
-                return taskClass.getDeclaredConstructor(task.getClass()).newInstance(task);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return getAllTasksNoUpdatesIn(days,team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * Returns TaskDTO about given Task
+     * Returns TaskDTO about given Task based on role
      * @param role UserRole of user asking
      * @param task Task to return DTO of
      * @param user User asking for DTO

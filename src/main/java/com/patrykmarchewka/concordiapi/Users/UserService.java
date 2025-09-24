@@ -11,7 +11,7 @@ import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
-import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
@@ -29,14 +29,14 @@ public class UserService {
 
 
     private final UserRepository userRepository;
-    private final RoleRegistry roleRegistry;
     private final UserUpdatersService userUpdatersService;
+    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService){
+    public UserService(UserRepository userRepository, UserUpdatersService userUpdatersService, TeamUserRoleService teamUserRoleService){
         this.userRepository = userRepository;
-        this.roleRegistry = roleRegistry;
         this.userUpdatersService = userUpdatersService;
+        this.teamUserRoleService = teamUserRoleService;
     }
 
     /**
@@ -156,8 +156,10 @@ public class UserService {
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
     public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, Team team){
-        Set<User> users = roleRegistry.createUserDTOMapWithParam(team,param).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
-        return userMemberDTOSetProcess(users);
+        if (!myRole.isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return userMemberDTOSetProcess(teamUserRoleService.getAllByTeamAndUserRole(team, param));
     }
 
     /**
@@ -168,8 +170,10 @@ public class UserService {
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
     public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, Team team){
-        Set<User> users = roleRegistry.createUserDTOMapNoParam(team).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
-        return userMemberDTOSetProcess(users);
+        if (!myRole.isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return userMemberDTOSetProcess(team.getTeammates());
     }
 
     /**
