@@ -10,7 +10,7 @@ public class APIResponse<T> {
     public APIResponse(String message, T data){
         this.message = message;
         this.data = data;
-        this.timestamp = OffsetDateTime.now().toString();
+        this.timestamp = OffsetDateTimeConverter.nowConverted().toString();
     }
 
     public String getMessage(){return message;}

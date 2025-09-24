@@ -14,6 +14,7 @@ import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Pair;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -104,7 +104,7 @@ public class TaskService {
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTime.now()) >= days).collect(Collectors.toSet());
+        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toSet());
     }
 
     /**
@@ -170,7 +170,7 @@ public class TaskService {
      */
     @Transactional
     public Task saveTask(Task task){
-        task.setUpdateDate(OffsetDateTime.now());
+        task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
         return taskRepository.save(task);
     }
 

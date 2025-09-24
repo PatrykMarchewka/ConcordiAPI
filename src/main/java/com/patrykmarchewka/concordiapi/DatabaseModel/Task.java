@@ -1,7 +1,9 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,7 +35,9 @@ public class Task {
     @Column(nullable = false)
     private TaskStatus taskStatus;
     @Column(nullable = false)
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime creationDate;
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime updateDate;
 
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "task")

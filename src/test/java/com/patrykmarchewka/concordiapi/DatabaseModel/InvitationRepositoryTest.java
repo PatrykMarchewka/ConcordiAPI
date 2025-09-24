@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
 
-import java.time.OffsetDateTime;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,8 +45,8 @@ public class InvitationRepositoryTest implements InvitationTestHelper, TeamTestH
         assertEquals(team,found.getInvitingTeam());
         assertEquals(UserRole.MEMBER, found.getRole());
         assertEquals(101,found.getUses());
-        assertTrue(OffsetDateTime.now().isBefore(found.getDueTime()));
-        assertTrue(OffsetDateTime.now().plusDays(2).isAfter(found.getDueTime()));
+        assertTrue(OffsetDateTimeConverter.nowConverted().isBefore(found.getDueTime()));
+        assertTrue(OffsetDateTimeConverter.nowConverted().plusDays(2).isAfter(found.getDueTime()));
     }
 
     @Test

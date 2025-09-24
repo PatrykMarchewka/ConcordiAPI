@@ -1,8 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
-
-import java.time.OffsetDateTime;
 
 public interface TaskTestHelper {
     default Task createTask(Team team,TaskRepository taskRepository){
@@ -11,8 +10,8 @@ public interface TaskTestHelper {
         task.setDescription("Description");
         task.setTaskStatus(TaskStatus.NEW);
         task.setAssignedTeam(team);
-        task.setCreationDate(OffsetDateTime.now().minusSeconds(2));
-        task.setUpdateDate(OffsetDateTime.now().minusSeconds(1));
+        task.setCreationDate(OffsetDateTimeConverter.nowConverted().minusSeconds(2));
+        task.setUpdateDate(OffsetDateTimeConverter.nowConverted().minusSeconds(1));
         return taskRepository.save(task);
     }
 }

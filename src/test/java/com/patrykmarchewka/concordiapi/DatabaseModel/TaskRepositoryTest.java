@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -7,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
 
-import java.time.OffsetDateTime;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,8 +48,8 @@ public class TaskRepositoryTest implements TaskTestHelper, TeamTestHelper{
         assertTrue(task.getUserTasks().isEmpty());
         assertTrue(task.getUsers().isEmpty());
         assertTrue(task.getSubtasks().isEmpty());
-        assertTrue(OffsetDateTime.now().isAfter(found.getCreationDate()));
-        assertTrue(OffsetDateTime.now().isAfter(found.getUpdateDate()));
+        assertTrue(OffsetDateTimeConverter.nowConverted().isAfter(found.getCreationDate()));
+        assertTrue(OffsetDateTimeConverter.nowConverted().isAfter(found.getUpdateDate()));
     }
 
     @Test
