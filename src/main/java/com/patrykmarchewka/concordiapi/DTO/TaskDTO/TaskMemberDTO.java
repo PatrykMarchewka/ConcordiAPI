@@ -63,4 +63,20 @@ public class TaskMemberDTO implements TaskDTO {
                 Objects.equals(subtasks, task.getSubtasks().stream().map(SubtaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())) &&
                 Objects.equals(users, task.getUsers().stream().map(UserMemberDTO::new).collect(Collectors.toUnmodifiableSet()));
     }
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof TaskMemberDTO taskMemberDTO)) return false;
+        return Objects.equals(id, taskMemberDTO.getID()) &&
+                Objects.equals(name, taskMemberDTO.getName()) &&
+                Objects.equals(description, taskMemberDTO.getDescription()) &&
+                Objects.equals(taskStatus, taskMemberDTO.getTaskStatus()) &&
+                Objects.equals(subtasks, taskMemberDTO.getSubtasks()) &&
+                Objects.equals(users, taskMemberDTO.getUsers());
+
+    }
+
+    @Override
+    public int hashCode(){ return Objects.hash(id,name,description,taskStatus); }
 }

@@ -75,4 +75,22 @@ public class TaskManagerDTO implements TaskDTO {
                 Objects.equals(creationDate, task.getCreationDate().toString()) &&
                 Objects.equals(updateDate, task.getUpdateDate().toString());
     }
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof TaskManagerDTO taskManagerDTO)) return false;
+        return Objects.equals(id, taskManagerDTO.getID()) &&
+                Objects.equals(name, taskManagerDTO.getName()) &&
+                Objects.equals(description, taskManagerDTO.getDescription()) &&
+                Objects.equals(taskStatus, taskManagerDTO.getTaskStatus()) &&
+                Objects.equals(subtasks, taskManagerDTO.getSubtasks()) &&
+                Objects.equals(users, taskManagerDTO.getUsers()) &&
+                Objects.equals(creationDate, taskManagerDTO.getCreationDate()) &&
+                Objects.equals(updateDate, taskManagerDTO.getUpdateDate());
+
+    }
+
+    @Override
+    public int hashCode(){ return Objects.hash(id,name,description,taskStatus,creationDate,updateDate); }
 }
