@@ -112,7 +112,7 @@ public class TaskService {
      */
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
-        validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasksByID(body.getUsers(),team);
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
 
@@ -128,7 +128,7 @@ public class TaskService {
      */
     @Transactional
     public Task putTask(TaskRequestBody body, Team team, Task task) {
-        validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         return saveTask(task);
     }
@@ -142,7 +142,7 @@ public class TaskService {
      */
     @Transactional
     public Task patchTask(TaskRequestBody body, Team team, Task task){
-        validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         return saveTask(task);
     }
@@ -321,20 +321,27 @@ public class TaskService {
     }
 
     /**
-     * Checks if users belongs in a given team
+     * Checks if users belong in a given team
      * @param userIDs Set of IDs of Users to check
      * @param team Team in which to search
-     * @return True if all users are part of given team, otherwise false
      * @throws BadRequestException Thrown when one or more users are not part of the team
      */
-    public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
-        if (userIDs == null || team == null) return false;
+    public void validateUsersForTasksByID(Set<Integer> userIDs, Team team){
         for (int id : userIDs) {
             if (!team.checkUser(id)) {
                 throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
             }
         }
-        return true;
+    }
+
+    /**
+     * Checks if users belong in a given team, calls {@link #validateUsersForTasksByID(Set, Team)}
+     * @param users Set of Users to check
+     * @param team Team in which to search
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
+    public void validateUsersForTasks(Set<User> users, Team team){
+        validateUsersForTasksByID(users.stream().map(u -> (int)u.getID()).collect(Collectors.toUnmodifiableSet()),team);
     }
 
     public Task getTaskWithUserTasks(Task task){
