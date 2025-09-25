@@ -122,6 +122,7 @@ public class InvitationService {
      * @param team Team to check in
      * @return Set of InvitationDTO for all invitations in the team
      */
+    @Transactional(readOnly = true)
     public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
             for (Invitation inv : invitationRepository.getAllByInvitingTeam(team)){
