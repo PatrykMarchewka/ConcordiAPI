@@ -101,7 +101,7 @@ public class TaskService {
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toSet());
+        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -265,16 +265,6 @@ public class TaskService {
         return roleRegistry.putTaskRoleMap(user).getOrDefault(role, t-> false).test(task);
     }
 
-
-    /**
-     * Unused, removes all Subtasks from Task
-     * @param task Task to remove subtasks from
-     */
-    private void removeSubtasksFromTask(Task task){
-        task.getSubtasks().clear();
-        saveTask(task);
-    }
-
     /**
      * Adds User to specified Task
      * @param user User to get added to task
@@ -282,6 +272,9 @@ public class TaskService {
      */
     @Transactional
     public void addUserToTask(Task task, User user) {
+        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        validateUsersForTasksByID(Set.of((int)user.getID()), team);
+
         task.addUserTask(user);
         saveTask(task);
     }
@@ -293,6 +286,9 @@ public class TaskService {
      */
     @Transactional
     public void addUsersToTask(Task task, Set<User> users){
+        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        validateUsersForTasks(users, team);
+
         for (User user : users){
             task.addUserTask(user);
         }
