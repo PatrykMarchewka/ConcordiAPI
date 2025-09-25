@@ -1,11 +1,16 @@
 package com.patrykmarchewka.concordiapi.Tasks;
 
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskDTO;
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -239,6 +244,71 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     }
 
     @Test
+    void shouldGetAllTasksDTO(){
+        TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of());
+        Task task1 = taskService.createTask(body1, team);
+
+        Set<TaskDTO> found = taskService.getAllTasks(user, team, UserRole.OWNER);
+
+        assertEquals(2, found.size());
+        assertTrue(found.contains(new TaskManagerDTO(task)));
+        assertTrue(found.contains(new TaskManagerDTO(task1)));
+    }
+
+    @Test
+    void shouldGetMyTasksDTO(){
+        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
+        User user1 = userService.createUser(userRequestBody1);
+        teamService.addUser(team, user1, UserRole.ADMIN);
+        TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user1.getID()));
+        Task task1 = taskService.createTask(body1, team);
+
+        Set<TaskDTO> found = taskService.getMyTasks(user1, team, UserRole.OWNER);
+
+        assertEquals(1, found.size());
+        assertTrue(found.contains(new TaskManagerDTO(task1)));
+    }
+
+    @Test
+    void shouldGetMyTasksMemberDTO(){
+        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
+        User user1 = userService.createUser(userRequestBody1);
+        teamService.addUser(team, user1, UserRole.ADMIN);
+        TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user1.getID()));
+        Task task1 = taskService.createTask(body1, team);
+
+        Set<TaskDTO> found = taskService.getMyTasks(user1, team, UserRole.MEMBER);
+
+        assertEquals(1, found.size());
+        assertTrue(found.contains(new TaskMemberDTO(task1)));
+    }
+
+    @Test
+    void shouldGetInformationAboutTaskDTO(){
+        TaskDTO found = taskService.getInformationAboutTaskRole(UserRole.OWNER, task, user);
+
+        assertEquals(new TaskManagerDTO(task), found);
+    }
+
+    @Test
+    void shouldGetInformationAboutTaskDTOMember(){
+        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
+        User user1 = userService.createUser(userRequestBody1);
+        teamService.addUser(team, user1, UserRole.ADMIN);
+        TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user1.getID()));
+        Task task1 = taskService.createTask(body1, team);
+
+        TaskDTO found = taskService.getInformationAboutTaskRole(UserRole.MEMBER, task1, user1);
+
+        assertEquals(new TaskMemberDTO(task1), found);
+    }
+
+    @Test
+    void shouldThrowInsteadGetInformationAboutTaskDTOMember(){
+        assertThrows(NoPrivilegesException.class, () -> taskService.getInformationAboutTaskRole(UserRole.MEMBER, task, user));
+    }
+
+    @Test
     void shouldCheckPutTaskRole(){
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
         User user1 = userService.createUser(userRequestBody1);
@@ -271,6 +341,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldAddUsersToTask(){
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
         User user1 = userService.createUser(userRequestBody1);
+        teamService.addUser(team, user1, UserRole.ADMIN);
 
         Task found = taskService.getTaskWithUserTasks(task);
 
@@ -285,6 +356,14 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         assertEquals(2, found.getUsers().size());
         assertTrue(found.getUsers().contains(user));
         assertTrue(found.getUsers().contains(user1));
+    }
+
+    @Test
+    void shouldThrowForUserOutsideTeamBeingAddedToTask(){
+        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
+        User user1 = userService.createUser(userRequestBody1);
+
+        assertThrows(BadRequestException.class,() -> taskService.addUserToTask(task, user1));
     }
 
     @Test
@@ -315,6 +394,19 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         Task found = taskService.getTaskWithUserTasks(task1);
 
         assertTrue(found.getUsers().isEmpty());
+    }
+
+    @Test
+    void shouldValidateUsersForTasksByID(){
+        assertDoesNotThrow(() -> taskService.validateUsersForTasksByID(Set.of((int)user.getID()), team));
+    }
+
+    @Test
+    void shouldThrowForUserOutsideTeamBeingValidated(){
+        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
+        User user1 = userService.createUser(userRequestBody1);
+
+        assertThrows(BadRequestException.class,() -> taskService.validateUsersForTasksByID(Set.of((int)user1.getID()), team));
     }
 
 }
