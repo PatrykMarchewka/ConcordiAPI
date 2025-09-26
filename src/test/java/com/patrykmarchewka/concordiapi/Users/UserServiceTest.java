@@ -6,6 +6,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
@@ -66,6 +67,13 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         assertThrows(LazyInitializationException.class, () -> found.getUserTasks().isEmpty());
         assertThrows(LazyInitializationException.class, () -> found.getTeamRoles().isEmpty());
         assertThrows(LazyInitializationException.class, () -> found.getTeams().isEmpty());
+    }
+
+    @Test
+    void shouldThrowForNonUniqueLogin(){
+        UserRequestBody body1 = createUserRequestBody("JaneD");
+
+        assertThrows(ConflictException.class, () -> userService.createUser(body1));
     }
 
     @Test
