@@ -5,9 +5,10 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-public class UserMeDTO {
+public class UserMeDTO implements UserDTO{
     private long id;
     private String name;
     private String lastName;
@@ -25,8 +26,8 @@ public class UserMeDTO {
 
     public UserMeDTO(){}
 
-    public Long getId() {return id;}
-    public void setId(Long id) {this.id = id;}
+    public Long getID() {return id;}
+    public void setID(Long id) {this.id = id;}
 
     public String getName() {return name;}
     public void setName(String name) {this.name = name;}
@@ -36,4 +37,26 @@ public class UserMeDTO {
 
     public Set<TeamMemberDTO> getTeams(){return teams;}
     public void setTeams(Set<TeamMemberDTO> teams){this.teams = teams;}
+
+    @Override
+    public boolean equalsUser(User user) {
+        return Objects.equals(id, user.getID()) &&
+                Objects.equals(name, user.getName()) &&
+                Objects.equals(lastName, user.getLastName());
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof UserMeDTO userMeDTO)) return false;
+        return Objects.equals(id, userMeDTO.getID()) &&
+                Objects.equals(name, userMeDTO.getName()) &&
+                Objects.equals(lastName, userMeDTO.getLastName()) &&
+                Objects.equals(teams, userMeDTO.getTeams());
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(id,name,lastName);
+    }
 }
