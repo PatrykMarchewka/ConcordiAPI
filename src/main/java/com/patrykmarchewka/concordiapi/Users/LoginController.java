@@ -13,6 +13,7 @@ import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
@@ -181,7 +182,8 @@ public class LoginController {
      * @param invID Invitation UUID
      * @param authentication Authentication from logged user
      * @return TeamMemberDTO with the joined team
-     * @throws ConflictException Thrown when invitation is expired or user is already part of the team
+     * @throws ConflictException Thrown when user is already part of the team
+     * @throws BadRequestException Thrown when invitation is expired or can be no longer used
      */
     @Operation(summary = "Join team using invitation", description = "Joins team using the provided invitation")
     @SecurityRequirement(name = "BearerAuth")
@@ -189,9 +191,9 @@ public class LoginController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
+    public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
         context = context.withUser(authentication).withInvitation(invID);
-        User user = context.getUser();
+        User user = userService.getUserWithTeams(context.getUser());
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
         invitationService.useInvitation(invitation, user);
