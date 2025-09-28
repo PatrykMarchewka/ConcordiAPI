@@ -51,6 +51,23 @@ public class TeamMemberDTO implements TeamDTO {
                 Objects.equals(name, team.getName()) &&
                 team.getTeamTasks().stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet()).containsAll(tasks) &&
                 Objects.equals(owners, team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet()));
+    }
 
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof TeamMemberDTO teamMemberDTO)) return false;
+        return Objects.equals(id, teamMemberDTO.getID()) &&
+                Objects.equals(name, teamMemberDTO.getName()) &&
+                Objects.equals(teammateCount, teamMemberDTO.getTeammateCount()) &&
+                Objects.equals(tasks, teamMemberDTO.getTasks()) &&
+                Objects.equals(owners, teamMemberDTO.getOwners());
+
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(id, name, teammateCount);
     }
 }
