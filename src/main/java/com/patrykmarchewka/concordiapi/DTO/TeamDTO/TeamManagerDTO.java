@@ -9,7 +9,6 @@ import com.patrykmarchewka.concordiapi.UserRole;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,12 +47,4 @@ public class TeamManagerDTO implements TeamDTO {
 
     public Map<UserRole, Set<UserMemberDTO>> getUsersByRole(){ return this.usersByRole; }
     public void setUsersByRole(Map<UserRole, Set<UserMemberDTO>> usersByRole) { this.usersByRole = usersByRole; }
-
-    @Override
-    public boolean equalsTeam(Team team) {
-        return Objects.equals(id, team.getID()) &&
-                Objects.equals(name, team.getName()) &&
-                Objects.equals(tasks, team.getTeamTasks().stream().map(TaskManagerDTO::new).collect(Collectors.toUnmodifiableSet())) &&
-                Objects.equals(usersByRole.values(), team.getUserRoles().stream().map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet()));
-    }
 }

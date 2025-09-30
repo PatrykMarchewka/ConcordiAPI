@@ -4,8 +4,6 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.UserRole;
 
-import java.util.Objects;
-
 public class InvitationMemberDTO implements InvitationDTO{
     private String UUID;
     private TeamMemberDTO team;
@@ -27,11 +25,4 @@ public class InvitationMemberDTO implements InvitationDTO{
 
     public UserRole getRole(){return this.role;}
     public void setRole(UserRole role){this.role = role;}
-
-    @Override
-    public boolean equalsInvitation(Invitation invitation) {
-        return Objects.equals(UUID, invitation.getUUID()) &&
-                Objects.equals(team, new TeamMemberDTO(invitation.getInvitingTeam(), null)) &&
-                Objects.equals(role, invitation.getRole());
-    }
 }

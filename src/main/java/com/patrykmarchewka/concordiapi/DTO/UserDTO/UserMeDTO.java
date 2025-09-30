@@ -39,13 +39,6 @@ public class UserMeDTO implements UserDTO{
     public void setTeams(Set<TeamMemberDTO> teams){this.teams = teams;}
 
     @Override
-    public boolean equalsUser(User user) {
-        return Objects.equals(id, user.getID()) &&
-                Objects.equals(name, user.getName()) &&
-                Objects.equals(lastName, user.getLastName());
-    }
-
-    @Override
     public boolean equals(Object o){
         if (this == o) return true;
         if (!(o instanceof UserMeDTO userMeDTO)) return false;

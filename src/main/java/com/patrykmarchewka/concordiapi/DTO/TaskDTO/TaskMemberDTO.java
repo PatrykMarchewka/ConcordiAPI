@@ -10,7 +10,6 @@ import com.patrykmarchewka.concordiapi.TaskStatus;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class TaskMemberDTO implements TaskDTO {
     private long id;
@@ -52,17 +51,6 @@ public class TaskMemberDTO implements TaskDTO {
 
     public Set<UserMemberDTO> getUsers(){return users;}
     public void setUsers(Set<UserMemberDTO> users){this.users = users;}
-
-
-    @Override
-    public boolean equalsTask(Task task) {
-        return Objects.equals(id, task.getID()) &&
-                Objects.equals(name, task.getName()) &&
-                Objects.equals(description, task.getDescription()) &&
-                Objects.equals(taskStatus, task.getTaskStatus()) &&
-                Objects.equals(subtasks, task.getSubtasks().stream().map(SubtaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())) &&
-                Objects.equals(users, task.getUsers().stream().map(UserMemberDTO::new).collect(Collectors.toUnmodifiableSet()));
-    }
 
     @Override
     public boolean equals(Object o){

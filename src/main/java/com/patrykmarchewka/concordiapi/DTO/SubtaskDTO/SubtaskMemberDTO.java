@@ -38,11 +38,5 @@ public class SubtaskMemberDTO implements SubtaskDTO{
     public TaskStatus getTaskStatus(){return taskStatus;}
     public void setTaskStatus(TaskStatus taskStatus) {this.taskStatus = taskStatus;}
 
-    @Override
-    public boolean equalsSubtask(Subtask subtask){
-        return Objects.equals(id, subtask.getID()) &&
-                Objects.equals(name, subtask.getName()) &&
-                Objects.equals(description, subtask.getDescription()) &&
-                Objects.equals(taskStatus, subtask.getTaskStatus());
     }
 }

@@ -5,7 +5,6 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.time.OffsetDateTime;
-import java.util.Objects;
 
 public class InvitationManagerDTO implements InvitationDTO{
 
@@ -39,14 +38,4 @@ public class InvitationManagerDTO implements InvitationDTO{
 
     public String getDueTime(){return this.dueTime;}
     public void setDueTime(OffsetDateTime dueTime){this.dueTime = (dueTime != null) ? dueTime.toString() : null;}
-
-
-    @Override
-    public boolean equalsInvitation(Invitation invitation) {
-        return Objects.equals(UUID, invitation.getUUID()) &&
-                Objects.equals(team.getID(), invitation.getInvitingTeam().getID()) &&
-                Objects.equals(role, invitation.getRole()) &&
-                Objects.equals(uses, invitation.getUses()) &&
-                Objects.equals(dueTime, (invitation.getDueTime() != null) ? invitation.getDueTime().toString() : null);
-    }
 }

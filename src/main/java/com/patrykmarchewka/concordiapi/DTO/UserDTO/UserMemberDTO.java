@@ -32,13 +32,6 @@ public class UserMemberDTO implements UserDTO{
     public void setLastName(String lastName){this.lastName = lastName;}
 
     @Override
-    public boolean equalsUser(User user) {
-        return Objects.equals(id, user.getID()) &&
-                Objects.equals(name, user.getName()) &&
-                Objects.equals(lastName, user.getLastName());
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof UserMemberDTO userMemberDTO)) return false;
