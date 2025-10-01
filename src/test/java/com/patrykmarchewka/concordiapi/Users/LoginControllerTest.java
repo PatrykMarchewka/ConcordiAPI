@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.JSONWebToken;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -42,6 +43,11 @@ public class LoginControllerTest {
     void restInitialize(){
         this.restClient = builder.baseUrl("http://localhost:" + port).build();
         testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
+    void cleanUp(){
+        testDataLoader.clearDB();
     }
 
     @Test
@@ -169,6 +175,7 @@ public class LoginControllerTest {
 
         assertNotNull(response.getBody());
         assertEquals("Joined the following team:", response.getBody().getMessage());
+        assertTrue(response.getBody().getData().equalsTeam(testDataLoader.team1));
         assertEquals(old.getID(), response.getBody().getData().getID());
         assertEquals(old.getName(), response.getBody().getData().getName());
         assertEquals(old.getOwners().size(), response.getBody().getData().getOwners().size());
