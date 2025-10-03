@@ -26,7 +26,7 @@ public class UserMeDTO implements UserDTO{
 
     public UserMeDTO(){}
 
-    public Long getID() {return id;}
+    public long getID() {return id;}
     public void setID(Long id) {this.id = id;}
 
     public String getName() {return name;}
