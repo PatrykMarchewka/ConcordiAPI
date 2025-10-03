@@ -121,14 +121,14 @@ public class TaskControllerTest {
 
     @Test
     void shouldPutTask(){
-        String json = """
+        String json = String.format("""
                 {
                 "name":"newest task",
                 "description":"newest description",
-                "users": [5],
+                "users": [%d],
                 "taskStatus":"INPROGRESS"
                 }
-                """;
+                """, testDataLoader.userManagerA.getID());
         var response = restClient.put().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task1New.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
         testDataLoader.refreshTask(testDataLoader.task1New);
 
