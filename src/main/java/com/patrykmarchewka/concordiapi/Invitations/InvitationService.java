@@ -82,7 +82,7 @@ public class InvitationService {
     @Transactional
     public Invitation useInvitation(Invitation invitation,User user){
         Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
-        if (team.checkUser(user)){
+        if (team.checkUser(user.getID())){
             throw new ConflictException("You are already part of that team!");
         }
         invitation.useOne();
