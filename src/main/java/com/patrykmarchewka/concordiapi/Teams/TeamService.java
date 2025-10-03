@@ -147,7 +147,7 @@ public class TeamService {
         if (!Hibernate.isInitialized(team.getTeammates()) || !Hibernate.isInitialized(team.getInvitations())){
             throw new ImpossibleStateException("Cannot access userRoles and/or invitations for given team");
         }
-        if (team.getTeammates().isEmpty() && team.getInvitations().isEmpty()){
+        if (team.getTeammates().isEmpty()){
             deleteTeam(team);
             return null;
         }
