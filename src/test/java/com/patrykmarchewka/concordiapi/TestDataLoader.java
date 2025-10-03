@@ -42,9 +42,11 @@ public class TestDataLoader {
     public User userMemberB;
     public Team team1;
     public Team team2;
+    public Team teamToDelete;
     public Task task1;
     public Task task1New;
     public Task task2;
+    public Task taskToDelete;
     public Subtask subtask1;
     public Subtask subtask2;
     public Invitation invitation;
@@ -104,6 +106,7 @@ public class TestDataLoader {
     private void createTeams(){
         this.team1 = teamService.createTeam(new TeamRequestBody("team"), user1);
         this.team2 = teamService.createTeam(new TeamRequestBody("team2"), user1);
+        this.teamToDelete = teamService.createTeam(new TeamRequestBody("toDelete"), user2);
     }
 
     private void addUsersToTeams(){
@@ -121,6 +124,7 @@ public class TestDataLoader {
         this.task1 = taskService.createTask(new TaskRequestBody("task", "taskdesc", Set.of((int)user1.getID(), (int)userAdminA.getID(), (int)userAdminA2.getID(), (int)userMemberA.getID()), TaskStatus.NEW), team1);
         this.task1New = taskService.createTask(new TaskRequestBody("taskNew", "taskdescNew", Set.of(), TaskStatus.NEW), team1);
         this.task2 = taskService.createTask(new TaskRequestBody("task2", "taskdesc2", Set.of(), TaskStatus.INPROGRESS), team1);
+        this.taskToDelete = taskService.createTask(new TaskRequestBody("toDelete", "toDelete", Set.of(), TaskStatus.CANCELLED), teamToDelete);
     }
 
     private void createSubtasks(){
