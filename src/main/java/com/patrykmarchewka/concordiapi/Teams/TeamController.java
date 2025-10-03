@@ -5,10 +5,10 @@ import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.OnPut;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,7 +54,7 @@ public class TeamController {
     @ApiResponse(responseCode = "401", ref = "401")
     @GetMapping("/teams")
     public ResponseEntity<APIResponse<Set<TeamDTO>>> myTeams(Authentication authentication){
-        context = context.withUser(authentication);
+        context = context.withUserWithTeams(authentication);
         return ResponseEntity.ok(new APIResponse<>("Information about all joined teams",teamService.getTeamsDTO(context.getUser())));
     }
 
@@ -70,9 +70,9 @@ public class TeamController {
     @ApiResponse(responseCode = "401", ref = "401")
     @PostMapping("/teams")
     public ResponseEntity<APIResponse<String>> createTeam(@RequestBody @ValidateGroup(OnCreate.class) TeamRequestBody body, Authentication authentication){
-        context = context.withUser(authentication);
-        Team team = teamService.createTeam(body, context.getUser());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Team created with ID of " + teamService.getID(team), null));
+        context = context.withUserWithTeams(authentication);
+        long teamID = teamService.createTeam(body, context.getUser()).getID();
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Team created with ID of " + teamID, null));
     }
 
     /**
@@ -96,7 +96,7 @@ public class TeamController {
      * @param ID ID of the team to edit
      * @param body TeamRequestBody with new team values
      * @param authentication User credentials to authenticate
-     * @return TeamDTO of edited Team
+     * @return TeamAdminDTO of edited Team
      * @throws NoPrivilegesException Thrown when user requesting the change is not Owner or Admin in the team
      */
     @Operation(summary = "Edit team completely", description = "Edits entire Team with all required values")
@@ -107,13 +107,13 @@ public class TeamController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/teams/{ID}")
     @Transactional
-    public ResponseEntity<APIResponse<TeamDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamAdminDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
 
         if(!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Team has been edited",teamService.createTeamDTO(context.getUser(), teamService.putTeam(context.getTeam(), body))));
+        return ResponseEntity.ok(new APIResponse<>("Team has been edited", new TeamAdminDTO(teamService.putTeam(context.getTeam(), body))));
     }
 
     /**
@@ -121,7 +121,7 @@ public class TeamController {
      * @param ID ID of team to edit
      * @param body TeamRequestBody with new team values
      * @param authentication User credentials to authenticate
-     * @return TeamDTO of edited team
+     * @return TeamAdminDTO of edited team
      * @throws NoPrivilegesException Thrown when user requesting the change is not Owner or Admin in the team
      */
     @Operation(summary = "Edit team", description = "Edits team with new values")
@@ -132,13 +132,13 @@ public class TeamController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/teams/{ID}")
     @Transactional
-    public ResponseEntity<APIResponse<TeamDTO>> patchTeam(@PathVariable long ID, @RequestBody @ValidateGroup TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamAdminDTO>> patchTeam(@PathVariable long ID, @RequestBody @ValidateGroup TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
 
         if(!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Team has been edited",teamService.createTeamDTO(context.getUser(), teamService.patchTeam(context.getTeam(), body))));
+        return ResponseEntity.ok(new APIResponse<>("Team has been edited",new TeamAdminDTO(teamService.patchTeam(context.getTeam(), body))));
     }
 
     /**
