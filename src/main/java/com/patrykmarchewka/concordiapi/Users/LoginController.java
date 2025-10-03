@@ -114,8 +114,8 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
-        context = context.withUser(authentication);
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(userService.getUserWithTeams(context.getUser()))));
+        context = context.withUserWithTeams(authentication);
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(context.getUser())));
     }
 
     /**
@@ -192,8 +192,8 @@ public class LoginController {
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
-        context = context.withUser(authentication).withInvitation(invID);
-        User user = userService.getUserWithTeams(context.getUser());
+        context = context.withUserWithTeams(authentication).withInvitation(invID);
+        User user = context.getUser();
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
         invitationService.useInvitation(invitation, user);
