@@ -49,6 +49,8 @@ public class TestDataLoader {
     public Task taskToDelete;
     public Subtask subtask1;
     public Subtask subtask2;
+    public Subtask subtask1New;
+    public Subtask subtaskToDelete;
     public Invitation invitation;
     public Invitation invitationNoUses;
     public Invitation invitationExpired;
@@ -62,6 +64,7 @@ public class TestDataLoader {
     public User refreshedUser;
     public Team refreshedTeam;
     public Task refreshedTask;
+    public Subtask refreshedSubtask;
 
     public TestDataLoader(UserService userService, TeamService teamService, TaskService taskService, SubtaskService subtaskService, InvitationService invitationService) {
         this.userService = userService;
@@ -129,7 +132,9 @@ public class TestDataLoader {
 
     private void createSubtasks(){
         this.subtask1 = subtaskService.createSubtask(new SubtaskRequestBody("subtask", "subtaskdesc", TaskStatus.HALTED), team1.getID(), task1.getID());
+        this.subtask1New = subtaskService.createSubtask(new SubtaskRequestBody("newSubtask", "newSubtaskdesc", TaskStatus.NEW), team1.getID(), task1.getID());
         this.subtask2 = subtaskService.createSubtask(new SubtaskRequestBody("subtask2", "subtaskdesc2", TaskStatus.CANCELLED), team1.getID(), task2.getID());
+        this.subtaskToDelete = subtaskService.createSubtask(new SubtaskRequestBody("toDelete", "toDelete", TaskStatus.CANCELLED), teamToDelete.getID(), taskToDelete.getID());
     }
 
     private void createInvitations(){
@@ -173,4 +178,6 @@ public class TestDataLoader {
     public void refreshTask(Task task){
         this.refreshedTask = taskService.getTaskFull(task);
     }
+
+    public void refreshSubtask(Subtask subtask){ this.refreshedSubtask = subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
 }
