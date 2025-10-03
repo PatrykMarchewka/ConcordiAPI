@@ -54,6 +54,8 @@ public class TestDataLoader {
     public Invitation invitation;
     public Invitation invitationNoUses;
     public Invitation invitationExpired;
+    public Invitation invitation1New;
+    public Invitation invitationToDelete;
     public String jwt1;
     public String jwt2;
     public String jwtAdminA;
@@ -65,6 +67,7 @@ public class TestDataLoader {
     public Team refreshedTeam;
     public Task refreshedTask;
     public Subtask refreshedSubtask;
+    public Invitation refreshedInvitation;
 
     public TestDataLoader(UserService userService, TeamService teamService, TaskService taskService, SubtaskService subtaskService, InvitationService invitationService) {
         this.userService = userService;
@@ -141,6 +144,8 @@ public class TestDataLoader {
         this.invitation = invitationService.createInvitation(new InvitationRequestBody((short) 101, UserRole.ADMIN, null), team1.getID());
         this.invitationNoUses = invitationService.createInvitation(new InvitationRequestBody((short)0, UserRole.MANAGER, null), team1.getID());
         this.invitationExpired = invitationService.createInvitation(new InvitationRequestBody((short)1, UserRole.MEMBER, OffsetDateTimeConverter.nowConverted().minusDays(1)), team1.getID());
+        this.invitation1New = invitationService.createInvitation(new InvitationRequestBody((short)10, UserRole.OWNER, null), team2.getID());
+        this.invitationToDelete = invitationService.createInvitation(new InvitationRequestBody((short)1, UserRole.OWNER, null), teamToDelete.getID());
     }
 
     private void setJWTs(){
@@ -162,6 +167,7 @@ public class TestDataLoader {
         this.userAdminA2 = userService.getUserFull(userAdminA2);
         this.userMemberA = userService.getUserFull(userMemberA);
         this.team1 = teamService.getTeamFull(team1);
+        this.team2 = teamService.getTeamFull(team2);
         this.task1 = taskService.getTaskFull(task1);
         this.task1New = taskService.getTaskFull(task1New);
         this.task2 = taskService.getTaskFull(task2);
@@ -180,4 +186,6 @@ public class TestDataLoader {
     }
 
     public void refreshSubtask(Subtask subtask){ this.refreshedSubtask = subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
+
+    public void refreshInvitation(Invitation invitation){ this.refreshedInvitation = invitationService.getInvitationByUUID(invitation.getUUID()); }
 }
