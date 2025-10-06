@@ -192,7 +192,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         taskService.removeSubtaskFromTaskAndDelete(context.getTask(), subtaskService.getSubtaskByID(taskID,ID));
-        return ResponseEntity.ok(new APIResponse<>("Subtask deleted", null));
+        return ResponseEntity.ok(new APIResponse<>("Subtask has been deleted", null));
     }
 
 }

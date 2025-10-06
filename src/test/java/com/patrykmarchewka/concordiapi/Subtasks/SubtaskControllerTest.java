@@ -131,7 +131,7 @@ public class SubtaskControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals("Subtask deleted", response.getBody().getMessage());
+        assertEquals("Subtask has been deleted", response.getBody().getMessage());
         assertThrows(NotFoundException.class, () -> testDataLoader.refreshSubtask(testDataLoader.subtaskToDelete));
     }
 }
