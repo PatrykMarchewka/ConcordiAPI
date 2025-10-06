@@ -39,7 +39,8 @@ public class Team {
     @Column(nullable = false)
     private Set<Invitation> invitations = new HashSet<>();
 
-    public long getID(){ return this.id; }
+    //Nullable Long to support equals and hashCode in TeamUserRole.java
+    public Long getID(){ return this.id; }
 
     public String getName(){ return this.name; }
 

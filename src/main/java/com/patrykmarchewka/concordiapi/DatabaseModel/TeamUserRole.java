@@ -62,13 +62,14 @@ public class TeamUserRole {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof TeamUserRole)) return false;
-        TeamUserRole role = (TeamUserRole) o;
-        return id != null && id.equals(role.getID());
+        if (!(o instanceof TeamUserRole role)) return false;
+        return Objects.equals(team.getID(), role.getTeam().getID()) &&
+                Objects.equals(user.getID(), role.getUser().getID()) &&
+                Objects.equals(userRole, role.getUserRole());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(team.getID(), user.getID(), userRole);
     }
 }
