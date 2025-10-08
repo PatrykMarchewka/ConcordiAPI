@@ -279,7 +279,7 @@ public class TestDataLoader {
 
         this.taskRead = taskService.getTaskFull(taskRead);
         this.taskWrite = taskService.getTaskFull(taskWrite);
-        this.taskDelete = taskService.getTaskFull(taskWrite);
+        this.taskDelete = taskService.getTaskFull(taskDelete);
     }
 
     //Old
