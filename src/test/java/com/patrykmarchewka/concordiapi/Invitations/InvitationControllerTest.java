@@ -2,6 +2,7 @@ package com.patrykmarchewka.concordiapi.Invitations;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
@@ -51,12 +52,13 @@ public class InvitationControllerTest {
     
     @Test
     void shouldGetInvitationsForTeam(){
-        var response = restClient.get().uri("/api/teams/{teamID}/invitations", testDataLoader.team1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<InvitationManagerDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/invitations", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<InvitationManagerDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("List of all invitations for this team", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitation)));
+        assertEquals(3, response.getBody().getData().size());
+        assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationRead)));
         assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationExpired)));
         assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationNoUses)));
     }
@@ -73,14 +75,13 @@ public class InvitationControllerTest {
                 "dueDate": "%s"
                 }
                 """, dueDate);
-        var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.team2.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.refreshTeam(testDataLoader.team2);
+        var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
+        testDataLoader.teamWrite = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Created new invitation", response.getBody().getMessage());
-        assertEquals(testDataLoader.team2.getID(), response.getBody().getData().getTeam().getID());
-        assertEquals(testDataLoader.team2.getInvitations().size() + 1, testDataLoader.refreshedTeam.getInvitations().size());
+        assertEquals(new TeamMemberDTO(testDataLoader.teamWrite, null), response.getBody().getData().getTeam());
         assertEquals((short)100, response.getBody().getData().getUses());
         assertEquals(UserRole.MEMBER, response.getBody().getData().getRole());
         //Some databases convert to UTC and strip offset, that is why compare we accept either solution as they ultimately point to same time
@@ -89,12 +90,12 @@ public class InvitationControllerTest {
 
     @Test
     void shouldCheckInvitation(){
-        var response = restClient.get().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.team1.getID(), testDataLoader.invitation.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamRead.getID(), testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Information about this invitation", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitation));
+        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
     }
 
     @Test
@@ -109,14 +110,14 @@ public class InvitationControllerTest {
                 "dueDate": "%s"
                 }
                 """, dueDate);
-        var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.team2.getID(), testDataLoader.invitation1New.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.refreshInvitation(testDataLoader.invitation1New);
+        var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
+        testDataLoader.invitationWrite = testDataLoader.refreshInvitationNew(testDataLoader.invitationWrite);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Invitation fully changed", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.refreshedInvitation));
+        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationWrite));
         assertEquals(99, response.getBody().getData().getUses());
         //Some databases convert to UTC and strip offset, that is why compare we accept either solution as they ultimately point to same time
         assertTrue((dueDate.toString().equals(response.getBody().getData().getDueTime()) || (dueDate.toInstant().toString().equals(response.getBody().getData().getDueTime()))));
@@ -130,7 +131,7 @@ public class InvitationControllerTest {
                 "role": "MANAGER"
                 }
                 """;
-        var response = restClient.patch().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.team2.getID(), testDataLoader.invitation1New.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
+        var response = restClient.patch().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -140,12 +141,12 @@ public class InvitationControllerTest {
 
     @Test
     void shouldDeleteInvitation(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamToDelete.getID(), testDataLoader.invitationToDelete.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwt2).retrieve().toEntity(APIResponse.class);
+        var response = restClient.delete().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamDelete.getID(), testDataLoader.invitationDelete.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtDelete).retrieve().toEntity(APIResponse.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Invitation has been deleted", response.getBody().getMessage());
-        assertThrows(NotFoundException.class,() -> testDataLoader.refreshInvitation(testDataLoader.invitationToDelete));
+        assertThrows(NotFoundException.class,() -> testDataLoader.refreshInvitationNew(testDataLoader.invitationDelete));
     }
 
 }
