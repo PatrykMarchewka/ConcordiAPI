@@ -5,7 +5,6 @@ import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMeDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.JSONWebToken;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
@@ -64,8 +63,8 @@ public class LoginControllerTest {
     void shouldLoginUserCorrectly(){
         String json = """
                 {
-                   "login": "string",
-                   "password": "string"
+                   "login": "READ",
+                   "password": "READ"
                 }
                 """;
         var response = restClient.post().uri("/login").contentType(MediaType.APPLICATION_JSON).body(json).retrieve().toEntity(APIResponse.class);
@@ -73,6 +72,11 @@ public class LoginControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertNotNull(response.getBody().getData());
+        try {
+            JSONWebToken.VerifyJWT(response.getBody().getData().toString());
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -114,13 +118,13 @@ public class LoginControllerTest {
 
     @Test
     void shouldGetMeDTO(){
-        var response = restClient.get().uri("/me").header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMeDTO>>() {});
+        var response = restClient.get().uri("/me").header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMeDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Data related to my account", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsUser(testDataLoader.user1));
-        assertEquals(2, response.getBody().getData().getTeams().size());
+        assertTrue(response.getBody().getData().equalsUser(testDataLoader.userReadOwner));
+        assertEquals(1, response.getBody().getData().getTeams().size());
     }
 
     @Test
@@ -130,21 +134,18 @@ public class LoginControllerTest {
                 "name":"patched"
                 }
                 """;
-        User dummy = testDataLoader.user1;
-        dummy.setName("patched");
-
-
-        var response = restClient.patch().uri("/me").contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + testDataLoader.jwt1).body(json).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
+        var response = restClient.patch().uri("/me").contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + testDataLoader.jwtWrite).body(json).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
+        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userWriteOwner);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Data changed!", response.getBody().getMessage());
-        assertEquals(new UserMemberDTO(dummy), response.getBody().getData());
+        assertEquals(new UserMemberDTO(refreshedUser), response.getBody().getData());
     }
 
     @Test
     void shouldRefreshToken(){
-        var response = restClient.post().uri("/me/refresh").header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(APIResponse.class);
+        var response = restClient.post().uri("/me/refresh").header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(APIResponse.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -159,27 +160,26 @@ public class LoginControllerTest {
 
     @Test
     void shouldCheckInvitation(){
-        var response = restClient.get().uri("/invitations/" + testDataLoader.invitation.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationMemberDTO>>() {});
+        var response = restClient.get().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("The provided invitation information", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitation));
+        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
     }
 
     @Test
     void shouldUseInvitation(){
-        TeamMemberDTO old = new TeamMemberDTO(testDataLoader.team1, null);
-
-        var response = restClient.post().uri("/invitations/" + testDataLoader.invitation.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwt2).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
+        var oldTeamDTO = new TeamMemberDTO(testDataLoader.teamRead, null);
+        var response = restClient.post().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
 
         assertNotNull(response.getBody());
         assertEquals("Joined the following team:", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTeam(testDataLoader.team1));
-        assertEquals(old.getID(), response.getBody().getData().getID());
-        assertEquals(old.getName(), response.getBody().getData().getName());
-        assertEquals(old.getOwners().size(), response.getBody().getData().getOwners().size());
-        assertEquals(old.getTeammateCount() + 1, response.getBody().getData().getTeammateCount());
-        assertEquals(old.getTasks().size(), response.getBody().getData().getTasks().size());
+        assertTrue(response.getBody().getData().equalsTeam(testDataLoader.teamRead));
+        assertEquals(oldTeamDTO.getID(), response.getBody().getData().getID());
+        assertEquals(oldTeamDTO.getName(), response.getBody().getData().getName());
+        assertEquals(oldTeamDTO.getOwners().size(), response.getBody().getData().getOwners().size());
+        assertEquals(oldTeamDTO.getTeammateCount() + 1, response.getBody().getData().getTeammateCount());
+        assertEquals(oldTeamDTO.getTasks().size(), response.getBody().getData().getTasks().size());
     }
 }
