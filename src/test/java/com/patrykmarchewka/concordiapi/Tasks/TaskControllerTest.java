@@ -55,15 +55,13 @@ public class TaskControllerTest {
         //JSON Deserialization sees APIResponse<Set> so it doesn't add "type" field to TaskDTO even when annotated to do it
         //because of that it has issues with deserializing Set<TaskDTO> into objects
         //In this test responses are TaskManagerDTO, but for mixed DTOs it would need to be Map<String, Object> or something better
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks", testDataLoader.team1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All tasks available", response.getBody().getMessage());
-        assertEquals(testDataLoader.team1.getTeamTasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.task1)));
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.task1New)));
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.task2)));
+        assertEquals(testDataLoader.teamRead.getTeamTasks().size(), response.getBody().getData().size());
+        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.taskRead)));
     }
 
     @Test
@@ -75,7 +73,7 @@ public class TaskControllerTest {
                 "taskStatus":"NEW"
                 }
                 """;
-        var response = restClient.post().uri("/api/teams/{teamID}/tasks", testDataLoader.team2.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtAdminB).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var response = restClient.post().uri("/api/teams/{teamID}/tasks", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -92,13 +90,13 @@ public class TaskControllerTest {
         //JSON Deserialization sees APIResponse<Set> so it doesn't add "type" field to TaskDTO even when annotated to do it
         //because of that it has issues with deserializing Set<TaskDTO> into objects
         //In this test responses are TaskManagerDTO, but for mixed DTOs it would need to be Map<String, Object> or something better
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/me", testDataLoader.team1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/me", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Tasks assigned to me", response.getBody().getMessage());
-        assertEquals(testDataLoader.user1.getUserTasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.task1)));
+        assertEquals(testDataLoader.userReadOwner.getUserTasks().size(), response.getBody().getData().size());
+        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.taskRead)));
     }
 
     @Test
@@ -111,12 +109,12 @@ public class TaskControllerTest {
         //    @JsonSubTypes.Type(value = TeamMemberDTO.class, name = "TeamMemberDTO")
         //})
 
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskManagerDTO>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamRead.getID(), testDataLoader.taskRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskManagerDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task details", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTask(testDataLoader.task1));
+        assertTrue(response.getBody().getData().equalsTask(testDataLoader.taskRead));
     }
 
     @Test
@@ -125,65 +123,68 @@ public class TaskControllerTest {
                 {
                 "name":"newest task",
                 "description":"newest description",
-                "users": [%d],
+                "users": [%d , %d],
                 "taskStatus":"INPROGRESS"
                 }
-                """, testDataLoader.userManagerA.getID());
-        var response = restClient.put().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task1New.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
-        testDataLoader.refreshTask(testDataLoader.task1New);
+                """, testDataLoader.userWriteOwner.getID(), testDataLoader.userManager.getID());
+        var response = restClient.put().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task fully changed", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTask(testDataLoader.refreshedTask));
-        assertEquals(1, response.getBody().getData().getUsers().size());
-        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManagerA)));
+        assertTrue(response.getBody().getData().equalsTask(refreshedTask));
+        assertEquals(2, response.getBody().getData().getUsers().size());
+        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userWriteOwner)));
+        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManager)));
     }
 
     @Test
     void shouldPatchTask(){
         String json = """
                 {
-                "users": []
+                "name": "newer task"
                 }
                 """;
-        var response = restClient.patch().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task1New.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var response = restClient.patch().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task updated", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().getUsers().isEmpty());
+        assertEquals("newer task", response.getBody().getData().getName());
     }
 
     @Test
     void shouldDeleteTask(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamToDelete.getID(), testDataLoader.taskToDelete.getID()).header("Authorization", "Bearer " + testDataLoader.jwt2).retrieve().toEntity(APIResponse.class);
+        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamDelete.getID(), testDataLoader.taskDelete.getID()).header("Authorization", "Bearer " + testDataLoader.jwtDelete).retrieve().toEntity(APIResponse.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task has been deleted", response.getBody().getMessage());
-        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTask(testDataLoader.taskToDelete));
+        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTaskNew(testDataLoader.taskDelete));
     }
 
     @Test
     void shouldAttachUserToTask(){
-        var response = restClient.post().uri("/api/teams/{teamID}/tasks/{ID}/users/{userID}", testDataLoader.team1.getID(), testDataLoader.task1New.getID(), testDataLoader.userAdminA.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var response = restClient.post().uri("/api/teams/{teamID}/tasks/{ID}/users/{userID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User added to task", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdminA)));
+        assertEquals(testDataLoader.taskWrite.getUserTasks().size() + 1, refreshedTask.getUsers().size());
+        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
     }
 
     @Test
     void shouldRemoveUserFromTask(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{ID}/users/{userID}", testDataLoader.team1.getID(), testDataLoader.task1.getID(), testDataLoader.userMemberA.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
+        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{ID}/users/{userID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.userWriteOwner.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User removed from task", response.getBody().getMessage());
-        assertFalse(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userMemberA)));
+        assertFalse(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userWriteOwner)));
     }
 
 
