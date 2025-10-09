@@ -47,67 +47,66 @@ public class UserControllerTest {
 
     @Test
     void shouldGetAllUsersInATeam(){
-        var response = restClient.get().uri("/api/teams/{teamID}/users", testDataLoader.team1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<UserMemberDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/users", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<UserMemberDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All users in the team", response.getBody().getMessage());
-        assertEquals(testDataLoader.team1.getUserRoles().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.user1)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdminA)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdminA2)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManagerA)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userMemberA)));
+        assertEquals(testDataLoader.teamRead.getUserRoles().size(), response.getBody().getData().size());
+        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userReadOwner)));
+        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
+        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManager)));
+        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userMember)));
     }
 
     @Test
     void shouldGetAllUsersInATeamWithRole(){
-        var response = restClient.get().uri("/api/teams/{teamID}/users?role=OWNER", testDataLoader.team1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<UserMemberDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/users?role=OWNER", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<UserMemberDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All users in the team with that role", response.getBody().getMessage());
         assertEquals(1, response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.user1)));
+        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userReadOwner)));
     }
 
     @Test
     void shouldGetUserInTeam(){
-        var response = restClient.get().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.team1.getID(), testDataLoader.userAdminA.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamRead.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User with the provided ID", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsUser(testDataLoader.userAdminA));
+        assertTrue(response.getBody().getData().equalsUser(testDataLoader.userAdmin));
     }
 
     @Test
     void shouldRemoveUserFromTeam(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.team2.getID(), testDataLoader.userAdminB2.getID()).header("Authorization", "Bearer " + testDataLoader.jwtAdminB).retrieve().toEntity(APIResponse.class);
-        testDataLoader.refreshTeam(testDataLoader.team2);
-        testDataLoader.refreshUser(testDataLoader.userAdminB2);
+        var response = restClient.delete().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
+        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshUser = testDataLoader.refreshUserNew(testDataLoader.userAdmin);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User removed from team", response.getBody().getMessage());
         assertNull(response.getBody().getData());
-        assertFalse(testDataLoader.refreshedTeam.checkUser(testDataLoader.userAdminB2.getID()));
-        assertFalse(testDataLoader.refreshedUser.getTeams().contains(testDataLoader.team2));
+        assertFalse(refreshedTeam.checkUser(testDataLoader.userAdmin.getID()));
+        assertFalse(refreshUser.getTeams().contains(testDataLoader.teamWrite));
     }
 
     @Test
     void shouldLeaveTeam(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/users/me", testDataLoader.team2.getID()).header("Authorization", "Bearer " + testDataLoader.jwtMemberB).retrieve().toEntity(APIResponse.class);
-        testDataLoader.refreshTeam(testDataLoader.team2);
-        testDataLoader.refreshUser(testDataLoader.userMemberB);
+        var response = restClient.delete().uri("/api/teams/{teamID}/users/me", testDataLoader.teamWrite.getID()).header("Authorization", "Bearer " + testDataLoader.jwtMember).retrieve().toEntity(APIResponse.class);
+        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userMember);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Left the team", response.getBody().getMessage());
         assertNull(response.getBody().getData());
-        assertFalse(testDataLoader.refreshedTeam.checkUser(testDataLoader.userMemberB.getID()));
-        assertFalse(testDataLoader.refreshedUser.getTeams().contains(testDataLoader.team2));
+        assertFalse(refreshedTeam.checkUser(testDataLoader.userMember.getID()));
+        assertFalse(refreshedUser.getTeams().contains(testDataLoader.teamWrite));
     }
 
     @Test
@@ -115,15 +114,14 @@ public class UserControllerTest {
         String json = """
                 "MEMBER"
                 """;
-        var response = restClient.patch().uri("/api/teams/{teamID}/users/{ID}/role", testDataLoader.team2.getID(), testDataLoader.userManagerB.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtAdminB).retrieve().toEntity(APIResponse.class);
-        testDataLoader.refreshUser(testDataLoader.userManagerB);
+        var response = restClient.patch().uri("/api/teams/{teamID}/users/{ID}/role", testDataLoader.teamWrite.getID(), testDataLoader.userManager.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
+        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userManager);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Role changed", response.getBody().getMessage());
         assertNull(response.getBody().getData());
-        assertTrue(testDataLoader.refreshedUser.getTeamRoles().stream().anyMatch(teamUserRole -> (teamUserRole.getTeam().equals(testDataLoader.team2) && teamUserRole.getUser().equals(testDataLoader.userManagerB) && teamUserRole.getUserRole().isMember())));
-
+        assertTrue(refreshedUser.getTeamRoles().stream().anyMatch(teamUserRole -> (teamUserRole.getTeam().equals(testDataLoader.teamWrite) && teamUserRole.getUser().equals(testDataLoader.userManager) && teamUserRole.getUserRole().isMember())));
     }
 
 
