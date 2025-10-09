@@ -50,14 +50,13 @@ public class SubtaskControllerTest {
 
     @Test
     void shouldGetSubtasks(){
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks", testDataLoader.team1.getID(), testDataLoader.task1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<SubtaskMemberDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks", testDataLoader.teamRead.getID(), testDataLoader.taskRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<SubtaskMemberDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtasks attached to this task", response.getBody().getMessage());
-        assertEquals(testDataLoader.task1.getSubtasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(subtaskMemberDTO -> subtaskMemberDTO.equalsSubtask(testDataLoader.subtask1)));
-        assertTrue(response.getBody().getData().stream().anyMatch(subtaskMemberDTO -> subtaskMemberDTO.equalsSubtask(testDataLoader.subtask1New)));
+        assertEquals(testDataLoader.taskRead.getSubtasks().size(), response.getBody().getData().size());
+        assertTrue(response.getBody().getData().stream().anyMatch(subtaskMemberDTO -> subtaskMemberDTO.equalsSubtask(testDataLoader.subtaskRead)));
     }
 
     @Test
@@ -69,8 +68,8 @@ public class SubtaskControllerTest {
                 "taskStatus":"HALTED"
                 }
                 """;
-        var response = restClient.post().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks", testDataLoader.team1.getID(), testDataLoader.task2.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
-        testDataLoader.refreshTask(testDataLoader.task2);
+        var response = restClient.post().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
+        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -78,17 +77,17 @@ public class SubtaskControllerTest {
         assertEquals("name", response.getBody().getData().getName());
         assertEquals("description", response.getBody().getData().getDescription());
         assertEquals(TaskStatus.HALTED, response.getBody().getData().getTaskStatus());
-        assertEquals(testDataLoader.task2.getSubtasks().size() + 1, testDataLoader.refreshedTask.getSubtasks().size());
+        assertEquals(testDataLoader.taskWrite.getSubtasks().size() + 1, refreshedTask.getSubtasks().size());
     }
 
     @Test
     void shouldGetSpecificSubtask(){
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task1.getID(), testDataLoader.subtask1.getID()).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamRead.getID(), testDataLoader.taskRead.getID(), testDataLoader.subtaskRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask details", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsSubtask(testDataLoader.subtask1));
+        assertTrue(response.getBody().getData().equalsSubtask(testDataLoader.subtaskRead));
     }
 
     @Test
@@ -100,14 +99,14 @@ public class SubtaskControllerTest {
                 "taskStatus":"NEW"
                 }
                 """;
-        var response = restClient.put().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task2.getID(), testDataLoader.subtask2.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
-        testDataLoader.refreshSubtask(testDataLoader.subtask2);
+        var response = restClient.put().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.subtaskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
+        var refreshedSubtask = testDataLoader.refreshSubtaskNew(testDataLoader.subtaskWrite);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask fully changed", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsSubtask(testDataLoader.refreshedSubtask));
+        assertTrue(response.getBody().getData().equalsSubtask(refreshedSubtask));
     }
 
     @Test
@@ -117,7 +116,7 @@ public class SubtaskControllerTest {
                 "name":"newestSubtask"
                 }
                 """;
-        var response = restClient.patch().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.team1.getID(), testDataLoader.task2.getID(), testDataLoader.subtask2.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwt1).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
+        var response = restClient.patch().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.subtaskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -127,11 +126,11 @@ public class SubtaskControllerTest {
 
     @Test
     void shouldDeleteSubtask(){
-        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamToDelete.getID(), testDataLoader.taskToDelete.getID(), testDataLoader.subtaskToDelete.getID()).header("Authorization", "Bearer " + testDataLoader.jwt2).retrieve().toEntity(APIResponse.class);
+        var response = restClient.delete().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamDelete.getID(), testDataLoader.taskDelete.getID(), testDataLoader.subtaskDelete.getID()).header("Authorization", "Bearer " + testDataLoader.jwtDelete).retrieve().toEntity(APIResponse.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask has been deleted", response.getBody().getMessage());
-        assertThrows(NotFoundException.class, () -> testDataLoader.refreshSubtask(testDataLoader.subtaskToDelete));
+        assertThrows(NotFoundException.class, () -> testDataLoader.refreshSubtaskNew(testDataLoader.subtaskDelete));
     }
 }
