@@ -119,7 +119,7 @@ public class UserController {
         }
 
         teamService.removeUser(context.getTeam(), userService.getUserByID(ID));
-        return ResponseEntity.ok(new APIResponse<>("User deleted from team!",null));
+        return ResponseEntity.ok(new APIResponse<>("User removed from team",null));
     }
 
     /**
