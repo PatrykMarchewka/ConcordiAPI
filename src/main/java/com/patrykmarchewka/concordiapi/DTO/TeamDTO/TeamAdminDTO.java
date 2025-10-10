@@ -4,7 +4,6 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.util.EnumMap;
@@ -20,15 +19,15 @@ public class TeamAdminDTO implements TeamDTO {
     private Set<TaskManagerDTO> tasks = new HashSet<>();
     private Map<UserRole, Set<UserMemberDTO>> usersByRole = new EnumMap<>(UserRole.class);
 
-    public TeamAdminDTO(Team team, TeamUserRoleService service){
-        this.id = team.getId();
+    public TeamAdminDTO(Team team){
+        this.id = team.getID();
         this.name = team.getName();
         for (Task task : team.getTeamTasks()){
             tasks.add(new TaskManagerDTO(task));
         }
 
         for (UserRole role : UserRole.values()){
-            Set<UserMemberDTO> set = service.getAllByTeamAndUserRole(team,role).stream().map(UserMemberDTO::new).collect(Collectors.toUnmodifiableSet());
+            Set<UserMemberDTO> set = team.getUserRoles().stream().filter(ur -> ur.getUserRole().equals(role)).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
             usersByRole.put(role,set);
         }
 
@@ -36,8 +35,8 @@ public class TeamAdminDTO implements TeamDTO {
 
     public TeamAdminDTO(){}
 
-    public long getId() {return id;}
-    public void setId(long id){this.id = id;}
+    public long getID() {return id;}
+    public void setID(long id){this.id = id;}
 
     public String getName(){return name;}
     public void setName(String name){this.name = name;}

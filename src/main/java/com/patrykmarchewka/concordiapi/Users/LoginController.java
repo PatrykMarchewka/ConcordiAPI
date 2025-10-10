@@ -13,12 +13,12 @@ import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.JSONWebToken;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,14 +43,12 @@ import java.security.NoSuchAlgorithmException;
 public class LoginController {
 
     private final UserService userService;
-    private final TeamUserRoleService teamUserRoleService;
     private final InvitationService invitationService;
     private ControllerContext context;
 
     @Autowired
-    public LoginController(UserService userService, TeamUserRoleService teamUserRoleService, InvitationService invitationService, ControllerContext context){
+    public LoginController(UserService userService, InvitationService invitationService, ControllerContext context){
         this.userService = userService;
-        this.teamUserRoleService = teamUserRoleService;
         this.invitationService = invitationService;
         this.context = context;
     }
@@ -116,8 +114,8 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/me")
     public ResponseEntity<APIResponse<UserMeDTO>> getMyData(Authentication authentication){
-        context = context.withUser(authentication);
-        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(userService.getUserWithTeams(context.getUser()), teamUserRoleService)));
+        context = context.withUserWithTeams(authentication);
+        return ResponseEntity.ok(new APIResponse<>("Data related to my account", new UserMeDTO(context.getUser())));
     }
 
     /**
@@ -176,7 +174,7 @@ public class LoginController {
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
         context = context.withInvitation(invID);
-        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation(), teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation())));
     }
 
     /**
@@ -184,7 +182,8 @@ public class LoginController {
      * @param invID Invitation UUID
      * @param authentication Authentication from logged user
      * @return TeamMemberDTO with the joined team
-     * @throws ConflictException Thrown when invitation is expired or user is already part of the team
+     * @throws ConflictException Thrown when user is already part of the team
+     * @throws BadRequestException Thrown when invitation is expired or can be no longer used
      */
     @Operation(summary = "Join team using invitation", description = "Joins team using the provided invitation")
     @SecurityRequirement(name = "BearerAuth")
@@ -192,12 +191,12 @@ public class LoginController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) throws Exception {
-        context = context.withUser(authentication).withInvitation(invID);
+    public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
+        context = context.withUserWithTeams(authentication).withInvitation(invID);
         User user = context.getUser();
         Invitation invitation = context.getInvitation();
         Team team = invitation.getInvitingTeam();
         invitationService.useInvitation(invitation, user);
-        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user, teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user)));
     }
 }

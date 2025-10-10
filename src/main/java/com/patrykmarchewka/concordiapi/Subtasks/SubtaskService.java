@@ -64,6 +64,36 @@ public class SubtaskService {
     }
 
     /**
+     * Edit subtask completely with new values
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @param teamID ID of the team containing the subtask
+     * @return Subtask after changes
+     */
+    @Transactional
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
+        Team team = teamService.getTeamByID(teamID);
+        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
+        subtaskUpdatersService.update(subtask,body,task,UpdateType.PUT);
+        return saveSubtask(subtask);
+    }
+
+    /**
+     * Edits subtask with new values
+     * @param subtask Subtask to edit
+     * @param body SubtaskRequestBody with new values
+     * @param teamID ID of the team containing the subtask
+     * @return Subtask after changes
+     */
+    @Transactional
+    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
+        Team team = teamService.getTeamByID(teamID);
+        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
+        subtaskUpdatersService.update(subtask,body,task,UpdateType.PATCH);
+        return saveSubtask(subtask);
+    }
+
+    /**
      * Saves pending changes to subtask
      * @param subtask Subtask to save
      * @return Subtask after saved changes
@@ -86,44 +116,10 @@ public class SubtaskService {
     }
 
     /**
-     * Edit subtask completely with new values
-     * @param subtask Subtask to edit
-     * @param body SubtaskRequestBody with new values
-     * @param teamID ID of the team containing the subtask
-     * @return Subtask after changes
+     * Deletes everything and flushes
      */
-    @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
-        Team team = teamService.getTeamByID(teamID);
-        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
-        subtaskUpdatersService.update(subtask,body,task,UpdateType.PUT);
-        return saveSubtask(subtask);
+    public void deleteAll(){
+        subtaskRepository.deleteAll();
+        subtaskRepository.flush();
     }
-
-    /**
-     * Unused, checks whether subtask exists provided ID and task ID
-     * @param ID ID of the subtask to check for
-     * @param task ID of the team to check in
-     * @return True if subtask with given ID in task with specified ID exists, otherwise false
-     */
-    public boolean checkIfSubtaskExistsByIDAndTask(long ID,Task task){
-        return subtaskRepository.existsByIdAndTask(ID, task);
-    }
-
-    /**
-     * Edits subtask with new values
-     * @param subtask Subtask to edit
-     * @param body SubtaskRequestBody with new values
-     * @param teamID ID of the team containing the subtask
-     * @return Subtask after changes
-     */
-    @Transactional
-    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
-        Team team = teamService.getTeamByID(teamID);
-        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
-        subtaskUpdatersService.update(subtask,body,task,UpdateType.PATCH);
-        return saveSubtask(subtask);
-    }
-
-
 }

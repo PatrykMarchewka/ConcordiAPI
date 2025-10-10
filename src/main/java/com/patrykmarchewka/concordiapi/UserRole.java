@@ -7,21 +7,6 @@ public enum UserRole{
     MEMBER,
     BANNED;
 
-    /**
-     * Converts String to UserRole value ignoring case
-     * @param name String of UserRole value
-     * @return UserRole from the String if found, otherwise throws
-     * @throws IllegalArgumentException Thrown when it can't find UserRole from given String
-     */
-    public static UserRole fromString(String name){
-        for (UserRole role : UserRole.values() ){
-            if (role.name().equalsIgnoreCase(name)){
-                return role;
-            }
-        }
-        throw new IllegalArgumentException("Unknown value: " + name);
-    }
-
     public boolean isOwner(){ return this == OWNER; }
     public boolean isAdmin() { return this == ADMIN; }
     public boolean isManager(){ return this == MANAGER; }

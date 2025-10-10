@@ -6,13 +6,12 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
-import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
-import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
@@ -30,14 +29,14 @@ public class UserService {
 
 
     private final UserRepository userRepository;
-    private final RoleRegistry roleRegistry;
     private final UserUpdatersService userUpdatersService;
+    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public UserService(UserRepository userRepository, RoleRegistry roleRegistry, UserUpdatersService userUpdatersService){
+    public UserService(UserRepository userRepository, UserUpdatersService userUpdatersService, TeamUserRoleService teamUserRoleService){
         this.userRepository = userRepository;
-        this.roleRegistry = roleRegistry;
         this.userUpdatersService = userUpdatersService;
+        this.teamUserRoleService = teamUserRoleService;
     }
 
     /**
@@ -51,22 +50,13 @@ public class UserService {
     }
 
     /**
-     * Returns user with given login or null
-     * @param Login Login of the user to search for
-     * @return User with the given login or null value
-     */
-    public User getUserByLogin(String Login){
-        return userRepository.findByLogin(Login).orElse(null);
-    }
-
-    /**
      * Returns user given UserRequestLogin or throws
      * @param body UserRequestLogin with the credentials
      * @return User with the given credentials
      * @throws WrongCredentialsException Thrown when credentials don't match
      */
     public User getUserByLoginAndPassword(UserRequestLogin body){
-        User user = getUserByLogin(body.getLogin());
+        User user = userRepository.findByLogin(body.getLogin()).orElse(null);
 
         //If user doesnt exist, we still run hash check
         //This is done to prevent timing attacks that could reveal valid usernames
@@ -132,14 +122,6 @@ public class UserService {
     }
 
     /**
-     * Unused, Deletes specified User by ID
-     * @param id ID of user to delete
-     */
-    public void deleteUserByID(long id){
-        userRepository.deleteById(id);
-    }
-
-    /**
      * Saves pending changes to User
      * @param user User to save
      * @return User after changes
@@ -174,8 +156,10 @@ public class UserService {
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
     public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, Team team){
-        Set<User> users = roleRegistry.createUserDTOMapWithParam(team,param).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
-        return userMemberDTOSetProcess(users);
+        if (!myRole.isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return userMemberDTOSetProcess(teamUserRoleService.getAllByTeamAndUserRole(team, param));
     }
 
     /**
@@ -186,26 +170,10 @@ public class UserService {
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
     public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, Team team){
-        Set<User> users = roleRegistry.createUserDTOMapNoParam(team).getOrDefault(myRole, () -> {throw new NoPrivilegesException();}).get();
-        return userMemberDTOSetProcess(users);
-    }
-
-
-    /**
-     * Checks if users belongs in a given team
-     * @param userIDs Set of IDs of Users to check
-     * @param team Team in which to search
-     * @return True if all users are part of given team, otherwise false
-     * @throws BadRequestException Thrown when one or more users are not part of the team
-     */
-    public boolean validateUsersForTasks(Set<Integer> userIDs, Team team){
-        if (userIDs == null || team == null) return false;
-        for (int id : userIDs) {
-            if (!team.checkUser(getUserByID((long) id))) {
-                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
-            }
+        if (!myRole.isAdminGroup()){
+            throw new NoPrivilegesException();
         }
-        return true;
+        return userMemberDTOSetProcess(team.getTeammates());
     }
 
     /**
@@ -214,6 +182,10 @@ public class UserService {
      * @return Set of Users with given IDs
      */
     public Set<User> getUsersFromIDs(Set<Integer> userIDs){
+        //For loop instead of stream for performance
+        //After running on my personal PC average times for 1000 runs stream vs for loop execution on very small set (2 items) in ns
+        //STREAM: 348942
+        //FORLOOP: 119438
         Set<User> users = new HashSet<>();
         for(int id : userIDs){
             users.add(getUserByID((long)id));
@@ -222,7 +194,23 @@ public class UserService {
     }
 
     public User getUserWithTeams(User user){
-        return userRepository.findUserWithTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+        return userRepository.findUserWithTeamRolesAndTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public User getUserWithUserTasks(User user){
+        return userRepository.findUserWithUserTasksByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public User getUserFull(User user){
+        return userRepository.findUserFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+        userRepository.deleteAll();
+        userRepository.flush();
     }
 
 }

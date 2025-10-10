@@ -9,6 +9,7 @@ import com.patrykmarchewka.concordiapi.Invitations.InvitationService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class ControllerContext {
 
 
 
+    private final UserService userService;
     private final TeamService teamService;
     private final TaskService taskService;
     private final TeamUserRoleService teamUserRoleService;
@@ -35,7 +37,8 @@ public class ControllerContext {
 
 
     @Autowired
-    public ControllerContext(TeamService teamService, TaskService taskService, TeamUserRoleService teamUserRoleService, InvitationService invitationService) {
+    public ControllerContext(UserService userService, TeamService teamService, TaskService taskService, TeamUserRoleService teamUserRoleService, InvitationService invitationService) {
+        this.userService = userService;
         this.teamService = teamService;
         this.taskService = taskService;
         this.teamUserRoleService = teamUserRoleService;
@@ -48,6 +51,11 @@ public class ControllerContext {
      */
     public ControllerContext withUser(Authentication authentication){
         this.user = (User)authentication.getPrincipal();
+        return this;
+    }
+
+    public ControllerContext withUserWithTeams(Authentication authentication){
+        this.user = userService.getUserWithTeams((User)authentication.getPrincipal());
         return this;
     }
 

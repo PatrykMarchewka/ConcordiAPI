@@ -1,7 +1,9 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,19 +35,21 @@ public class Task {
     @Column(nullable = false)
     private TaskStatus taskStatus;
     @Column(nullable = false)
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime creationDate;
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime updateDate;
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "task")
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "task")
     @Column(nullable = false)
     private Set<Subtask> subtasks = new HashSet<>();
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "assignedTask")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "assignedTask")
     @Column(nullable = false)
     private Set<UserTask> userTasks = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "team_id", nullable = false)
+    @JoinColumn(name = "team_id")
     private Team assignedTeam;
 
     public long getID() {
@@ -55,7 +59,6 @@ public class Task {
     public String getName(){
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -63,7 +66,6 @@ public class Task {
     public String getDescription() {
         return description;
     }
-
     public void setDescription(String description) {
         this.description = description;
     }
@@ -71,7 +73,6 @@ public class Task {
     public TaskStatus getTaskStatus() {
         return taskStatus;
     }
-
     public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
@@ -79,13 +80,11 @@ public class Task {
     public OffsetDateTime getCreationDate() {
         return creationDate;
     }
-
     public void setCreationDate(OffsetDateTime creationDate) {this.creationDate = creationDate;}
 
     public OffsetDateTime getUpdateDate() {
         return updateDate;
     }
-
     public void setUpdateDate(OffsetDateTime updateDate) {
         this.updateDate = updateDate;
     }
@@ -93,7 +92,6 @@ public class Task {
     public Set<Subtask> getSubtasks() {
         return subtasks;
     }
-
     public void setSubtasks(Set<Subtask> subtasks) {
         this.subtasks = subtasks;
     }
@@ -107,15 +105,15 @@ public class Task {
     public void setAssignedTeam(Team assignedTeam){ this.assignedTeam = assignedTeam; }
 
 
-
-
-
     public Subtask addSubtask(Subtask subtask){
         subtask.setTask(this);
         this.subtasks.add(subtask);
         return subtask;
     }
-    public void removeSubtask(Subtask subtask){this.subtasks.remove(subtask);}
+    public void removeSubtask(Subtask subtask){
+        subtask.setTask(null);
+        this.subtasks.remove(subtask);
+    }
 
     public UserTask addUserTask(User user){
         UserTask userTask = new UserTask(user,this);
@@ -129,6 +127,9 @@ public class Task {
     public void removeUserTask(UserTask userTask){
         userTask.getAssignedUser().removeUserTask(userTask);
         this.userTasks.remove(userTask);
+
+        userTask.setAssignedTask(null);
+        userTask.setAssignedUser(null);
     }
 
 

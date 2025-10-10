@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class TaskMemberDTO implements TaskDTO {
@@ -51,8 +52,19 @@ public class TaskMemberDTO implements TaskDTO {
     public Set<UserMemberDTO> getUsers(){return users;}
     public void setUsers(Set<UserMemberDTO> users){this.users = users;}
 
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof TaskMemberDTO taskMemberDTO)) return false;
+        return Objects.equals(id, taskMemberDTO.getID()) &&
+                Objects.equals(name, taskMemberDTO.getName()) &&
+                Objects.equals(description, taskMemberDTO.getDescription()) &&
+                Objects.equals(taskStatus, taskMemberDTO.getTaskStatus()) &&
+                Objects.equals(subtasks, taskMemberDTO.getSubtasks()) &&
+                Objects.equals(users, taskMemberDTO.getUsers());
 
+    }
 
-
-
+    @Override
+    public int hashCode(){ return Objects.hash(id,name,description,taskStatus); }
 }

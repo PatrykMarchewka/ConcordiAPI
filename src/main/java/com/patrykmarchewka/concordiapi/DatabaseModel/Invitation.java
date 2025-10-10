@@ -1,7 +1,9 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -29,6 +31,7 @@ public class Invitation {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+    @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime dueTime;
 
     public String getUUID(){return this.UUID;}
@@ -47,7 +50,7 @@ public class Invitation {
     public void setDueTime(OffsetDateTime dueTime) {this.dueTime = dueTime;}
 
     public void useOne() {
-        if ((this.getDueTime() != null && OffsetDateTime.now().isAfter(this.getDueTime())) || this.getUses() <= 0){
+        if ((this.getDueTime() != null && OffsetDateTimeConverter.nowConverted().isAfter(this.getDueTime())) || this.getUses() <= 0){
             throw new BadRequestException("Invitation expired");
         }
         else{

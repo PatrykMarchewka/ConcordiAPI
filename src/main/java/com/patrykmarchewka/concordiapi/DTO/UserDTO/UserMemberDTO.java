@@ -1,7 +1,9 @@
 package com.patrykmarchewka.concordiapi.DTO.UserDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 
-public class UserMemberDTO {
+import java.util.Objects;
+
+public class UserMemberDTO implements UserDTO{
     private long id;
     private String name;
     private String lastName;
@@ -20,12 +22,28 @@ public class UserMemberDTO {
 
     public UserMemberDTO(){}
 
-    public Long getId() {return id;}
-    public void setId(Long id) {this.id = id;}
+    public long getID() {return id;}
+    public void setID(Long id) {this.id = id;}
 
     public String getName() {return name;}
     public void setName(String name) {this.name = name;}
 
     public String getLastName(){return lastName;}
     public void setLastName(String lastName){this.lastName = lastName;}
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserMemberDTO userMemberDTO)) return false;
+        return Objects.equals(id, userMemberDTO.getID()) &&
+                Objects.equals(name, userMemberDTO.getName()) &&
+                Objects.equals(lastName, userMemberDTO.getLastName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, lastName);
+    }
+
+
 }

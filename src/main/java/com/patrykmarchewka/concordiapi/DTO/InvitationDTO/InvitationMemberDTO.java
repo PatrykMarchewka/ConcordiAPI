@@ -2,17 +2,16 @@ package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 
-public class InvitationMemberDTO {
+public class InvitationMemberDTO implements InvitationDTO{
     private String UUID;
     private TeamMemberDTO team;
     private UserRole role;
 
-    public InvitationMemberDTO(Invitation invitation, TeamUserRoleService teamUserRoleService){
+    public InvitationMemberDTO(Invitation invitation){
         this.UUID = invitation.getUUID();
-        this.team = new TeamMemberDTO(invitation.getInvitingTeam(),null,teamUserRoleService);
+        this.team = new TeamMemberDTO(invitation.getInvitingTeam(),null);
         this.role = invitation.getRole();
     }
 

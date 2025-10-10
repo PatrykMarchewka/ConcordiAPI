@@ -139,7 +139,7 @@ public class TaskController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
-    public ResponseEntity<APIResponse<Object>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<TaskDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
         return ResponseEntity.ok(new APIResponse<>("Task details", taskService.getInformationAboutTaskRole(context.getUserRole(), context.getTask(), context.getUser())));
         
@@ -190,7 +190,7 @@ public class TaskController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(context.getTask(), body, context.getTeam()))));
+        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getTeam(), context.getTask()))));
     }
 
     /**
@@ -232,7 +232,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
 
         if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();
@@ -259,7 +259,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(userID));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
 
         if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
             throw new NoPrivilegesException();

@@ -9,7 +9,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +23,12 @@ public class InvitationService {
 
     private final InvitationRepository invitationRepository;
     private final TeamService teamService;
-    private final TeamUserRoleService teamUserRoleService;
     private final InvitationUpdatersService invitationUpdatersService;
 
     @Autowired
-    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, TeamUserRoleService teamUserRoleService, InvitationUpdatersService invitationUpdatersService){
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService){
         this.invitationRepository = invitationRepository;
         this.teamService = teamService;
-        this.teamUserRoleService = teamUserRoleService;
         this.invitationUpdatersService = invitationUpdatersService;
     }
     
@@ -50,6 +47,32 @@ public class InvitationService {
     }
 
     /**
+     * Edits Invitation completely with new values
+     * @param invitation Invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @return Invitation after changes
+     */
+    @Transactional
+    public Invitation putInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
+        return saveInvitation(invitation);
+    }
+
+    /**
+     * Edits Invitation with new values
+     * @param invitation Invitation to edit
+     * @param body InvitationRequestBody with new values
+     * @return Invitation after changes
+     */
+    @Transactional
+    public Invitation patchInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
+        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
+        return saveInvitation(invitation);
+    }
+
+    /**
      * Uses invitation and adds user to the team
      * @param invitation Invitation to use
      * @param user User using the invitation
@@ -59,7 +82,7 @@ public class InvitationService {
     @Transactional
     public Invitation useInvitation(Invitation invitation,User user){
         Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
-        if (team.checkUser(user)){
+        if (team.checkUser(user.getID())){
             throw new ConflictException("You are already part of that team!");
         }
         invitation.useOne();
@@ -99,38 +122,20 @@ public class InvitationService {
      * @param team Team to check in
      * @return Set of InvitationDTO for all invitations in the team
      */
+    @Transactional(readOnly = true)
     public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
             Set<InvitationManagerDTO> invitations = new HashSet<>();
             for (Invitation inv : invitationRepository.getAllByInvitingTeam(team)){
-                invitations.add(new InvitationManagerDTO(inv,teamUserRoleService));
+                invitations.add(new InvitationManagerDTO(inv));
             }
             return invitations;
     }
 
     /**
-     * Edits Invitation with new values
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with new values
-     * @return Invitation after changes
+     * Deletes everything and flushes
      */
-    @Transactional
-    public Invitation partialUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
-        return saveInvitation(invitation);
+    public void deleteAll(){
+        invitationRepository.deleteAll();
+        invitationRepository.flush();
     }
-
-    /**
-     * Edits Invitation completely with new values
-     * @param invitation Invitation to edit
-     * @param body InvitationRequestBody with new values
-     * @return Invitation after changes
-     */
-    @Transactional
-    public Invitation putUpdate(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
-        return saveInvitation(invitation);
-    }
-
 }

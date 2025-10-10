@@ -11,6 +11,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,25 +27,26 @@ public class Team {
     @Column(nullable = false)
     private String name;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "team")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "team")
     @Column(nullable = false)
     private Set<TeamUserRole> userRoles = new HashSet<>();
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "assignedTeam")
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "assignedTeam")
     @Column(nullable = false)
     private Set<Task> teamTasks = new HashSet<>();
 
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "invitingTeam")
+    @OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "invitingTeam")
     @Column(nullable = false)
     private Set<Invitation> invitations = new HashSet<>();
 
-    public long getId(){ return this.id; }
+    //Nullable Long to support equals and hashCode in TeamUserRole.java
+    public Long getID(){ return this.id; }
 
     public String getName(){ return this.name; }
 
     public void setName(String name){ this.name = name; }
 
-    public Set<User> getTeammates(){ return this.getUserRoles().stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
+    public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
 
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
@@ -68,18 +70,39 @@ public class Team {
     public Team removeUserRole(TeamUserRole role){
         role.getUser().removeTeamRole(role);
         this.userRoles.remove(role);
+
+        role.setTeam(null);
+        role.setUser(null);
+        role.setUserRole(null);
+
         return this;
     }
 
     public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
+    public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
 
 
-    public void addTask(Task task){
+    public Task addTask(Task task){
         task.setAssignedTeam(this);
         this.teamTasks.add(task);
+        return task;
     }
-    public void removeTask(Task task){
-        this.teamTasks.remove(task);
+
+    public Team removeTask(Task task){
+        task.setAssignedTeam(null);
+//        Iterates through entire set looking for the one to remove and after removing stops
+//        faster than .removeIf() since it doesnt scan entire Set everytime but only until hit
+//        Iterator because hibernate defaults to PersistentSet and .remove() doesnt count it as same item in Set
+
+        Iterator<Task> iterator = this.teamTasks.iterator();
+        while (iterator.hasNext()){
+            Task t = iterator.next();
+            if (t.getID() == task.getID()){
+                iterator.remove();
+                break;
+            }
+        }
+        return this;
     }
 
 
@@ -92,7 +115,7 @@ public class Team {
         if (this == o) return true;
         if (!(o instanceof Team)) return false;
         Team team = (Team) o;
-        return id != null && id.equals(team.getId());
+        return id != null && id.equals(team.getID());
     }
 
     @Override

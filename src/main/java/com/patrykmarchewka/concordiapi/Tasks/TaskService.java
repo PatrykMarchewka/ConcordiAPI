@@ -9,23 +9,21 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
+import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.Pair;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
-import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.lang.reflect.InvocationTargetException;
-import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,16 +33,14 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TeamService teamService;
-    private final UserService userService;
     private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
     private final UserTaskRepository userTaskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, @Lazy UserService userService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
         this.taskRepository = taskRepository;
         this.teamService = teamService;
-        this.userService = userService;
         this.roleRegistry = roleRegistry;
         this.taskUpdatersService = taskUpdatersService;
         this.userTaskRepository = userTaskRepository;
@@ -58,7 +54,7 @@ public class TaskService {
      * @return Set of tasks in given Team
      */
     public Set<Task> getAllTasks(Team team){
-        return taskRepository.findByAssignedTeam(team);
+        return taskRepository.getByAssignedTeam(team);
     }
 
     /**
@@ -105,7 +101,7 @@ public class TaskService {
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTime.now()) > days).collect(Collectors.toSet());
+        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -116,7 +112,7 @@ public class TaskService {
      */
     @Transactional
     public Task createTask(TaskRequestBody body, Team team){
-        userService.validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasksByID(body.getUsers(),team);
         Task task = new Task();
         taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
 
@@ -132,7 +128,7 @@ public class TaskService {
      */
     @Transactional
     public Task putTask(TaskRequestBody body, Team team, Task task) {
-        userService.validateUsersForTasks(body.getUsers(),team);
+        validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         return saveTask(task);
     }
@@ -145,8 +141,8 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(Task task, TaskRequestBody body, Team team){
-        userService.validateUsersForTasks(body.getUsers(),team);
+    public Task patchTask(TaskRequestBody body, Team team, Task task){
+        validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         return saveTask(task);
     }
@@ -171,8 +167,17 @@ public class TaskService {
      */
     @Transactional
     public Task saveTask(Task task){
-        task.setUpdateDate(OffsetDateTime.now());
+        task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
         return taskRepository.save(task);
+    }
+
+    /**
+     * Unused, saves all tasks
+     * @param tasks Set of tasks to save
+     */
+    @Transactional
+    public void saveAllTasks(Set<Task> tasks){
+        taskRepository.saveAll(tasks);
     }
 
     /**
@@ -204,24 +209,10 @@ public class TaskService {
      * @param team Team in which to check for
      * @param role Role of the user in a team
      * @return Set of TaskDTO with information about the tasks
-     * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getAllTasks(User user, Team team, UserRole role){
-        Pair<Set<Task>, Class<? extends TaskDTO>> pair = roleRegistry.getAllTasksInTeamMap(user, team).get(role);
-
-        return pair.getFirst().stream().map(task -> {
-            try {
-                return pair.getSecond().getDeclaredConstructor(task.getClass()).newInstance(task);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return roleRegistry.getAllTasksMap(user,team).get(role).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -233,21 +224,9 @@ public class TaskService {
      * @return Set of TaskDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getMyTasks(User user,Team team, UserRole role){
-        Class<? extends TaskDTO> taskClass = roleRegistry.getMyTasksMap().get(role);
-        return getAllTasksForUser(user, team).stream().map(item -> {
-            try {
-                return taskClass.getDeclaredConstructor(item.getClass()).newInstance(item);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return getAllTasksForUser(user, team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -258,25 +237,13 @@ public class TaskService {
      * @return Set of TaskDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
+    @Transactional(readOnly = true)
     public Set<TaskDTO> getInactiveTasks(Team team, UserRole role, Integer days){
-        Class<? extends TaskDTO> taskClass = roleRegistry.getMyTasksMap().get(role);
-        return getAllTasksNoUpdatesIn(days,team).stream().map(task -> {
-            try {
-                return taskClass.getDeclaredConstructor(task.getClass()).newInstance(task);
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toSet());
+        return getAllTasksNoUpdatesIn(days,team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * Returns TaskDTO about given Task
+     * Returns TaskDTO about given Task based on role
      * @param role UserRole of user asking
      * @param task Task to return DTO of
      * @param user User asking for DTO
@@ -298,16 +265,6 @@ public class TaskService {
         return roleRegistry.putTaskRoleMap(user).getOrDefault(role, t-> false).test(task);
     }
 
-
-    /**
-     * Unused, removes all Subtasks from Task
-     * @param task Task to remove subtasks from
-     */
-    private void removeSubtasksFromTask(Task task){
-        task.getSubtasks().clear();
-        saveTask(task);
-    }
-
     /**
      * Adds User to specified Task
      * @param user User to get added to task
@@ -315,8 +272,11 @@ public class TaskService {
      */
     @Transactional
     public void addUserToTask(Task task, User user) {
+        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        validateUsersForTasksByID(Set.of((int)user.getID()), team);
+
         task.addUserTask(user);
-        userService.saveUser(user);
+        saveTask(task);
     }
 
     /**
@@ -326,10 +286,13 @@ public class TaskService {
      */
     @Transactional
     public void addUsersToTask(Task task, Set<User> users){
+        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        validateUsersForTasks(users, team);
+
         for (User user : users){
             task.addUserTask(user);
         }
-        userService.saveAllUsers(users);
+        saveTask(task);
     }
 
     /**
@@ -339,7 +302,7 @@ public class TaskService {
      */
     @Transactional
     public void removeUserFromTask(Task task, User user){
-        task.removeUserTask(userTaskRepository.getByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
+        task.removeUserTask(userTaskRepository.findByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
         saveTask(task);
     }
 
@@ -351,6 +314,50 @@ public class TaskService {
     public void removeUsersFromTask(Task task){
         task.getUserTasks().clear();
         saveTask(task);
+    }
+
+    /**
+     * Checks if users belong in a given team
+     * @param userIDs Set of IDs of Users to check
+     * @param team Team in which to search
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
+    public void validateUsersForTasksByID(Set<Integer> userIDs, Team team){
+        for (int id : userIDs) {
+            if (!team.checkUser(id)) {
+                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
+            }
+        }
+    }
+
+    /**
+     * Checks if users belong in a given team, calls {@link #validateUsersForTasksByID(Set, Team)}
+     * @param users Set of Users to check
+     * @param team Team in which to search
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
+    public void validateUsersForTasks(Set<User> users, Team team){
+        validateUsersForTasksByID(users.stream().map(u -> (int)u.getID()).collect(Collectors.toUnmodifiableSet()),team);
+    }
+
+    public Task getTaskWithUserTasks(Task task){
+        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    public Task getTaskWithSubtasks(Task task){
+        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    public Task getTaskFull(Task task){
+        return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    /**
+     * Deletes everything and flushes
+     */
+    public void deleteAll(){
+       taskRepository.deleteAll();
+       taskRepository.flush();
     }
 
 }

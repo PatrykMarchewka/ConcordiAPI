@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -51,8 +52,9 @@ public class InvitationController {
      * Returns information about all invitations generated for the team
      * @param teamID ID of the team to check in
      * @param authentication User credentials to authenticate
-     * @return InvitationDTO of all invitations for the team
+     * @return Set of InvitationDTO for all invitations in the team
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     * @throws NotFoundException Thrown when Team or UserRole was not found
      */
     @Operation(summary = "Check invitations",description = "Check all invitations for given team")
     @ApiResponse(responseCode = "200", ref = "200")
@@ -66,30 +68,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team:",invitationService.getInvitationsDTO(context.getTeam())));
-    }
-
-    /**
-     * Returns information about specific invitation
-     * @param teamID ID of the team to check in
-     * @param invID ID of the invitation to check for
-     * @param authentication User credentials to authenticate
-     * @return InvitationDTO of the specified invitation
-     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
-     */
-    @Operation(summary = "Check invitation", description = "Check specific invitation for given team")
-    @ApiResponse(responseCode = "200", ref = "200")
-    @ApiResponse(responseCode = "401", ref = "401")
-    @ApiResponse(responseCode = "403", ref = "403")
-    @ApiResponse(responseCode = "404", ref = "404")
-    @GetMapping("/invitations/{invID}")
-    public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
-
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
-        return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(context.getInvitation(), teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team",invitationService.getInvitationsDTO(context.getTeam())));
     }
 
     /**
@@ -113,7 +92,30 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles(context.getUserRole(),body.getRole())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID),teamUserRoleService)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID))));
+    }
+
+    /**
+     * Returns information about specific invitation
+     * @param teamID ID of the team to check in
+     * @param invID ID of the invitation to check for
+     * @param authentication User credentials to authenticate
+     * @return InvitationDTO of the specified invitation
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
+    @Operation(summary = "Check invitation", description = "Check specific invitation for given team")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
+    @GetMapping("/invitations/{invID}")
+    public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
+        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+
+        if (!context.getUserRole().isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+        return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(context.getInvitation())));
     }
 
     /**
@@ -137,7 +139,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.putUpdate(context.getInvitation(), body, teamID),teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(context.getInvitation(), body, teamID))));
     }
 
     /**
@@ -161,7 +163,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Patched the invitation",new InvitationManagerDTO(invitationService.partialUpdate(context.getInvitation(), body, teamID),teamUserRoleService)));
+        return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(context.getInvitation(), body, teamID))));
     }
 
     /**
