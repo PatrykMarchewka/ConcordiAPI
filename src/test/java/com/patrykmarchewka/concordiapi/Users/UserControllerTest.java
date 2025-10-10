@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.Users;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
@@ -52,7 +53,7 @@ public class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All users in the team", response.getBody().getMessage());
-        assertEquals(testDataLoader.teamRead.getUserRoles().size(), response.getBody().getData().size());
+        assertEquals(new TeamMemberDTO(testDataLoader.teamRead, null).getTeammateCount(), response.getBody().getData().size());
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userReadOwner)));
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManager)));

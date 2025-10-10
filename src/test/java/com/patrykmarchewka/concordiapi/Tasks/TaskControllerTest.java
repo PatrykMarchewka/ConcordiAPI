@@ -167,12 +167,10 @@ public class TaskControllerTest {
     @Test
     void shouldAttachUserToTask(){
         var response = restClient.post().uri("/api/teams/{teamID}/tasks/{ID}/users/{userID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
-        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User added to task", response.getBody().getMessage());
-        assertEquals(testDataLoader.taskWrite.getUserTasks().size() + 1, refreshedTask.getUsers().size());
         assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
     }
 

@@ -104,7 +104,7 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals("newer", refreshedTeam.getName());
+        assertEquals("newer", response.getBody().getData().getName());
         assertTrue(response.getBody().getData().equalsTeam(refreshedTeam));
     }
 
@@ -122,7 +122,7 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals("newest", refreshedTeam.getName());
+        assertEquals("newest", response.getBody().getData().getName());
         assertTrue(response.getBody().getData().equalsTeam(refreshedTeam));
     }
 
