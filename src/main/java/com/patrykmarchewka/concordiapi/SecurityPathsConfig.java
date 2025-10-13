@@ -16,7 +16,8 @@ public class SecurityPathsConfig {
                 PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs/**"),
                 PathPatternRequestMatcher.withDefaults().matcher("/login"),
                 PathPatternRequestMatcher.withDefaults().matcher("/signup"),
-                PathPatternRequestMatcher.withDefaults().matcher("/health")
+                PathPatternRequestMatcher.withDefaults().matcher("/health"),
+                PathPatternRequestMatcher.withDefaults().matcher("/favicon.ico") //favicon for browsers
         );
     }
 }
