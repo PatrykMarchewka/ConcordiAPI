@@ -25,7 +25,7 @@ public class TeamUserRoleService {
 
     /**
      * Gets the TeamUserRole object with the given parameters <br>
-     * If you want to get UserRole and not just whole object use {@link #getRole(User, Team)} instead
+     * If you want to get {@link UserRole} and not just whole object use {@link #getRole(User, Team)} instead
      * @param user User for whom the object is being retrieved
      * @param team Team in which user belongs and has valid UserRole
      * @return TeamUserRole which holds given User, Team and UserRole information
