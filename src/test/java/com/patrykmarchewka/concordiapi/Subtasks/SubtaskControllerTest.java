@@ -3,6 +3,7 @@ package com.patrykmarchewka.concordiapi.Subtasks;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
@@ -55,8 +56,7 @@ public class SubtaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtasks attached to this task", response.getBody().getMessage());
-        assertEquals(testDataLoader.taskRead.getSubtasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(subtaskMemberDTO -> subtaskMemberDTO.equalsSubtask(testDataLoader.subtaskRead)));
+        assertEquals(new TaskMemberDTO(testDataLoader.taskRead).getSubtasks(), response.getBody().getData());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class SubtaskControllerTest {
         assertEquals("name", response.getBody().getData().getName());
         assertEquals("description", response.getBody().getData().getDescription());
         assertEquals(TaskStatus.HALTED, response.getBody().getData().getTaskStatus());
-        assertEquals(testDataLoader.taskWrite.getSubtasks().size() + 1, refreshedTask.getSubtasks().size());
+        assertTrue(new TaskMemberDTO(refreshedTask).getSubtasks().contains(response.getBody().getData()));
     }
 
     @Test
