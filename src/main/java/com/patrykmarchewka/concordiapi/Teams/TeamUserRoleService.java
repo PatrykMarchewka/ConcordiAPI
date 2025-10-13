@@ -41,8 +41,7 @@ public class TeamUserRoleService {
      * @return UserRole of User in given Team
      */
     public UserRole getRole(User user, Team team){
-        TeamUserRole tmr = getByUserAndTeam(user,team);
-        return tmr.getUserRole();
+        return getByUserAndTeam(user,team).getUserRole();
     }
 
     /**
