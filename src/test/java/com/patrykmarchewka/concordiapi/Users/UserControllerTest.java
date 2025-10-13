@@ -85,7 +85,7 @@ public class UserControllerTest {
     void shouldRemoveUserFromTeam(){
         var response = restClient.delete().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
         var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
-        var refreshUser = testDataLoader.refreshUserNew(testDataLoader.userAdmin);
+        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userAdmin);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -100,7 +100,7 @@ public class UserControllerTest {
     void shouldLeaveTeam(){
         var response = restClient.delete().uri("/api/teams/{teamID}/users/me", testDataLoader.teamWrite.getID()).header("Authorization", "Bearer " + testDataLoader.jwtMember).retrieve().toEntity(APIResponse.class);
         var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
-        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userMember);
+        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userMember);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -116,7 +116,7 @@ public class UserControllerTest {
                 "MEMBER"
                 """;
         var response = restClient.patch().uri("/api/teams/{teamID}/users/{ID}/role", testDataLoader.teamWrite.getID(), testDataLoader.userManager.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
-        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userManager);
+        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userManager);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());

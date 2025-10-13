@@ -135,7 +135,7 @@ public class LoginControllerTest {
                 }
                 """;
         var response = restClient.patch().uri("/me").contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + testDataLoader.jwtWrite).body(json).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
-        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userWriteOwner);
+        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userWriteOwner);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());

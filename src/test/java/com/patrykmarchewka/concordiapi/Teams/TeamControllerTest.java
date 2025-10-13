@@ -71,7 +71,7 @@ public class TeamControllerTest {
                 """;
 
         var response = restClient.post().uri("/api/teams").contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
-        var refreshedUser = testDataLoader.refreshUserNew(testDataLoader.userWriteOwner);
+        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userWriteOwner);
 
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
