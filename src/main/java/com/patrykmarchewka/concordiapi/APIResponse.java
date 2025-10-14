@@ -10,7 +10,7 @@ public class APIResponse<T> {
     public APIResponse(String message, T data){
         this.message = message;
         this.data = data;
-        this.timestamp = OffsetDateTimeConverter.nowConverted().toString();
+        this.timestamp = OffsetDateTimeConverter.formatDate(OffsetDateTime.now());
     }
 
     public String getMessage(){return message;}
@@ -20,5 +20,5 @@ public class APIResponse<T> {
     public void setData(T data){this.data = data;}
 
     public String getTimestamp(){return timestamp;}
-    public void setTimestamp(OffsetDateTime timestamp){this.timestamp = timestamp.toString();}
+    public void setTimestamp(String timestamp){this.timestamp = timestamp;}
 }

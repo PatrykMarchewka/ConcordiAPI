@@ -4,6 +4,8 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 @Converter(autoApply = true)
 public final class OffsetDateTimeConverter implements AttributeConverter<OffsetDateTime, OffsetDateTime> {
@@ -21,7 +23,7 @@ public final class OffsetDateTimeConverter implements AttributeConverter<OffsetD
     }
 
     public static OffsetDateTime converted(final OffsetDateTime offsetDateTime){
-        return offsetDateTime == null ? null : offsetDateTime.withNano((offsetDateTime.getNano() / 1000) * 1000);
+        return offsetDateTime == null ? null : offsetDateTime.truncatedTo(ChronoUnit.SECONDS);
     }
 
     @Override
@@ -32,5 +34,9 @@ public final class OffsetDateTimeConverter implements AttributeConverter<OffsetD
     @Override
     public OffsetDateTime convertToEntityAttribute(final OffsetDateTime offsetDateTime) {
         return converted(offsetDateTime);
+    }
+
+    public static String formatDate(final OffsetDateTime offsetDateTime){
+        return offsetDateTime != null ? offsetDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX")) : null;
     }
 }
