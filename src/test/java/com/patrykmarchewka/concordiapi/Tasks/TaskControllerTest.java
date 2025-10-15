@@ -128,7 +128,7 @@ public class TaskControllerTest {
                 }
                 """, testDataLoader.userWriteOwner.getID(), testDataLoader.userManager.getID());
         var response = restClient.put().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
-        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
+        var refreshedTask = testDataLoader.refreshTask(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -161,7 +161,7 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task has been deleted", response.getBody().getMessage());
-        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTaskNew(testDataLoader.taskDelete));
+        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTask(testDataLoader.taskDelete));
     }
 
     @Test

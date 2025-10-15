@@ -69,7 +69,7 @@ public class SubtaskControllerTest {
                 }
                 """;
         var response = restClient.post().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
-        var refreshedTask = testDataLoader.refreshTaskNew(testDataLoader.taskWrite);
+        var refreshedTask = testDataLoader.refreshTask(testDataLoader.taskWrite);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
