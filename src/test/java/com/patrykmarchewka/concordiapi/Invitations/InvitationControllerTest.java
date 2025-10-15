@@ -76,7 +76,7 @@ public class InvitationControllerTest {
                 }
                 """, dueDate);
         var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.teamWrite = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        testDataLoader.teamWrite = testDataLoader.refreshTeam(testDataLoader.teamWrite);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());

@@ -84,7 +84,7 @@ public class UserControllerTest {
     @Test
     void shouldRemoveUserFromTeam(){
         var response = restClient.delete().uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.userAdmin.getID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
-        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshedTeam = testDataLoader.refreshTeam(testDataLoader.teamWrite);
         var refreshedUser = testDataLoader.refreshUser(testDataLoader.userAdmin);
 
 
@@ -99,7 +99,7 @@ public class UserControllerTest {
     @Test
     void shouldLeaveTeam(){
         var response = restClient.delete().uri("/api/teams/{teamID}/users/me", testDataLoader.teamWrite.getID()).header("Authorization", "Bearer " + testDataLoader.jwtMember).retrieve().toEntity(APIResponse.class);
-        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshedTeam = testDataLoader.refreshTeam(testDataLoader.teamWrite);
         var refreshedUser = testDataLoader.refreshUser(testDataLoader.userMember);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());

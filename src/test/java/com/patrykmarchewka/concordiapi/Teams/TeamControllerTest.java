@@ -99,7 +99,7 @@ public class TeamControllerTest {
                 """;
 
         var response = restClient.put().uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamAdminDTO>>() {});
-        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshedTeam = testDataLoader.refreshTeam(testDataLoader.teamWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -117,7 +117,7 @@ public class TeamControllerTest {
                 """;
 
         var response = restClient.patch().uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamAdminDTO>>() {});
-        var refreshedTeam = testDataLoader.refreshTeamNew(testDataLoader.teamWrite);
+        var refreshedTeam = testDataLoader.refreshTeam(testDataLoader.teamWrite);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -133,6 +133,6 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("The team has been disbanded", response.getBody().getMessage());
-        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTeamNew(testDataLoader.teamDelete));
+        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTeam(testDataLoader.teamDelete));
     }
 }
