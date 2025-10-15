@@ -283,14 +283,13 @@ public class TestDataLoader {
     }
 
     //Old
-    public void refreshSubtask(Subtask subtask){ this.refreshedSubtask = subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
     public void refreshInvitation(Invitation invitation){ this.refreshedInvitation = invitationService.getInvitationByUUID(invitation.getUUID()); }
     //
 
     public User refreshUser(User user){ return userService.getUserFull(user); }
     public Team refreshTeam(Team team){ return teamService.getTeamFull(team); }
     public Task refreshTask(Task task){ return taskService.getTaskFull(task); }
-    public Subtask refreshSubtaskNew(Subtask subtask){ return subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
+    public Subtask refreshSubtask(Subtask subtask){ return subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
     public Invitation refreshInvitationNew(Invitation invitation){ return  invitationService.getInvitationByUUID(invitation.getUUID()); }
 
 }

@@ -100,7 +100,7 @@ public class SubtaskControllerTest {
                 }
                 """;
         var response = restClient.put().uri("/api/teams/{teamID}/tasks/{taskID}/subtasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID(), testDataLoader.subtaskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<SubtaskMemberDTO>>() {});
-        var refreshedSubtask = testDataLoader.refreshSubtaskNew(testDataLoader.subtaskWrite);
+        var refreshedSubtask = testDataLoader.refreshSubtask(testDataLoader.subtaskWrite);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -131,6 +131,6 @@ public class SubtaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask has been deleted", response.getBody().getMessage());
-        assertThrows(NotFoundException.class, () -> testDataLoader.refreshSubtaskNew(testDataLoader.subtaskDelete));
+        assertThrows(NotFoundException.class, () -> testDataLoader.refreshSubtask(testDataLoader.subtaskDelete));
     }
 }
