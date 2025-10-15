@@ -9,6 +9,7 @@
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [Prerequisites](#prerequisites)
+- [System Properties](#system-properties)
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
@@ -21,7 +22,7 @@
 
 - **Java 21** - Latest stable version with LTS support.
 - **Spring Boot** - Simplifies application setup and dependency management while providing production-ready features.
-- **Microsoft SQL Server (T-SQL)** - Reliable relational database system.
+- **Relational Database (JDBC-compatible)** - Any database with a supported JDBC driver. *(Microsoft SQL Server with T-SQL used in development)*
 - **Docker** - Optional, for containerized deployment.
 - **JSON Web Tokens (JWT)** - Token-based authentication.
 - **BCrypt** - Industry-standard hashing algorithm for secure password storage.
@@ -42,47 +43,114 @@
 
 Ensure the following requirements are met before running **ConcordiAPI**:
 
-- **Microsoft SQL Server** (T-SQL compatible) - Local or remote instance.
-- **Database** - An existing database with credentials that have read/write privileges.
+- **Relational Database** - Any JDBC-compatible database with a valid driver. You must provide credentials with read/write privileges.
 - **Java 21** - Required if running from source or via a packaged JAR.
 - **Docker** - Required only if deploying via container.
 
 > **Important:** The database must be accessible from the machine or container running ConcordiAPI.
-> Make sure your `DB_URL` in configuration points to a valid, reachable SQL Server instance.
+
+---
+
+## System Properties
+
+ConcordiAPI supports loading system properties from a local file named `ConcordiAPI.env` located in the same directory as the compiled JAR.
+
+**Format:**  
+Each variable must be defined on a separate line using the format:
+<pre>
+Key=Value
+AnotherKey=AnotherValue
+</pre>
+**Example:**
+<pre>
+DB_URL=jdbc:sqlserver://localhost:1433;databaseName=yourdb
+DB_USERNAME=yourusername
+DB_PASSWORD=yourpassword
+DB_DRIVER=com.microsoft.sqlserver.jdbc.SQLServerDriver
+JWT_SECRET=my_custom_secret
+SERVER_PORT=10000
+</pre>
+
+> **Note:** All values in `ConcordiAPI.env` are loaded as system properties before application startup. These properties are isolated to the ConcordiAPI process and are removed once the application shuts down. Other processes do not have access to these values.
+
+### Supported Variables
+
+| Variable                    | Default Value     | Required | Accepted Values           | Description |
+|-----------------------------|-------------------|----------|----------------------------|-------------|
+| `DB_URL`                    | *(none)*          | ✅ Yes   | Valid JDBC URL             | Connection string for any supported database |
+| `DB_USERNAME`               | *(none)*          | ✅ Yes   | Any string                 | Database username |
+| `DB_PASSWORD`               | *(none)*          | ✅ Yes   | Any string                 | Database password |
+| `DB_DRIVER`                 | *(none)*          | ✅ Yes   | Fully qualified class name | JDBC driver class name |
+| `DDL_AUTO`                  | `validate`        | ❌ No    | `none`, `validate`, `update`, `create`, `create-drop` | JPA schema generation strategy |
+| `SHOW_SQL`                  | `false`           | ❌ No    | `true`, `false`            | Enables SQL logging for JPA operations |
+| `RESTART_ENABLED`           | `false`           | ❌ No    | `true`, `false`            | Enables devtools restart support |
+| `FORMAT_SQL`                | `false`           | ❌ No    | `true`, `false`            | Formats SQL output for readability |
+| `DB_POOL_SIZE`              | `10`              | ❌ No    | Any positive integer       | Maximum size of Hikari connection pool |
+| `DB_TIMEOUT`                | `30000`           | ❌ No    | Milliseconds (integer)     | Hikari connection timeout |
+| `CORS_ALLOWED_ORIGINS`      | *(none)*          | ❌ No    | Comma-separated URLs        | Allowed origins for GraphQL CORS |
+| `SERVER_ADDRESS`            | `0.0.0.0`         | ❌ No    | Any valid IP or hostname   | Address the server binds to |
+| `SERVER_PORT`               | `10000`           | ❌ No    | Any open port              | Port on which the API runs |
+| `JWT_SECRET`                | *(none)*          | ❌ No    | Any string                 | Secret key for JWT token signing |
+| `LOG_LEVEL`                 | `info`            | ❌ No    | `trace`, `debug`, `info`, `warn`, `error` | Root logging level |
+
+
+> **Note:** If `JWT_SECRET` is omitted, a new secret is generated on each run, invalidating previously issued tokens.
 
 ---
 
 ## Installation
 
+You can run ConcordiAPI using Docker, a prebuilt JAR, or directly from source.
+
+Environment variables can be provided in two ways:
+
+- **Inline** using command-line flags (`--spring.datasource.url=...` or `-e DB_URL=...`)
+- **File-based** using a `ConcordiAPI.env` file placed next to the JAR (see [System Properties](#system-properties))
+
+---
+
 ### **Option 1 - Docker**
 A `Dockerfile` is included in the repository.
-You **must** provide the following environment variables for the container to run:
 
-| Variable      | Description |
-|---------------|-------------|
-| `DB_URL`      | JDBC connection string for SQL Server, e.g., `jdbc:sqlserver://localhost:1433;databaseName=yourdb` |
-| `DB_USERNAME` | Database username |
-| `DB_PASSWORD` | Database password |
-| `JWT_SECRET`  | *(Optional)* Secret key for JWT token generation. If not provided, a new one is generated on startup. Generating new secret invalidates all previous tokens |
+You can pass environment variables directly using `-e`, or rely on a `ConcordiAPI.env` file.
 
 **Build and run with Docker:**
 ```bash
 docker build -t concordiapi .
-docker run -e DB_URL=... -e DB_USERNAME=... -e DB_PASSWORD=... -p 10000:10000 concordiapi
+docker run -e DB_URL=... -e DB_USERNAME=... -e DB_PASSWORD=... -e DB_DRIVER=... -p 10000:10000 concordiapi
 ```
+
+Or simply:
+```bash
+docker run -p 10000:10000 concordiapi
+```
+
+> If `ConcordiAPI.env` is present in the container’s working directory, its contents will be loaded automatically.
+
+---
 
 ### **Option 2 - Prebuilt JAR**
 The latest release is available in the [releases tab](https://github.com/PatrykMarchewka/ConcordiAPI/releases/).
-The `.jar` file is ready to run once the required environment variables are set.
 
-**Run the JAR:**
+You can pass system properties inline or use a `ConcordiAPI.env` file in the same directory as the JAR.
+
+**Run the JAR with inline properties:**
 ```bash
 java -jar concordiapi.jar \
-  --spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=yourdb \
-  --spring.datasource.username=yourusername \
-  --spring.datasource.password=yourpassword
+  --spring.datasource.url=jdbc:postgresql://localhost:5432/mydb \
+  --spring.datasource.username=myuser \
+  --spring.datasource.password=mypassword \
+  --spring.datasource.driver-class-name=org.postgresql.Driver
 ```
-(Add --JWT_SECRET=your_secret if you want a fixed JWT secret.)
+
+Or simply:
+```bash
+java -jar concordiapi.jar
+```
+
+> If `ConcordiAPI.env` is present in the JAR directory, its contents will be loaded automatically.
+
+---
 
 ### **Option 3 - Local Development**
 1. **Clone the repository:**
@@ -90,21 +158,26 @@ java -jar concordiapi.jar \
 git clone https://github.com/PatrykMarchewka/ConcordiAPI.git
 cd ConcordiAPI
 ```
-2. Set environment variables and run
-   You can set the required environment variables in PowerShell before running the application:
-  ```powershell
-$env:DB_URL="jdbc:sqlserver://localhost:1433;databaseName=yourdb"
-$env:DB_USERNAME="yourusername"
-$env:DB_PASSWORD="yourpassword"
+
+2. Set system properties and run:
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/mydb"
+$env:DB_USERNAME="myuser"
+$env:DB_PASSWORD="mypassword"
+$env:DB_DRIVER="org.postgresql.Driver"
 ./gradlew.bat bootRun
 ```
-Alternatively, you can configure these values directly in the application properties file in `src/main/resources/application.properties`:
+
+Alternatively, configure values directly in `src/main/resources/application.properties`:
 ```properties
-spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=yourdb
-spring.datasource.username=yourusername
-spring.datasource.password=yourpassword
+spring.datasource.url=jdbc:postgresql://localhost:5432/mydb
+spring.datasource.username=myuser
+spring.datasource.password=mypassword
+spring.datasource.driver-class-name=org.postgresql.Driver
 jwt.secret=your_jwt_secret
 ```
+
+> You can also create a `ConcordiAPI.env` file in the root directory and run the app without setting variables manually.
 
 ---
 
@@ -112,7 +185,7 @@ jwt.secret=your_jwt_secret
 
 Once the application is running, the API will be accessible at:
 
-**Base URL:** `http://0.0.0.0:10000`
+**Base URL:** `http://0.0.0.0:10000` unless changed by system properties
 
 You can interact with the API using any HTTP client, such as [Postman](https://www.postman.com/) or [cURL](https://curl.se/).
 
@@ -152,8 +225,8 @@ You can interact with the API using any HTTP client, such as [Postman](https://w
 ---
 
 ## API Documentation
-- **Visit 0.0.0.0:10000/swagger-ui/index.html for interactive API documentation**
-- **Visit 0.0.0.0:10000/v3/api-docs for JSON Open API Docs**
+- **Visit /swagger-ui/index.html for interactive API documentation**
+- **Visit /v3/api-docs for JSON Open API Docs**
 
 ---
 
