@@ -111,7 +111,7 @@ public class InvitationControllerTest {
                 }
                 """, dueDate);
         var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.invitationWrite = testDataLoader.refreshInvitationNew(testDataLoader.invitationWrite);
+        testDataLoader.invitationWrite = testDataLoader.refreshInvitation(testDataLoader.invitationWrite);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -146,7 +146,7 @@ public class InvitationControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Invitation has been deleted", response.getBody().getMessage());
-        assertThrows(NotFoundException.class,() -> testDataLoader.refreshInvitationNew(testDataLoader.invitationDelete));
+        assertThrows(NotFoundException.class,() -> testDataLoader.refreshInvitation(testDataLoader.invitationDelete));
     }
 
 }
