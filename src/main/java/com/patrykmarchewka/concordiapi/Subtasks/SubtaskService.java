@@ -7,6 +7,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.SubtaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
 import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -46,6 +47,17 @@ public class SubtaskService {
      */
     public Subtask getSubtaskByID(long taskID, long subtaskID){
         return subtaskRepository.findSubtaskByIdAndTaskId(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
+    }
+
+    /**
+     * Returns subtask based on task ID and subtask ID
+     * @param taskID ID of task to check for
+     * @param subtaskID ID of subtask to check for
+     * @return Subtask with provided ID in provided task
+     * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
+     */
+    public SubtaskIdentity getSubtaskIdentityByID(final long taskID, final long subtaskID){
+        return subtaskRepository.findSubtaskIdentityByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -107,10 +119,10 @@ public class SubtaskService {
      * @param task Task to check in
      * @return Set of SubtaskDTO in provided task
      */
-    public Set<SubtaskMemberDTO> getSubtasksDTO(Task task){
-        Set<SubtaskMemberDTO> subtasks = new HashSet<>();
-        for (Subtask sub : task.getSubtasks()){
-            subtasks.add(new SubtaskMemberDTO(sub));
+    public Set<SubtaskMemberDTO> getSubtasksDTO(final Task task){
+        final Set<SubtaskMemberDTO> subtasks = new HashSet<>();
+        for (final Subtask sub : task.getSubtasks()){
+            subtasks.add(SubtaskMemberDTO.from(sub));
         }
         return subtasks;
     }

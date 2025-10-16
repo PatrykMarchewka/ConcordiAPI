@@ -1,6 +1,8 @@
 package com.patrykmarchewka.concordiapi.DTO.SubtaskDTO;
 
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentityAdapter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 
 import java.util.Objects;
@@ -11,17 +13,15 @@ public class SubtaskMemberDTO implements SubtaskDTO{
     private String description;
     private TaskStatus taskStatus;
 
-
-    public SubtaskMemberDTO(Subtask subtask){
+    public SubtaskMemberDTO(SubtaskIdentity subtask){
         this.id = subtask.getID();
         this.name = subtask.getName();
         this.description = subtask.getDescription();
         this.taskStatus = subtask.getTaskStatus();
     }
 
-    @Override
-    public String toString(){
-        return id + ":" + name + " " + description + " " + taskStatus.name();
+    public static SubtaskMemberDTO from(Subtask subtask){
+        return new SubtaskMemberDTO(new SubtaskIdentityAdapter(subtask));
     }
 
     public SubtaskMemberDTO(){}
