@@ -46,6 +46,7 @@ public class Team {
 
     public void setName(String name){ this.name = name; }
 
+    @Deprecated
     public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
 
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
@@ -78,7 +79,7 @@ public class Team {
         return this;
     }
 
-    public boolean checkUser(User user){return this.userRoles.stream().map(TeamUserRole::getUser).anyMatch(user::equals);}
+    @Deprecated
     public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
 
 
@@ -93,7 +94,6 @@ public class Team {
 //        Iterates through entire set looking for the one to remove and after removing stops
 //        faster than .removeIf() since it doesnt scan entire Set everytime but only until hit
 //        Iterator because hibernate defaults to PersistentSet and .remove() doesnt count it as same item in Set
-
         Iterator<Task> iterator = this.teamTasks.iterator();
         while (iterator.hasNext()){
             Task t = iterator.next();
@@ -104,11 +104,6 @@ public class Team {
         }
         return this;
     }
-
-
-
-
-
 
     @Override
     public boolean equals(Object o) {
