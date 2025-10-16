@@ -4,6 +4,8 @@ import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -17,7 +19,12 @@ public class TeamMemberDTO implements TeamDTO {
     private Set<TaskMemberDTO> tasks = new HashSet<>();
     private Set<UserMemberDTO> owners = new HashSet<>();
 
-    public TeamMemberDTO(Team team, User user){
+    /**
+     * @deprecated Will be replaced by {@link #TeamMemberDTO(TeamWithUserRolesAndTasks, User)}
+     * @param team
+     * @param user
+     */
+    public TeamMemberDTO(Team team, User user) {
         this.id = team.getID();
         this.name = team.getName();
         this.teammateCount = team.getUserRoles().size();
@@ -25,6 +32,21 @@ public class TeamMemberDTO implements TeamDTO {
             this.tasks = team.getTeamTasks().stream().filter(t -> t.getUsers().contains(user)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
         }
 
+        this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
+    }
+
+    public TeamMemberDTO(TeamWithUserRolesAndTasks team, User user){
+        this.id = team.getID();
+        this.name = team.getName();
+        this.teammateCount = team.getUserRoles().size();
+        this.tasks = team.getTeamTasks().stream().filter(t -> t.getUsers().contains(user)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
+        this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
+    }
+
+    public TeamMemberDTO(TeamWithUserRoles team) {
+        this.id = team.getID();
+        this.name = team.getName();
+        this.teammateCount = team.getUserRoles().size();
         this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
     }
 
