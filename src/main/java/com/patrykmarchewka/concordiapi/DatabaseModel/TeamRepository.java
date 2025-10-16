@@ -32,6 +32,15 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
 """)
     Optional<Team> findTeamWithInvitationsByID(@Param("id") long id);
 
+    @Query("""
+    SELECT t FROM Team t
+    LEFT JOIN FETCH t.userRoles ur
+    LEFT JOIN FETCH ur.user
+    LEFT JOIN FETCH t.teamTasks
+    WHERE t.id = :id
+""")
+    Optional<TeamWithUserRolesAndTasks> findTeamWithUserRolesAndTasksByID(@Param("id") long id);
+
     @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
     @Query("SELECT t FROM Team t WHERE t.id = :id")
     Optional<Team> findTeamFullByID(@Param("id") long id);

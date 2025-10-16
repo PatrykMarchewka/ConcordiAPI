@@ -32,22 +32,6 @@ public class RoleRegistry {
     }
 
 
-    //Team
-
-    /**
-     * Map of user Roles and DTOs to return
-     * @return Appropriate DTO for the UserRole
-     */
-    public Map<UserRole, BiFunction<Team, User, TeamDTO>> createTeamDTOMap() {
-        return Map.of(
-            UserRole.OWNER, (team, user) -> new TeamAdminDTO(team),
-            UserRole.ADMIN, (team, user) -> new TeamAdminDTO(team),
-            UserRole.MANAGER, (team, user) -> new TeamManagerDTO(team),
-            UserRole.MEMBER, TeamMemberDTO::new
-    );
-}
-
-
     //Tasks
 
     /**

@@ -1,6 +1,9 @@
 package com.patrykmarchewka.concordiapi.Teams;
 
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamManagerDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
@@ -9,7 +12,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.RoleRegistry;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
 import com.patrykmarchewka.concordiapi.UpdateType;
@@ -19,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,17 +33,22 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamUserRoleService teamUserRoleService;
     private final TaskService taskService;
-    private final RoleRegistry roleRegistry;
     private final TeamUpdatersService teamUpdatersService;
 
     @Autowired
-    public TeamService(TeamRepository teamRepository, TeamUserRoleService teamUserRoleService, TaskService taskService, RoleRegistry roleRegistry, TeamUpdatersService teamUpdatersService){
+    public TeamService(TeamRepository teamRepository, TeamUserRoleService teamUserRoleService, TaskService taskService, TeamUpdatersService teamUpdatersService){
         this.teamRepository = teamRepository;
         this.teamUserRoleService = teamUserRoleService;
         this.taskService = taskService;
-        this.roleRegistry = roleRegistry;
         this.teamUpdatersService = teamUpdatersService;
     }
+
+    private static final Map<UserRole, Function<TeamWithUserRolesAndTasks, TeamDTO>> roleToTeamDTO = Map.of(
+            UserRole.OWNER, TeamAdminDTO::new,
+            UserRole.ADMIN, TeamAdminDTO::new,
+            UserRole.MANAGER, TeamManagerDTO::new,
+            UserRole.MEMBER, TeamMemberDTO::new
+    );
 
 
     /**
@@ -167,25 +177,42 @@ public class TeamService {
 
 
     /**
-     * Returns Set of TeamDTO
+     * @deprecated Deprecated method, pending removal once replacement is made
+     * Returns Set of TeamDTO by calling {@link #getTeamDTOByRole(long, long)} (currently calls {@link #getTeamDTOByRole(User, Team)} as former one doesn't work yet)
      * @param user User calling the action
      * @return Set of TeamDTO based on User Role
      */
     public Set<TeamDTO> getTeamsDTO(User user){
-        return user.getTeams().stream().map(team -> createTeamDTO(user,team)).collect(Collectors.toSet());
+        return user.getTeams().stream().map(team -> getTeamDTOByRole(user, team)).collect(Collectors.toUnmodifiableSet());
     }
 
 
     /**
+     * @deprecated Deprecated method, currently used for compatibility. Delete once the replacement {@link #getTeamDTOByRole(long, long)} will work
      * Returns one DTO of a team
      * @param user User calling the action
      * @param team Team to return DTO of
      * @return TeamDTO based on User Role
      * @throws NoPrivilegesException Thrown if user doesn't have enough privileges to generate DTO
      */
-    public TeamDTO createTeamDTO(User user, Team team){
-        UserRole role = teamUserRoleService.getRole(user,team);
-        return roleRegistry.createTeamDTOMap().getOrDefault(role, (t, u) -> { throw new NoPrivilegesException(); }).apply(team, user);
+    public TeamDTO getTeamDTOByRole(User user, Team team){
+        final UserRole role = teamUserRoleService.getRole(user, team);
+        final TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(team.getID());
+        return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
+    }
+
+    /**
+     * Returns DTO of a team <br>
+     * WARNING: Tends to randomly fail in tests, no failure seen in production usage, because of that keep using {@link #getTeamDTOByRole(User, Team)} until those issues are resolved
+     * @param userID ID of User calling the action
+     * @param teamID ID of Team to return DTO of
+     * @return TeamDTO based on User Role
+     * @throws NoPrivilegesException Thrown if user doesn't have enough privileges to generate DTO
+     */
+    public TeamDTO getTeamDTOByRole(final long userID, final long teamID){
+        final TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(teamID);
+        final UserRole role = teamUserRoleService.getRole(userID, teamWithUserRolesAndTasks.getID());
+        return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
     }
 
     public Team getTeamWithUserRoles(Team team){
@@ -194,6 +221,10 @@ public class TeamService {
 
     public Team getTeamWithTeamTasks(Team team){
         return teamRepository.findTeamWithTeamTasksByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
+
+    public TeamWithUserRolesAndTasks getTeamWithUserRolesAndTasksByID(long teamID){
+        return teamRepository.findTeamWithUserRolesAndTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public Team getTeamWithInvitations(Team team){
