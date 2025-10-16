@@ -24,6 +24,7 @@ public class TeamUserRoleService {
     }
 
     /**
+     * @deprecated Uses old {@link TeamUserRoleRepository#findByUserAndTeam(User, Team)}, new one isn't ready yet so thats why this one is kept and used
      * Gets the TeamUserRole object with the given parameters <br>
      * If you want to get {@link UserRole} and not just whole object use {@link #getRole(User, Team)} instead
      * @param user User for whom the object is being retrieved
@@ -35,6 +36,18 @@ public class TeamUserRoleService {
     }
 
     /**
+     * Gets the TeamUserRole object with the given parameters <br>
+     * If you want to get {@link UserRole} and not just whole object use {@link #getRole(User, Team)} instead
+     * @param userID ID of User for whom the object is being retrieved
+     * @param teamID ID of Team in which user belongs and has valid UserRole
+     * @return TeamUserRole which holds given User, Team and UserRole information
+     */
+    public TeamUserRole getByUserAndTeam(long userID, long teamID){
+        return teamUserRoleRepository.findByUserAndTeam(userID, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    /**
+     * @deprecated calls old {@link #getByUserAndTeam(User, Team)}, new one isn't ready yet so thats why this one is kept and used
      * Returns UserRole of User in given Team
      * @param user User of which to get role of
      * @param team Team to check role of user for
@@ -45,7 +58,17 @@ public class TeamUserRoleService {
     }
 
     /**
-     * Changes UserRole of User in a team
+     * Returns UserRole of User in given Team
+     * @param userID ID of User of which to get role of
+     * @param teamID ID of Team to check role of user for
+     * @return UserRole of User in given Team
+     */
+    public UserRole getRole(long userID, long teamID){
+        return getByUserAndTeam(userID, teamID).getUserRole();
+    }
+
+    /**
+     * Changes already existing UserRole of User in a team
      * @param user User to change role for
      * @param team Team in which the role change occurs
      * @param role UserRole to change it to
