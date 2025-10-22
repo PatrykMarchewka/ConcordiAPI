@@ -18,7 +18,7 @@ public class TeamUpdatersPATCH {
     }
 
     /**
-     * Applies PATCH updates for the Team given the TeamRequestBody details, should be only called from {@link com.patrykmarchewka.concordiapi.Teams.TeamService#patchTeam(Team, TeamRequestBody)}
+     * Applies PATCH updates for the Team given the TeamRequestBody details, should be only called from {@link TeamUpdatersService#patchUpdate(Team, TeamRequestBody)}
      * @param team Team to modify
      * @param body TeamRequestBody with information to update
      */

@@ -17,7 +17,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +61,7 @@ public class TeamService {
     @Transactional
     public Team createTeam(TeamRequestBody body, User user){
         Team team = new Team();
-        teamUpdatersService.update(team,body, UpdateType.CREATE);
+        teamUpdatersService.createUpdate(team, body);
         team.addUserRole(user,UserRole.OWNER);
         return saveTeam(team);
     }
@@ -75,7 +74,7 @@ public class TeamService {
      */
     @Transactional
     public Team putTeam(Team team, TeamRequestBody body){
-        teamUpdatersService.update(team,body,UpdateType.PUT);
+        teamUpdatersService.putUpdate(team, body);
         return saveTeam(team);
     }
 
@@ -87,7 +86,7 @@ public class TeamService {
      */
     @Transactional
     public Team patchTeam(Team team,TeamRequestBody body){
-        teamUpdatersService.update(team,body,UpdateType.PATCH);
+        teamUpdatersService.patchUpdate(team, body);
         return saveTeam(team);
     }
 
