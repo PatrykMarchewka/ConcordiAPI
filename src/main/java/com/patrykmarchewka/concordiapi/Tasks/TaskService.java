@@ -13,6 +13,11 @@ import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentity;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.TaskStatus;
@@ -48,13 +53,34 @@ public class TaskService {
 
 
 
+
+    public TaskIdentity getTaskByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
     /**
      * Returns all tasks in given team
-     * @param team Team to chose to get tasks from
+     * @param teamID ID of Team to get tasks from
      * @return Set of tasks in given Team
      */
-    public Set<Task> getAllTasks(Team team){
-        return taskRepository.getByAssignedTeam(team);
+    public Set<TaskIdentity> getAllTasksByTeamID(final long teamID){
+        return taskRepository.getByAssignedTeamID(teamID);
+    }
+
+    public Set<TaskIdentity> getAllTasksByTeamIDAndUserID(final long teamID, final long userID){
+        return taskRepository.getByAssignedTeamIDAndAssignedUserID(teamID, userID);
+    }
+
+    public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskWithSubtasks getTaskWithSubtasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskFull getTaskFullByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -172,7 +198,7 @@ public class TaskService {
     }
 
     /**
-     * Unused, saves all tasks
+     * Saves all tasks
      * @param tasks Set of tasks to save
      */
     @Transactional
@@ -181,12 +207,14 @@ public class TaskService {
     }
 
     /**
+     * @deprecated Will be replaced by {@link #getTaskByIDAndTeamID(long, long)}
      * Returns task with given ID and team
      * @param id ID of the task to search for
      * @param team Team in which task is located
      * @return Task with given ID
      * @throws NotFoundException Thrown when can't find task with specified ID and Team
      */
+    @Deprecated
     public Task getTaskByIDAndTeam(long id, Team team){
         return taskRepository.findByIdAndAssignedTeam(id,team).orElseThrow(() -> new NotFoundException());
     }
@@ -272,7 +300,7 @@ public class TaskService {
      */
     @Transactional
     public void addUserToTask(Task task, User user) {
-        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        TeamWithUserRoles team = teamService.getTeamWithUserRolesAndTasksByID(task.getAssignedTeam().getID());
         validateUsersForTasksByID(Set.of((int)user.getID()), team);
 
         task.addUserTask(user);
@@ -286,7 +314,7 @@ public class TaskService {
      */
     @Transactional
     public void addUsersToTask(Task task, Set<User> users){
-        Team team = teamService.getTeamWithUserRoles(task.getAssignedTeam());
+        TeamWithUserRoles team = teamService.getTeamWithUserRolesAndTasksByID(task.getAssignedTeam().getID());
         validateUsersForTasks(users, team);
 
         for (User user : users){
@@ -330,14 +358,32 @@ public class TaskService {
     }
 
     /**
+     * Checks if users belong in a given team <br>
+     * Prefer {@link #validateUsersForTasksByID(Set, TeamWithUserRoles)}
      * Checks if users belong in a given team
      * @param userIDs Set of IDs of Users to check
      * @param team Team in which to search
      * @throws BadRequestException Thrown when one or more users are not part of the team
      */
+    @Deprecated
     public void validateUsersForTasksByID(Set<Integer> userIDs, Team team){
         for (int id : userIDs) {
             if (!team.checkUser(id)) {
+                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
+            }
+        }
+    }
+
+
+    /**
+     * Checks if users belong in a given team
+     * @param userIDs Set of IDs of Users to check
+     * @param team    Team in which to search
+     * @throws BadRequestException Thrown when one or more users are not part of the team
+     */
+    public void validateUsersForTasksByID(Set<Integer> userIDs, TeamWithUserRoles team){
+        for (int id : userIDs){
+            if (!team.checkUser(id)){
                 throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
             }
         }
@@ -349,18 +395,21 @@ public class TaskService {
      * @param team Team in which to search
      * @throws BadRequestException Thrown when one or more users are not part of the team
      */
-    public void validateUsersForTasks(Set<User> users, Team team){
+    public void validateUsersForTasks(Set<User> users, TeamWithUserRoles team){
         validateUsersForTasksByID(users.stream().map(u -> (int)u.getID()).collect(Collectors.toUnmodifiableSet()),team);
     }
 
+    @Deprecated
     public Task getTaskWithUserTasks(Task task){
         return taskRepository.findTaskWithUserTasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
 
+    @Deprecated
     public Task getTaskWithSubtasks(Task task){
         return taskRepository.findTaskWithSubtasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
 
+    @Deprecated
     public Task getTaskFull(Task task){
         return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
