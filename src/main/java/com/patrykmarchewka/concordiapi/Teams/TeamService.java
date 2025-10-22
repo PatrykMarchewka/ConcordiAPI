@@ -12,6 +12,8 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
@@ -182,6 +184,7 @@ public class TeamService {
      * @param user User calling the action
      * @return Set of TeamDTO based on User Role
      */
+    @Deprecated
     public Set<TeamDTO> getTeamsDTO(User user){
         return user.getTeams().stream().map(team -> getTeamDTOByRole(user, team)).collect(Collectors.toUnmodifiableSet());
     }
@@ -195,9 +198,10 @@ public class TeamService {
      * @return TeamDTO based on User Role
      * @throws NoPrivilegesException Thrown if user doesn't have enough privileges to generate DTO
      */
+    @Deprecated
     public TeamDTO getTeamDTOByRole(User user, Team team){
-        final UserRole role = teamUserRoleService.getRole(user, team);
-        final TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(team.getID());
+        UserRole role = teamUserRoleService.getRole(user, team);
+        TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(team.getID());
         return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
     }
 
@@ -210,8 +214,8 @@ public class TeamService {
      * @throws NoPrivilegesException Thrown if user doesn't have enough privileges to generate DTO
      */
     public TeamDTO getTeamDTOByRole(final long userID, final long teamID){
-        final TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(teamID);
-        final UserRole role = teamUserRoleService.getRole(userID, teamWithUserRolesAndTasks.getID());
+        TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(teamID);
+        UserRole role = teamUserRoleService.getRole(userID, teamWithUserRolesAndTasks.getID());
         return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
     }
 
@@ -219,16 +223,16 @@ public class TeamService {
         return teamRepository.findTeamWithUserRolesAndUsersByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
-    public Team getTeamWithTeamTasks(Team team){
-        return teamRepository.findTeamWithTeamTasksByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    public TeamWithTasks getTeamWithTeamTasks(long teamID){
+        return teamRepository.findTeamWithTeamTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public TeamWithUserRolesAndTasks getTeamWithUserRolesAndTasksByID(long teamID){
         return teamRepository.findTeamWithUserRolesAndTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
-    public Team getTeamWithInvitations(Team team){
-        return teamRepository.findTeamWithInvitationsByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    public TeamWithInvitations getTeamWithInvitations(long teamID){
+        return teamRepository.findTeamWithInvitationsByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
     public Team getTeamFull(Team team){

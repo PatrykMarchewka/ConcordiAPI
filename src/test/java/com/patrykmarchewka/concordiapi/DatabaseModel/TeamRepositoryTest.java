@@ -1,6 +1,8 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +47,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
     void shouldReturnTeamWithTeamTasks(){
         long id = createTeam(teamRepository).getID();
 
-        Team found = teamRepository.findTeamWithTeamTasksByID(id).orElse(null);
+        TeamWithTasks found = teamRepository.findTeamWithTeamTasksByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getTeamTasks().isEmpty());
@@ -53,7 +55,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingTeamWithNoTasks(){
-        Optional<Team> found = teamRepository.findTeamWithTeamTasksByID(0);
+        Optional<TeamWithTasks> found = teamRepository.findTeamWithTeamTasksByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -78,7 +80,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
     void shouldReturnTeamWithInvitations(){
         long id = createTeam(teamRepository).getID();
 
-        Team found = teamRepository.findTeamWithInvitationsByID(id).orElse(null);
+        TeamWithInvitations found = teamRepository.findTeamWithInvitationsByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getInvitations().isEmpty());
@@ -86,7 +88,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingTeamWithNoInvitations(){
-        Optional<Team> found = teamRepository.findTeamWithInvitationsByID(0);
+        Optional<TeamWithInvitations> found = teamRepository.findTeamWithInvitationsByID(0);
         assertTrue(found.isEmpty());
     }
 

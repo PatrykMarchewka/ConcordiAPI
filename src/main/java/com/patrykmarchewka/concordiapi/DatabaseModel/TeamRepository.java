@@ -1,5 +1,8 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,14 +26,14 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
     LEFT JOIN FETCH t.teamTasks
     WHERE t.id = :id
 """)
-    Optional<Team> findTeamWithTeamTasksByID(@Param("id") long id);
+    Optional<TeamWithTasks> findTeamWithTeamTasksByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
     LEFT JOIN FETCH t.invitations
     WHERE t.id = :id
 """)
-    Optional<Team> findTeamWithInvitationsByID(@Param("id") long id);
+    Optional<TeamWithInvitations> findTeamWithInvitationsByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
