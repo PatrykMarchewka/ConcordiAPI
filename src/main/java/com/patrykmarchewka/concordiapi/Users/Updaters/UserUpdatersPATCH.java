@@ -18,7 +18,7 @@ public class UserUpdatersPATCH {
     }
 
     /**
-     * Applies PATCH updates for the User given the UserRequestBody details, should be only called from {@link com.patrykmarchewka.concordiapi.Users.UserService#patchUser(User, UserRequestBody)}
+     * Applies PATCH updates for the User given the UserRequestBody details, should be only called from {@link UserUpdatersService#patchUpdate(User, UserRequestBody)}
      * @param user User to modify
      * @param body UserRequestBody with information to update
      */

@@ -12,7 +12,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +84,7 @@ public class UserService {
     @Transactional
     public User createUser(UserRequestBody body){
         User user = new User();
-        userUpdatersService.update(user,body, UpdateType.CREATE);
+        userUpdatersService.createUpdate(user, body);
         return saveUser(user);
     }
 
@@ -97,7 +96,7 @@ public class UserService {
      */
     @Transactional
     public User putUser(User user, UserRequestBody body){
-        userUpdatersService.update(user,body,UpdateType.PUT);
+        userUpdatersService.putUpdate(user, body);
         return saveUser(user);
     }
 
@@ -109,7 +108,7 @@ public class UserService {
      */
     @Transactional
     public User patchUser(User user,UserRequestBody body){
-        userUpdatersService.update(user,body,UpdateType.PATCH);
+        userUpdatersService.patchUpdate(user, body);
         return saveUser(user);
     }
 

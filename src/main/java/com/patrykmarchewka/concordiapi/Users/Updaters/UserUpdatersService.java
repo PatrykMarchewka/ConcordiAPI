@@ -2,8 +2,6 @@ package com.patrykmarchewka.concordiapi.Users.Updaters;
 
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,14 +17,15 @@ public class UserUpdatersService {
         this.userUpdatersPATCH = userUpdatersPATCH;
     }
 
+    public void createUpdate(User user, UserRequestBody body){
+        userUpdatersCREATE.applyCreateUpdates(user, body);
+    }
 
-    public void update(User user, UserRequestBody body, UpdateType type){
-        switch (type){
-            case CREATE -> userUpdatersCREATE.applyCreateUpdates(user, body);
-            case PUT -> userUpdatersPUT.applyPutUpdates(user, body);
-            case PATCH -> userUpdatersPATCH.applyPatchUpdates(user, body);
-            case null, default -> throw new BadRequestException("Called update type that isn't CREATE/PUT/PATCH");
-        }
+    public void putUpdate(User user, UserRequestBody body){
+        userUpdatersPUT.applyPutUpdates(user, body);
+    }
 
+    public void patchUpdate(User user, UserRequestBody body){
+        userUpdatersPATCH.applyPatchUpdates(user, body);
     }
 }

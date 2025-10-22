@@ -18,7 +18,7 @@ public class UserUpdatersPUT {
     }
 
     /**
-     * Applies PUT updates for the User given the UserRequestBody details, should be only called from {@link com.patrykmarchewka.concordiapi.Users.UserService#putUser(User, UserRequestBody)}
+     * Applies PUT updates for the User given the UserRequestBody details, should be only called from {@link UserUpdatersService#putUpdate(User, UserRequestBody)}
      * @param user User to modify
      * @param body UserRequestBody with information to update
      */

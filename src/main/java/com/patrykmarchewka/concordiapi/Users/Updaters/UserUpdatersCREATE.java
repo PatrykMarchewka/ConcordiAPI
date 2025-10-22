@@ -18,7 +18,7 @@ public class UserUpdatersCREATE {
     }
 
     /**
-     * Applies CREATE updates for the User given the UserRequestBody details, should be only called from {@link com.patrykmarchewka.concordiapi.Users.UserService#createUser(UserRequestBody)}
+     * Applies CREATE updates for the User given the UserRequestBody details, should be only called from {@link UserUpdatersService#createUpdate(User, UserRequestBody)}
      * @param user User to modify
      * @param body UserRequestBody with information to update
      */
