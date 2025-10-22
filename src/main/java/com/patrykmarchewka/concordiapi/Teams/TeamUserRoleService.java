@@ -4,6 +4,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRoleRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,11 +70,13 @@ public class TeamUserRoleService {
 
     /**
      * Changes already existing UserRole of User in a team
+     * @param myRole Role of the user asking for change
      * @param user User to change role for
      * @param team Team in which the role change occurs
      * @param role UserRole to change it to
      */
-    public void setRole(User user, Team team, UserRole role){
+    public void setRole(UserRole myRole, User user, Team team, UserRole role){
+        forceCheckRoles(myRole, role);
         TeamUserRole tmr = getByUserAndTeam(user,team);
         tmr.setUserRole(role);
         saveTMR(tmr);
@@ -106,6 +109,16 @@ public class TeamUserRoleService {
      */
     public boolean checkRoles(UserRole mine, UserRole other){
         return mine.compareTo(other) <= 0;
+    }
+
+    /**
+     * Compares two UserRoles and potentially throws. If you want to just compare without throwing use {@link #checkRoles(UserRole, UserRole)}
+     * @param mine First UserRole
+     * @param other Second UserRole
+     * @throws NoPrivilegesException Thrown when first role is less privileged than second
+     */
+    public void forceCheckRoles(UserRole mine, UserRole other){
+        if (!checkRoles(mine, other)) throw new NoPrivilegesException();
     }
 
     /**

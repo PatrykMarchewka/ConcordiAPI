@@ -71,7 +71,7 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldSetRoleToUser(){
-        teamUserRoleService.setRole(user, team, UserRole.ADMIN);
+        teamUserRoleService.setRole(UserRole.OWNER, user, team, UserRole.ADMIN);
         UserRole role = teamUserRoleService.getRole(user, team);
 
         assertEquals(UserRole.ADMIN, role);

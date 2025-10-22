@@ -5,7 +5,6 @@ import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.OnPut;
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
@@ -228,9 +227,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
-            throw new NoPrivilegesException();
-        }
+        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
         taskService.addUserToTask(context.getTask(), userService.getUserByID(userID));
         return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskByIDAndTeam(ID, context.getTeam()))));
@@ -255,9 +252,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
 
-        if (!teamUserRoleService.checkRoles(context.getUserRole(),context.getOtherRole())){
-            throw new NoPrivilegesException();
-        }
+        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
         taskService.removeUserFromTask(context.getTask(), userID);
         return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
