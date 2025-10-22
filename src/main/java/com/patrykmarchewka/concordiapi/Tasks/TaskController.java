@@ -59,7 +59,7 @@ public class TaskController {
      * @param teamID ID of the team to check
      * @param authentication User credentials to authenticate
      * @param inactivedays Optional parameter to filter, number of days for task to be considered inactive
-     * @return All tasks avaible or all inactive tasks
+     * @return TaskMemberDTO of all tasks avaible or all inactive tasks
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin,Manager or Member in the team
      */
     //param, ?inactivedays=5
@@ -69,17 +69,17 @@ public class TaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks")
-    public ResponseEntity<APIResponse<Set<TaskDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactivedays){
+    public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactivedays){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
 
         if (inactivedays != null){
-            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasks(context.getTeam(), context.getUserRole(),inactivedays)));
+            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasks(inactivedays, teamID)));
         }
 
-        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasks(context.getUser(), context.getTeam(), context.getUserRole())));
+        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasksWithRoleCheck(context.getUser().getID(), teamID, context.getUserRole())));
     }
 
     /**
@@ -87,7 +87,7 @@ public class TaskController {
      * @param teamID ID of the team in which task has to be created
      * @param body TaskRequestBody of the task to create
      * @param authentication User credentials to authenticate
-     * @return TaskDTO of the created task
+     * @return TaskMemberDTO of the created task
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin,Manager or Member in the team
      */
     @Operation(summary = "Create new task", description = "Creates a new task with specified information")
@@ -109,7 +109,7 @@ public class TaskController {
      * Returns all tasks assigned to user
      * @param teamID ID of the team to check in
      * @param authentication User credentials to authenticate
-     * @return TaskDTO of all tasks assigned to user
+     * @return TaskMemberDTO of all tasks assigned to user
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin,Manager or Member in the team
      */
     @Operation(summary = "Get all tasks assigned to me", description = "Gets all tasks assigned to me even if user is Owner/Admin/Manager")
@@ -118,12 +118,12 @@ public class TaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/me")
-    public ResponseEntity<APIResponse<Set<TaskDTO>>> getAllTasksAssignedToMe(@PathVariable long teamID, Authentication authentication){
+    public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasksAssignedToMe(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me", taskService.getMyTasks(context.getUser(), context.getTeam(), context.getUserRole())));
+        return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me", taskService.getAllTasksAssignedToMe(teamID, context.getUser().getID())));
 
     }
 
@@ -132,16 +132,16 @@ public class TaskController {
      * @param teamID ID of the team to check in
      * @param ID ID of the task to check for
      * @param authentication User credentials to authenticate
-     * @return TaskDTO of the specified task
+     * @return TaskMemberDTO of the specified task
      */
     @Operation(summary = "Get information about task",description = "Get information about specific task by its ID")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
-    public ResponseEntity<APIResponse<TaskDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<TaskMemberDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        return ResponseEntity.ok(new APIResponse<>("Task details", taskService.getInformationAboutTaskRole(context.getUserRole(), context.getTask(), context.getUser())));
+        return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
         
     }
 
@@ -151,7 +151,7 @@ public class TaskController {
      * @param ID ID of the task to replace information of
      * @param body TaskRequestBody with new values
      * @param authentication User credentials to authenticate
-     * @return TaskDTO after changes
+     * @return TaskMemberDTO after changes
      * @throws NoPrivilegesException Thrown when user doesn't have enough privileges to execute PUT on task
      */
     @Operation(summary = "Edit completely task",description = "Edits the entire task with all required fields")
@@ -163,10 +163,7 @@ public class TaskController {
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        if (!taskService.putTaskRole(context.getUserRole(), context.getTask(), context.getUser())){
-            throw new NoPrivilegesException();
-        }
-        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getTeam(), context.getTask()))));
+        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getTeam(), context.getTask(), context.getUser(), context.getUserRole()))));
     }
 
     /**
@@ -175,7 +172,7 @@ public class TaskController {
      * @param ID ID of the task to edit
      * @param body TaskRequestBody with new values
      * @param authentication User credentials to authenticate
-     * @return TaskDTO after changes
+     * @return TaskMemberDTO after changes
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
      */
     @Operation(summary = "Edit task",description = "Edit task fields")
@@ -187,10 +184,7 @@ public class TaskController {
     @PatchMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody @ValidateGroup TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
-        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getTeam(), context.getTask()))));
+        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getTeam(), context.getTask(), context.getUser(), context.getUserRole()))));
     }
 
     /**
@@ -265,8 +259,8 @@ public class TaskController {
             throw new NoPrivilegesException();
         }
 
-        taskService.removeUserFromTask(context.getTask(), userService.getUserByID(userID));
-        return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskByIDAndTeam(ID, context.getTeam()))));
+        taskService.removeUserFromTask(context.getTask(), userID);
+        return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
     }
 
 }

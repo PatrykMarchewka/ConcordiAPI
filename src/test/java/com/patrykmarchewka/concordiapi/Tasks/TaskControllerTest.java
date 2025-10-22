@@ -1,11 +1,13 @@
 package com.patrykmarchewka.concordiapi.Tasks;
 
-
 import com.patrykmarchewka.concordiapi.APIResponse;
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamManagerDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentityAdapter;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.TaskStatus;
+import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,15 +29,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TaskControllerTest {
 
-    @Autowired
-    private RestClient.Builder builder;
-    @Autowired
-    private TestDataLoader testDataLoader;
-
-    private RestClient restClient;
-
     @LocalServerPort
     private int port;
+
+    private final RestClient.Builder builder;
+    private final TestDataLoader testDataLoader;
+    private RestClient restClient;
+
+    private final TeamService teamService;
+    private final TaskService taskService;
+
+    @Autowired
+    public TaskControllerTest(final RestClient.Builder builder, final TestDataLoader testDataLoader, final TeamService teamService, final TaskService taskService) {
+        this.builder = builder;
+        this.testDataLoader = testDataLoader;
+        this.teamService = teamService;
+        this.taskService = taskService;
+    }
 
 
     @BeforeAll
@@ -52,16 +62,13 @@ public class TaskControllerTest {
 
     @Test
     void shouldGetAllTasksInATeam(){
-        //JSON Deserialization sees APIResponse<Set> so it doesn't add "type" field to TaskDTO even when annotated to do it
-        //because of that it has issues with deserializing Set<TaskDTO> into objects
-        //In this test responses are TaskManagerDTO, but for mixed DTOs it would need to be Map<String, Object> or something better
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskMemberDTO>>>() {});
+        TeamWithUserRolesAndTasks team = teamService.getTeamWithUserRolesAndTasksByID(testDataLoader.teamRead.getID());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All tasks available", response.getBody().getMessage());
-        assertEquals(testDataLoader.teamRead.getTeamTasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.taskRead)));
+        assertEquals(new TeamManagerDTO(team).getTasks(), response.getBody().getData());
     }
 
     @Test
@@ -87,16 +94,13 @@ public class TaskControllerTest {
     
     @Test
     void shouldGetTasksAssignedToMe(){
-        //JSON Deserialization sees APIResponse<Set> so it doesn't add "type" field to TaskDTO even when annotated to do it
-        //because of that it has issues with deserializing Set<TaskDTO> into objects
-        //In this test responses are TaskManagerDTO, but for mixed DTOs it would need to be Map<String, Object> or something better
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/me", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskManagerDTO>>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/me", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<TaskMemberDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Tasks assigned to me", response.getBody().getMessage());
         assertEquals(testDataLoader.userReadOwner.getUserTasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(taskManagerDTO -> taskManagerDTO.equalsTask(testDataLoader.taskRead)));
+        assertTrue(response.getBody().getData().stream().anyMatch(taskMemberDTO -> taskMemberDTO.equalsTask(new TaskIdentityAdapter(testDataLoader.taskRead))));
     }
 
     @Test
@@ -109,12 +113,12 @@ public class TaskControllerTest {
         //    @JsonSubTypes.Type(value = TeamMemberDTO.class, name = "TeamMemberDTO")
         //})
 
-        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamRead.getID(), testDataLoader.taskRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskManagerDTO>>() {});
+        var response = restClient.get().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamRead.getID(), testDataLoader.taskRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task details", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTask(testDataLoader.taskRead));
+        assertTrue(response.getBody().getData().equalsTask(new TaskIdentityAdapter(testDataLoader.taskRead)));
     }
 
     @Test
@@ -128,7 +132,7 @@ public class TaskControllerTest {
                 }
                 """, testDataLoader.userWriteOwner.getID(), testDataLoader.userManager.getID());
         var response = restClient.put().uri("/api/teams/{teamID}/tasks/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.taskWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TaskMemberDTO>>() {});
-        var refreshedTask = testDataLoader.refreshTask(testDataLoader.taskWrite);
+        var refreshedTask = taskService.getTaskByIDAndTeamID(testDataLoader.taskWrite.getID(), testDataLoader.teamWrite.getID());
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());

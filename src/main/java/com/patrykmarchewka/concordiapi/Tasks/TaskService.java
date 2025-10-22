@@ -1,7 +1,7 @@
 package com.patrykmarchewka.concordiapi.Tasks;
 
 
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskDTO;
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
@@ -19,7 +19,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
-import com.patrykmarchewka.concordiapi.RoleRegistry;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -30,7 +29,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,19 +41,45 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TeamService teamService;
-    private final RoleRegistry roleRegistry;
     private final TaskUpdatersService taskUpdatersService;
     private final UserTaskRepository userTaskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, RoleRegistry roleRegistry, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
         this.taskRepository = taskRepository;
         this.teamService = teamService;
-        this.roleRegistry = roleRegistry;
         this.taskUpdatersService = taskUpdatersService;
         this.userTaskRepository = userTaskRepository;
     }
 
+    /**
+     * Map to get appropriate tasks in a team
+     * @param userID ID of User calling the method
+     * @param teamID ID of Team in which to check
+     * @return Map of UserRoles and Set of tasks privileged to see
+     */
+    private Map<UserRole, Supplier<Set<TaskMemberDTO>>> roleSetMap(final long userID, final long teamID){
+        return Map.of(
+                UserRole.OWNER, () -> getAllTasks(teamID),
+                UserRole.ADMIN, () -> getAllTasks(teamID),
+                UserRole.MANAGER, () -> getAllTasks(teamID),
+                UserRole.MEMBER, () -> getAllTasksAssignedToMe(teamID, userID)
+        );
+    }
+
+    /**
+     * Map of UserRoles and whether they can edit task
+     * @param user User asking
+     * @return True if user can edit task, otherwise false
+     */
+    private Map<UserRole, Predicate<TaskWithUserTasks>> editTaskRoleMap(final User user) {
+        return Map.of(
+                UserRole.OWNER, t -> true,
+                UserRole.ADMIN, t -> true,
+                UserRole.MANAGER, t -> true,
+                UserRole.MEMBER, t -> t.hasUser(user)
+        );
+    }
 
 
 
@@ -85,49 +114,36 @@ public class TaskService {
 
     /**
      * Unused, returns all tasks that don't have any users assigned
-     * @param team Team in which to search
+     * @param teamID ID of Team in which to search
      * @return Set of tasks that have no users assigned to them
      */
     @Transactional(readOnly = true)
-    public Set<Task> getAllTasksWithoutUsers(Team team){
-        return getAllTasks(team).stream().filter(task -> task.getUsers().isEmpty()).collect(Collectors.toSet());
+    public Set<TaskMemberDTO> getAllTasksWithoutUsers(final long teamID){
+        return getAllTasks(teamID).stream().filter(task -> task.getUsers().isEmpty()).collect(Collectors.toUnmodifiableSet());
     }
-
-    /**
-     * Unused, returns all tasks that are assigned to user in given team
-     * @param user User to search for
-     * @param team Team in which to search
-     * @return Set of tasks that user is assigned to
-     */
-    @Transactional(readOnly = true)
-    public Set<Task> getAllTasksForUser(User user, Team team){
-        return getAllTasks(team).stream().filter(task -> task.hasUser(user)).collect(Collectors.toSet());
-    }
-
     /**
      * Unused, returns all tasks with given task status in a team
      * @param status TaskStatus to check for
-     * @param team Team in which to search
+     * @param teamID ID of Team in which to search
      * @return Set of tasks that have given TaskStatus
      */
     @Transactional(readOnly = true)
-    public Set<Task> getAllTasksByStatus(TaskStatus status, Team team){
-        return getAllTasks(team).stream().filter(task -> task.getTaskStatus().equals(status)).collect(Collectors.toSet());
+    public Set<TaskMemberDTO> getAllTasksByStatus(final TaskStatus status, long teamID){
+        return getAllTasks(teamID).stream().filter(task -> task.getTaskStatus().equals(status)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * Returns all tasks that didn't had any update in given number of days, should only be called from {@link #getInactiveTasks(Team, UserRole, Integer)}
+     * Returns all tasks that didn't had any update in given number of days, should only be called from {@link #getInactiveTasks(Integer, long)}
      * @param days Minimum number of days to search for
-     * @param team Team in which to search for
+     * @param teamID ID of Team in which to search for
      * @return Set of tasks that weren't updated in days
      * @throws IllegalArgumentException thrown when number is set to zero or less
      */
-    @Transactional(readOnly = true)
-    public Set<Task> getAllTasksNoUpdatesIn(int days, Team team){
+    public Set<TaskIdentity> getAllTasksNoUpdatesIn(final int days, final long teamID){
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasks(team).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
+        return getAllTasksByTeamID(teamID).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -150,10 +166,13 @@ public class TaskService {
      * @param body TaskRequestBody with new values
      * @param team Team in which task exists
      * @param task Task to edit
+     * @param user User asking for edit
+     * @param role Role of the user
      * @return Edited task
      */
     @Transactional
-    public Task putTask(TaskRequestBody body, Team team, Task task) {
+    public Task putTask(TaskRequestBody body, Team team, Task task, User user, UserRole role) {
+        verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
         return saveTask(task);
@@ -164,10 +183,13 @@ public class TaskService {
      * @param task Task to edit
      * @param body TeamRequestBody with new updated values
      * @param team Team in which task exists
+     * @param user User asking for edit
+     * @param role Role of the user
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(TaskRequestBody body, Team team, Task task){
+    public Task patchTask(TaskRequestBody body, Team team, Task task, User user, UserRole role){
+        verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
         return saveTask(task);
@@ -232,65 +254,64 @@ public class TaskService {
 
 
     /**
-     * Returns TaskDTO of either all tasks in team or all tasks in team assigned to user based on UserRole
-     * @param user User performing the check
-     * @param team Team in which to check for
+     * Returns TaskMemberDTO of either all tasks in team or all tasks in team assigned to user based on UserRole
+     * @param userID ID of User performing the check
+     * @param teamID ID of Team in which to check for
      * @param role Role of the user in a team
      * @return Set of TaskDTO with information about the tasks
      */
-    @Transactional(readOnly = true)
-    public Set<TaskDTO> getAllTasks(User user, Team team, UserRole role){
-        return roleRegistry.getAllTasksMap(user,team).get(role).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
+    public Set<TaskMemberDTO> getAllTasksWithRoleCheck(final long userID, final long teamID, final UserRole role){
+        return roleSetMap(userID, teamID).get(role).get();
     }
 
     /**
-     * Returns TaskDTO of all tasks in team assigned to user regardless of UserRole. <br>
-     * UserRole is used to identify what kind of information to return (which DTO)
-     * @param user User performing the check
-     * @param team Team in which to check for
-     * @param role Role of the user in a team
-     * @return Set of TaskDTO with information about the tasks
-     * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
+     * Returns TaskMemberDTO of all tasks in the team
+     * @param teamID ID of Team in which to search for
+     * @return Set of TaskMemberDTO with all tasks in a team
      */
-    @Transactional(readOnly = true)
-    public Set<TaskDTO> getMyTasks(User user,Team team, UserRole role){
-        return getAllTasksForUser(user, team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
+    public Set<TaskMemberDTO> getAllTasks(final long teamID){
+        final Set<Long> allTasks = getAllTasksByTeamID(teamID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
+        return getTaskMemberDTOFromIDs(allTasks, teamID);
+    }
+
+    public Set<TaskMemberDTO> getAllTasksAssignedToMe(final long teamID, final long userID){
+        final Set<Long> allTasks = getAllTasksByTeamIDAndUserID(teamID, userID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
+        return getTaskMemberDTOFromIDs(allTasks, teamID);
     }
 
     /**
-     * Returns TaskDTO of all tasks that didn't had an update in at least x days
-     * @param team Team in which to search the tasks
-     * @param role Role of the user asking to return correct DTOs
+     * Returns TaskMemberDTO of all tasks that didn't had an update in at least x days
      * @param days Minimum amount of days to be labeled as inactive
-     * @return Set of TaskDTO with information about the tasks
+     * @param teamID ID of Team to search in for
+     * @return Set of TaskMemberDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
-    @Transactional(readOnly = true)
-    public Set<TaskDTO> getInactiveTasks(Team team, UserRole role, Integer days){
-        return getAllTasksNoUpdatesIn(days,team).stream().map(roleRegistry.getTaskDTOMap().get(role)).collect(Collectors.toUnmodifiableSet());
+    public Set<TaskMemberDTO> getInactiveTasks(final Integer days, final long teamID){
+        Set<Long> allTasks = getAllTasksNoUpdatesIn(days, teamID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
+        return getTaskMemberDTOFromIDs(allTasks, teamID);
+    }
+
+    public Set<TaskMemberDTO> getTaskMemberDTOFromIDs(final Set<Long> taskIDs, final long teamID){
+        final Set<TaskMemberDTO> dtoSet = new HashSet<>();
+        for (final Long id : taskIDs){
+            dtoSet.add(new TaskMemberDTO(taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new)));
+        }
+        return dtoSet;
     }
 
     /**
-     * Returns TaskDTO about given Task based on role
-     * @param role UserRole of user asking
-     * @param task Task to return DTO of
-     * @param user User asking for DTO
-     * @return Task DTO with information about the task
-     * @throws NoPrivilegesException Thrown when user cannot get the task details
-     */
-    public TaskDTO getInformationAboutTaskRole(UserRole role, Task task, User user) {
-        return roleRegistry.getInformationAboutTaskRoleMap(task,user).entrySet().stream().filter(entry -> entry.getKey().test(role)).map(entry -> entry.getValue().apply(task)).findFirst().orElseThrow(() -> new NoPrivilegesException());
-    }
-
-    /**
-     * Checks whether user can modify task using PUT command
-     * @param role Role of the User asking for permission
-     * @param task Task to edit
+     * Checks whether user can modify task
      * @param user User asking for permission
-     * @return True if user can use PUT to edit task, otherwise false
+     * @param role Role of the user in the Team
+     * @param taskID ID of Task to edit
+     * @param teamID ID of Team in which task is in
+     * @throws NoPrivilegesException Thrown when user cannot modify task
      */
-    public boolean putTaskRole(UserRole role, Task task, User user){
-        return roleRegistry.putTaskRoleMap(user).getOrDefault(role, t-> false).test(task);
+    private void verifyTaskEditPrivilege(User user, UserRole role, long taskID, long teamID){
+        final TaskWithUserTasks taskWithUserTasks = getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
+        if (!editTaskRoleMap(user).getOrDefault(role, t -> false).test(taskWithUserTasks)){
+            throw new NoPrivilegesException();
+        }
     }
 
     /**
