@@ -24,6 +24,7 @@ public class TeamMemberDTO implements TeamDTO {
      * @param team
      * @param user
      */
+    @Deprecated
     public TeamMemberDTO(Team team, User user) {
         this.id = team.getID();
         this.name = team.getName();

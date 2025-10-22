@@ -1,6 +1,6 @@
 package com.patrykmarchewka.concordiapi.DTO.TeamDTO;
 
-import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskManagerDTO;
+import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
@@ -16,18 +16,19 @@ import java.util.stream.Collectors;
 public class TeamManagerDTO implements TeamDTO {
     private long id;
     private String name;
-    private Set<TaskManagerDTO> tasks = new HashSet<>();
+    private Set<TaskMemberDTO> tasks = new HashSet<>();
     private Map<UserRole, Set<UserMemberDTO>> usersByRole = new EnumMap<>(UserRole.class);
 
     /**
      * @deprecated Will be replaced by {@link #TeamManagerDTO(TeamWithUserRolesAndTasks)}
      * @param team
      */
+    @Deprecated
     public TeamManagerDTO(Team team){
         this.id = team.getID();
         this.name = team.getName();
         for (Task task : team.getTeamTasks()){
-            tasks.add(new TaskManagerDTO(task));
+            tasks.add(new TaskMemberDTO(task));
         }
 
         for (UserRole role : UserRole.values()){
@@ -40,7 +41,7 @@ public class TeamManagerDTO implements TeamDTO {
         this.id = team.getID();
         this.name = team.getName();
         for (Task task : team.getTeamTasks()){
-            tasks.add(new TaskManagerDTO(task));
+            tasks.add(new TaskMemberDTO(task));
         }
 
         for (UserRole role : UserRole.values()){
@@ -57,8 +58,8 @@ public class TeamManagerDTO implements TeamDTO {
     public String getName(){return name;}
     public void setName(String name){this.name = name;}
 
-    public Set<TaskManagerDTO> getTasks(){return tasks;}
-    public void setTasks(Set<TaskManagerDTO> tasks){this.tasks = tasks;}
+    public Set<TaskMemberDTO> getTasks(){return tasks;}
+    public void setTasks(Set<TaskMemberDTO> tasks){this.tasks = tasks;}
 
     public Map<UserRole, Set<UserMemberDTO>> getUsersByRole(){ return this.usersByRole; }
     public void setUsersByRole(Map<UserRole, Set<UserMemberDTO>> usersByRole) { this.usersByRole = usersByRole; }
