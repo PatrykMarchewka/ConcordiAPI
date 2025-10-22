@@ -83,7 +83,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPutInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MINConverted());
 
-        Invitation found = invitationService.putInvitation(invitation, body1, team.getID());
+        Invitation found = invitationService.putInvitation(invitation, body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MEMBER, found.getRole());
@@ -96,7 +96,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPatchInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MANAGER);
 
-        Invitation found = invitationService.patchInvitation(invitation, body1, team.getID());
+        Invitation found = invitationService.patchInvitation(invitation, body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MANAGER, found.getRole());
@@ -109,7 +109,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPatchInvitationFull(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MINConverted());
 
-        Invitation found = invitationService.patchInvitation(invitation, body1, team.getID());
+        Invitation found = invitationService.patchInvitation(invitation, body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MEMBER, found.getRole());

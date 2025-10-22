@@ -139,7 +139,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(context.getInvitation(), body, teamID))));
+        return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(context.getInvitation(), body))));
     }
 
     /**
@@ -163,7 +163,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(context.getInvitation(), body, teamID))));
+        return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(context.getInvitation(), body))));
     }
 
     /**

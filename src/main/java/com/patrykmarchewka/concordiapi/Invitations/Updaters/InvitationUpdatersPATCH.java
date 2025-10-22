@@ -20,7 +20,7 @@ public class InvitationUpdatersPATCH {
     }
 
     /**
-     * Applies PATCH updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#update(Invitation, InvitationRequestBody, UpdateType, Supplier)}
+     * Applies PATCH updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#patchUpdate(Invitation, InvitationRequestBody)}
      * @param invitation Invitation to edit
      * @param body InvitationRequestBody with information to update
      */

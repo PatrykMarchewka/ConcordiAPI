@@ -25,7 +25,7 @@ public class InvitationUpdatersCREATE {
     }
 
     /**
-     * Applies CREATE updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#update(Invitation, InvitationRequestBody, UpdateType, Supplier)}
+     * Applies CREATE updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#createUpdate(Invitation, InvitationRequestBody, Supplier)}
      * @param invitation Invitation to create
      * @param body InvitationRequestBody with information to update
      */

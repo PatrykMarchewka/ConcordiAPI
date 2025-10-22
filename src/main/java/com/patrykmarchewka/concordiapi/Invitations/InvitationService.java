@@ -42,7 +42,7 @@ public class InvitationService {
     public Invitation createInvitation(InvitationRequestBody body, long teamID){
         Invitation invitation = new Invitation();
         Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body, UpdateType.CREATE, teamSupplier);
+        invitationUpdatersService.createUpdate(invitation,body,teamSupplier);
         return saveInvitation(invitation);
     }
 
@@ -53,9 +53,8 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation putInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PUT, teamSupplier);
+    public Invitation putInvitation(Invitation invitation, InvitationRequestBody body){
+        invitationUpdatersService.putUpdate(invitation, body);
         return saveInvitation(invitation);
     }
 
@@ -66,9 +65,8 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation patchInvitation(Invitation invitation, InvitationRequestBody body, long teamID){
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
-        invitationUpdatersService.update(invitation,body,UpdateType.PATCH, teamSupplier);
+    public Invitation patchInvitation(Invitation invitation, InvitationRequestBody body){
+        invitationUpdatersService.patchUpdate(invitation, body);
         return saveInvitation(invitation);
     }
 

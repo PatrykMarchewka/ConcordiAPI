@@ -20,7 +20,7 @@ public class InvitationUpdatersPUT {
     }
 
     /**
-     * Applies PUT updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#update(Invitation, InvitationRequestBody, UpdateType, Supplier)}
+     * Applies PUT updates for the Invitation given the InvitationRequestBody, should only be called from {@link InvitationUpdatersService#putUpdate(Invitation, InvitationRequestBody)}
      * @param invitation Invitation to edit
      * @param body InvitationRequestBody with information to update
      */
