@@ -24,15 +24,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class UserControllerTest {
 
-    @Autowired
-    private RestClient.Builder builder;
-    @Autowired
-    private TestDataLoader testDataLoader;
-
-    private RestClient restClient;
-
     @LocalServerPort
     private int port;
+
+    private final RestClient.Builder builder;
+    private final TestDataLoader testDataLoader;
+    private RestClient restClient;
+
+    @Autowired
+    public UserControllerTest(final RestClient.Builder builder, final TestDataLoader testDataLoader) {
+        this.builder = builder;
+        this.testDataLoader = testDataLoader;
+    }
 
 
     @BeforeAll
@@ -93,7 +96,13 @@ public class UserControllerTest {
         assertEquals("User removed from team", response.getBody().getMessage());
         assertNull(response.getBody().getData());
         assertFalse(refreshedTeam.checkUser(testDataLoader.userAdmin.getID()));
-        assertFalse(refreshUser.getTeams().contains(testDataLoader.teamWrite));
+        assertFalse(refreshedUser.getTeams().contains(testDataLoader.teamWrite));
+
+        //TODO: Fix and change to:
+        //TeamWithUserRolesAndTasks team  = teamService.getTeamWithUserRolesAndTasksByID(testDataLoader.teamWrite.getID());
+        //assertFalse(new TeamManagerDTO(team).getUsersByRole().containsValue(new UserMemberDTO(testDataLoader.userAdmin)));
+        //assertFalse(refreshedUser.getTeams().contains(testDataLoader.teamWrite));
+        //assertFalse(new UserMeDTO(refreshedUser).getTeams().contains(new TeamMemberDTO(refreshedTeam, refreshedUser)));
     }
 
     @Test
