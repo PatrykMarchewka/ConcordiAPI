@@ -3,8 +3,6 @@ package com.patrykmarchewka.concordiapi.Subtasks.Updaters;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
-import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +22,15 @@ public class SubtaskUpdatersService {
         this.subtaskUpdatersPATCH = subtaskUpdatersPATCH;
     }
 
-    public void update(Subtask subtask, SubtaskRequestBody body, Supplier<Task> task, UpdateType type){
-        switch (type){
-            case CREATE -> subtaskUpdatersCREATE.applyCreateUpdates(subtask,body,task);
-            case PUT -> subtaskUpdatersPUT.applyPutUpdates(subtask, body);
-            case PATCH -> subtaskUpdatersPATCH.applyPatchUpdates(subtask, body);
-            case null, default -> throw new BadRequestException("Called update type that isn't CREATE/PUT/PATCH");
-        }
+    public void createUpdate(Subtask subtask, SubtaskRequestBody body, Supplier<Task> task){
+        subtaskUpdatersCREATE.applyCreateUpdates(subtask, body, task);
+    }
+
+    public void putUpdate(Subtask subtask, SubtaskRequestBody body){
+        subtaskUpdatersPUT.applyPutUpdates(subtask, body);
+    }
+
+    public void patchUpdate(Subtask subtask, SubtaskRequestBody body){
+        subtaskUpdatersPATCH.applyPatchUpdates(subtask, body);
     }
 }

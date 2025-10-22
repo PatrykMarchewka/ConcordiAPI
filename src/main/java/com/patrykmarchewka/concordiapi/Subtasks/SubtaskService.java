@@ -11,7 +11,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentit
 import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -64,6 +63,7 @@ public class SubtaskService {
      * Creates subtask with given body details
      * @param body SubtaskRequestBody with details of subtask to create
      * @param teamID ID of team in which to create the subtask
+     * @param taskID ID of the Task in which to add subtask to
      * @return Created subtask
      */
     @Transactional
@@ -71,7 +71,7 @@ public class SubtaskService {
         Subtask subtask = new Subtask();
         Team team = teamService.getTeamByID(teamID);
         Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
-        subtaskUpdatersService.update(subtask,body,task, UpdateType.CREATE);
+        subtaskUpdatersService.createUpdate(subtask, body, task);
         return saveSubtask(subtask);
     }
 
@@ -79,14 +79,11 @@ public class SubtaskService {
      * Edit subtask completely with new values
      * @param subtask Subtask to edit
      * @param body SubtaskRequestBody with new values
-     * @param teamID ID of the team containing the subtask
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
-        Team team = teamService.getTeamByID(teamID);
-        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
-        subtaskUpdatersService.update(subtask,body,task,UpdateType.PUT);
+    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body){
+        subtaskUpdatersService.putUpdate(subtask, body);
         return saveSubtask(subtask);
     }
 
@@ -94,14 +91,11 @@ public class SubtaskService {
      * Edits subtask with new values
      * @param subtask Subtask to edit
      * @param body SubtaskRequestBody with new values
-     * @param teamID ID of the team containing the subtask
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body, long teamID, long taskID){
-        Team team = teamService.getTeamByID(teamID);
-        Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
-        subtaskUpdatersService.update(subtask,body,task,UpdateType.PATCH);
+    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body){
+        subtaskUpdatersService.patchUpdate(subtask, body);
         return saveSubtask(subtask);
     }
 

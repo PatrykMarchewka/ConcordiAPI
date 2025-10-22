@@ -84,7 +84,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPutSubtask(){
         SubtaskRequestBody body1 = createSubtaskRequestBody("New name", "New description", TaskStatus.INPROGRESS);
 
-        Subtask found = subtaskService.putUpdate(subtask,body1, team.getID(), task.getID());
+        Subtask found = subtaskService.putUpdate(subtask,body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());
@@ -97,7 +97,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPatchSubtask(){
         SubtaskRequestBody body1 = createSubtaskRequestBodyPATCH("New name");
 
-        Subtask found = subtaskService.patchUpdate(subtask,body1, team.getID(), task.getID());
+        Subtask found = subtaskService.patchUpdate(subtask,body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());
@@ -110,7 +110,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPatchSubtaskFull(){
         SubtaskRequestBody body1 = createSubtaskRequestBody("New name", "New description", TaskStatus.INPROGRESS);
 
-        Subtask found = subtaskService.patchUpdate(subtask,body1, team.getID(), task.getID());
+        Subtask found = subtaskService.patchUpdate(subtask,body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());

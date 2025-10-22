@@ -3,8 +3,6 @@ package com.patrykmarchewka.concordiapi.Subtasks.Updaters;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +24,7 @@ public class SubtaskUpdatersCREATE {
 
 
     /**
-     * Applies CREATE updates for the Subtask given the SubtaskRequestBody details, should only be called from {@link SubtaskUpdatersService#update(Subtask, SubtaskRequestBody, Supplier, UpdateType)}
+     * Applies CREATE updates for the Subtask given the SubtaskRequestBody details, should only be called from {@link SubtaskUpdatersService#createUpdate(Subtask, SubtaskRequestBody, Supplier)}
      * @param subtask Subtask to create
      * @param body SubtaskRequestBody with new values
      * @param task Task to attach subtask to
