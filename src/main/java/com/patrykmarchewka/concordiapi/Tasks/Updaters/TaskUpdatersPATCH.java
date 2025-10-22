@@ -2,7 +2,6 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters;
 
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class TaskUpdatersPATCH {
 
 
     /**
-     * Applies PATCH updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#update(Task, TaskRequestBody, UpdateType)}
+     * Applies PATCH updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#patchUpdate(Task, TaskRequestBody)}
      * @param task Task to edit
      * @param body TaskRequestBody with information to update
      */

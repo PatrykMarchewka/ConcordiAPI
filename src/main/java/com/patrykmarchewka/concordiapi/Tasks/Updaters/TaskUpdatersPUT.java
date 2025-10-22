@@ -2,7 +2,6 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters;
 
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ public class TaskUpdatersPUT {
 
 
     /**
-     * Applies PUT updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#update(Task, TaskRequestBody, UpdateType)}
+     * Applies PUT updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#putUpdate(Task, TaskRequestBody)}
      * @param task Task to edit
      * @param body TaskRequestBody with information to update
      */

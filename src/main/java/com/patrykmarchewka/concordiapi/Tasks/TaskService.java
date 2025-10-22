@@ -22,7 +22,6 @@ import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -156,8 +155,7 @@ public class TaskService {
     public Task createTask(TaskRequestBody body, Team team){
         validateUsersForTasksByID(body.getUsers(),team);
         Task task = new Task();
-        taskUpdatersService.update(task,body, UpdateType.CREATE, () -> team);
-
+        taskUpdatersService.createUpdate(task, body, () -> team);
         return saveTask(task);
     }
 
@@ -174,7 +172,7 @@ public class TaskService {
     public Task putTask(TaskRequestBody body, Team team, Task task, User user, UserRole role) {
         verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
         validateUsersForTasksByID(body.getUsers(),team);
-        taskUpdatersService.update(task,body,UpdateType.PUT, () -> team);
+        taskUpdatersService.putUpdate(task, body);
         return saveTask(task);
     }
 
@@ -191,7 +189,7 @@ public class TaskService {
     public Task patchTask(TaskRequestBody body, Team team, Task task, User user, UserRole role){
         verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
         validateUsersForTasksByID(body.getUsers(),team);
-        taskUpdatersService.update(task,body,UpdateType.PATCH, () -> team);
+        taskUpdatersService.patchUpdate(task, body);
         return saveTask(task);
     }
 

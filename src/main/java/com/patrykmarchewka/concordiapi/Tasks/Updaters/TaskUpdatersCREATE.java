@@ -3,7 +3,6 @@ package com.patrykmarchewka.concordiapi.Tasks.Updaters;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.UpdateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +23,7 @@ public class TaskUpdatersCREATE {
     }
 
     /**
-     * Applies CREATE updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#update(Task, TaskRequestBody, UpdateType, Supplier)}
+     * Applies CREATE updates for the Task given the TaskRequestBody details, should be only called from {@link TaskUpdatersService#createUpdate(Task, TaskRequestBody, Supplier)}
      * @param task Task to create
      * @param body TaskRequestBody with information to update
      * @param team Team in which task is created
