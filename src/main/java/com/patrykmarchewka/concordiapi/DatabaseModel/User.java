@@ -1,5 +1,4 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -92,12 +91,12 @@ public class User {
         if (this == o) return true;
         if (!(o instanceof User)) return false;
         User user = (User) o;
-        return id != null && id.equals(user.getID());
+        return id != null && login != null && id.equals(user.getID()) && login.equals(user.getLogin());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, login);
     }
 
 
