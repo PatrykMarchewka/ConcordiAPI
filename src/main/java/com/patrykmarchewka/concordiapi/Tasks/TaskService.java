@@ -296,13 +296,26 @@ public class TaskService {
     }
 
     /**
+     * @deprecated Will be replaced by {@link #removeUserFromTask(Task, long)}
      * Removes user from Task
      * @param task Task to edit
      * @param user User to remove from Task
      */
+    @Deprecated
     @Transactional
     public void removeUserFromTask(Task task, User user){
         task.removeUserTask(userTaskRepository.findByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
+        saveTask(task);
+    }
+
+    /**
+     * Removes user from Task
+     * @param task Task to edit
+     * @param userID ID of User to remove from Task
+     */
+    @Transactional
+    public void removeUserFromTask(Task task, long userID){
+        task.removeUserTask(userTaskRepository.findByAssignedUserIDAndAssignedTaskID(userID, task.getID()).orElseThrow(NotFoundException::new));
         saveTask(task);
     }
 

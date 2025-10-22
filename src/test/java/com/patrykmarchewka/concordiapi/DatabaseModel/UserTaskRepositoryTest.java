@@ -45,7 +45,7 @@ public class UserTaskRepositoryTest implements UserTaskTestHelper, UserTestHelpe
         Task task = createTask(team,taskRepository);
         long id = createUserTask(user,task,userTaskRepository).getID();
 
-        UserTask found = userTaskRepository.findByAssignedUserAndAssignedTask(user,task).orElse(null);
+        UserTask found = userTaskRepository.findByAssignedUserIDAndAssignedTaskID(user.getID(),task.getID()).orElse(null);
 
         assertNotNull(found);
         assertEquals(id, found.getID());
