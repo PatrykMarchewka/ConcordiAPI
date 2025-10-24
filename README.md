@@ -75,23 +75,24 @@ SERVER_PORT=10000
 
 ### Supported Variables
 
-| Variable                    | Default Value     | Required | Accepted Values           | Description |
-|-----------------------------|-------------------|----------|----------------------------|-------------|
-| `DB_URL`                    | *(none)*          | ✅ Yes   | Valid JDBC URL             | Connection string for any supported database |
-| `DB_USERNAME`               | *(none)*          | ✅ Yes   | Any string                 | Database username |
-| `DB_PASSWORD`               | *(none)*          | ✅ Yes   | Any string                 | Database password |
-| `DB_DRIVER`                 | *(none)*          | ✅ Yes   | Fully qualified class name | JDBC driver class name |
-| `DDL_AUTO`                  | `validate`        | ❌ No    | `none`, `validate`, `update`, `create`, `create-drop` | JPA schema generation strategy |
-| `SHOW_SQL`                  | `false`           | ❌ No    | `true`, `false`            | Enables SQL logging for JPA operations |
-| `RESTART_ENABLED`           | `false`           | ❌ No    | `true`, `false`            | Enables devtools restart support |
-| `FORMAT_SQL`                | `false`           | ❌ No    | `true`, `false`            | Formats SQL output for readability |
-| `DB_POOL_SIZE`              | `10`              | ❌ No    | Any positive integer       | Maximum size of Hikari connection pool |
-| `DB_TIMEOUT`                | `30000`           | ❌ No    | Milliseconds (integer)     | Hikari connection timeout |
-| `CORS_ALLOWED_ORIGINS`      | *(none)*          | ❌ No    | Comma-separated URLs        | Allowed origins for GraphQL CORS |
-| `SERVER_ADDRESS`            | `0.0.0.0`         | ❌ No    | Any valid IP or hostname   | Address the server binds to |
-| `SERVER_PORT`               | `10000`           | ❌ No    | Any open port              | Port on which the API runs |
-| `JWT_SECRET`                | *(none)*          | ❌ No    | Any string                 | Secret key for JWT token signing |
-| `LOG_LEVEL`                 | `info`            | ❌ No    | `trace`, `debug`, `info`, `warn`, `error` | Root logging level |
+| Variable                        | Default Value | Required | Accepted Values                                       | Description                                  |
+|---------------------------------|---------------|----------|-------------------------------------------------------|----------------------------------------------|
+| `DB_URL`                        | *(none)*      | ✅ Yes    | Valid JDBC URL                                        | Connection string for any supported database |
+| `DB_USERNAME`                   | *(none)*      | ✅ Yes    | Any string                                            | Database username                            |
+| `DB_PASSWORD`                   | *(none)*      | ✅ Yes    | Any string                                            | Database password                            |
+| `DB_DRIVER`                     | *(none)*      | ✅ Yes    | Fully qualified class name                            | JDBC driver class name                       |
+| `DDL_AUTO`                      | `validate`    | ❌ No     | `none`, `validate`, `update`, `create`, `create-drop` | JPA schema generation strategy               |
+| `SHOW_SQL`                      | `false`       | ❌ No     | `true`, `false`                                       | Enables SQL logging for JPA operations       |
+| `RESTART_ENABLED`               | `false`       | ❌ No     | `true`, `false`                                       | Enables devtools restart support             |
+| `FORMAT_SQL`                    | `false`       | ❌ No     | `true`, `false`                                       | Formats SQL output for readability           |
+| `DB_POOL_SIZE`                  | `10`          | ❌ No     | Any positive integer                                  | Maximum size of Hikari connection pool       |
+| `DB_TIMEOUT`                    | `30000`       | ❌ No     | Milliseconds (integer)                                | Hikari connection timeout                    |
+| `CORS_ALLOWED_ORIGINS`          | *(none)*      | ❌ No     | Comma-separated URLs                                  | Allowed origins for CORS                     |
+| `GRAPH_QL_CORS_ALLOWED_ORIGINS` | *(none)*      | ❌ No     | Comma-separated URLs                                  | Allowed origins for GraphQL CORS             |
+| `SERVER_ADDRESS`                | `0.0.0.0`     | ❌ No     | Any valid IP or hostname                              | Address the server binds to                  |
+| `SERVER_PORT`                   | `10000`       | ❌ No     | Any open port                                         | Port on which the API runs                   |
+| `JWT_SECRET`                    | *(none)*      | ❌ No     | Any string                                            | Secret key for JWT token signing             |
+| `LOG_LEVEL`                     | `info`        | ❌ No     | `trace`, `debug`, `info`, `warn`, `error`             | Root logging level                           |
 
 
 > **Note:** If `JWT_SECRET` is omitted, a new secret is generated on each run, invalidating previously issued tokens.
