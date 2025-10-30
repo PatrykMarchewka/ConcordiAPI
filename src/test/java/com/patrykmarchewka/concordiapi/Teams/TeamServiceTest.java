@@ -10,6 +10,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Users.UserService;
@@ -155,8 +156,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldReturnTeamWithUserRoles(){
-        Team found = teamService.getTeamByID(team.getID());
-        found = teamService.getTeamWithUserRoles(found);
+        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
 
         assertEquals(1, found.getUserRoles().size());
         assertEquals(1, found.getTeammates().size());
