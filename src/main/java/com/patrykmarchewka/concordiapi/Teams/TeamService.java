@@ -123,12 +123,12 @@ public class TeamService {
     /**
      * Removes specified user from the team, removes the user from tasks attached to the team and removes role mention for that user. <br>
      * If the team would end up empty without any pending invitations the team gets deleted too
-     * @param team Team that contains the user that we want to remove
+     * @param teamID ID of Team that contains the user that we want to remove
      * @param user User to be removed
      */
     @Transactional
-    public Team removeUser(Team team, User user){
-        Team newteam = getTeamFull(team);
+    public Team removeUser(long teamID, User user){
+        Team newteam = getTeamEntityFull(teamID);
         removeTeamUserRoleForUser(newteam, user);
         removeTeamTasksForUser(newteam, user);
         return deleteTeamIfEmpty(newteam);
@@ -166,13 +166,13 @@ public class TeamService {
     }
 
     /**
-     * Removes all users from team using {@link #removeUser(Team, User)}
+     * Removes all users from team using {@link #removeUser(long, User)}
      * @param team Team to remove everyone from
      */
     @Transactional
     public void removeAllUsers(Team team){
         for (User user : team.getTeammates()){
-            removeUser(team,user);
+            removeUser(team.getID(),user);
         }
     }
 
@@ -234,8 +234,8 @@ public class TeamService {
         return teamRepository.findTeamWithInvitationsByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
-    public Team getTeamFull(Team team){
-        return teamRepository.findTeamFullByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    public Team getTeamEntityFull(long teamID){
+        return teamRepository.findTeamEntityFullByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
 

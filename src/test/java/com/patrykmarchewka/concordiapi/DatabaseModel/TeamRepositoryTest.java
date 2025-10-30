@@ -96,7 +96,7 @@ public class TeamRepositoryTest implements TeamTestHelper{
     void shouldSaveAndRetrieveTeamCorrectlyFull(){
         long id = createTeam(teamRepository).getID();
 
-        Team found = teamRepository.findTeamFullByID(id).orElse(null);
+        Team found = teamRepository.findTeamEntityFullByID(id).orElse(null);
 
         assertNotNull(found);
         assertEquals(id, found.getID());

@@ -162,9 +162,9 @@ public class TestDataLoader {
         this.userDeleteOwner = userService.getUserFull(userDeleteOwner);
         this.userMember = userService.getUserFull(userMember);
 
-        this.teamRead = teamService.getTeamFull(teamRead);
-        this.teamWrite = teamService.getTeamFull(teamWrite);
-        this.teamDelete = teamService.getTeamFull(teamDelete);
+        this.teamRead = teamService.getTeamEntityFull(teamRead.getID());
+        this.teamWrite = teamService.getTeamEntityFull(teamWrite.getID());
+        this.teamDelete = teamService.getTeamEntityFull(teamDelete.getID());
 
         this.taskRead = taskService.getTaskFull(taskRead);
         this.taskWrite = taskService.getTaskFull(taskWrite);
@@ -172,7 +172,7 @@ public class TestDataLoader {
     }
 
     public User refreshUser(User user){ return userService.getUserFull(user); }
-    public Team refreshTeam(Team team){ return teamService.getTeamFull(team); }
+    public Team refreshTeam(Team team){ return teamService.getTeamEntityFull(team.getID()); }
     public Task refreshTask(Task task){ return taskService.getTaskFull(task); }
     public Subtask refreshSubtask(Subtask subtask){ return subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
     public Invitation refreshInvitation(Invitation invitation){ return  invitationService.getInvitationByUUID(invitation.getUUID()); }

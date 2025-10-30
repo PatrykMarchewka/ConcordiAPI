@@ -46,5 +46,5 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
 
     @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
     @Query("SELECT t FROM Team t WHERE t.id = :id")
-    Optional<Team> findTeamFullByID(@Param("id") long id);
+    Optional<Team> findTeamEntityFullByID(@Param("id") long id);
 }

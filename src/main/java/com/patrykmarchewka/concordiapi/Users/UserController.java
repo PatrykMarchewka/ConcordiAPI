@@ -116,7 +116,7 @@ public class UserController {
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
-        teamService.removeUser(context.getTeam(), userService.getUserByID(ID));
+        teamService.removeUser(teamID, userService.getUserByID(ID));
         return ResponseEntity.ok(new APIResponse<>("User removed from team",null));
     }
 
@@ -139,7 +139,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
         }
         else{
-            teamService.removeUser(context.getTeam(), context.getUser());
+            teamService.removeUser(teamID, context.getUser());
             return ResponseEntity.ok(new APIResponse<>("Left the team",null));
         }
     }
