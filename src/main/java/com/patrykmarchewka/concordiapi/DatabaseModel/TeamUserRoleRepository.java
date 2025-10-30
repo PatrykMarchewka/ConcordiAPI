@@ -19,5 +19,5 @@ public interface TeamUserRoleRepository extends JpaRepository<TeamUserRole,Long>
         LEFT JOIN FETCH t.user user
         WHERE team.id = :teamID AND user.id = :userID
 """)
-    Optional<TeamUserRole> findByUserAndTeam(@Param("teamID") long teamID, @Param("userID") long userID);
+    Optional<TeamUserRole> findByUserAndTeam(@Param("userID") long userID, @Param("teamID") long teamID);
 }
