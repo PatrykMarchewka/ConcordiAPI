@@ -12,8 +12,10 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
@@ -221,6 +223,10 @@ public class TeamService {
         return teamRepository.findTeamWithUserRolesAndUsersByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
+    public TeamWithUserRoles getTeamWithUserRoles(long teamID){
+        return teamRepository.findTeamWithUserRolesByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
+
     public TeamWithTasks getTeamWithTeamTasks(long teamID){
         return teamRepository.findTeamWithTeamTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
@@ -235,6 +241,10 @@ public class TeamService {
 
     public Team getTeamEntityFull(long teamID){
         return teamRepository.findTeamEntityFullByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    }
+
+    public TeamFull getTeamFull(long teamID){
+        return teamRepository.findTeamFullByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
     }
 
 

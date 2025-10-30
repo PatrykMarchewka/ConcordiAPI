@@ -1,7 +1,10 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,11 +18,25 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
 
     @Query("""
     SELECT t FROM Team t
+    WHERE t.id = :id
+""")
+    Optional<TeamIdentity> findTeamByID(@Param("id") long id);
+
+    @Query("""
+    SELECT t FROM Team t
     LEFT JOIN FETCH t.userRoles ur
     LEFT JOIN FETCH ur.user
     WHERE t.id = :id
 """)
     Optional<Team> findTeamWithUserRolesAndUsersByID(@Param("id") long id);
+
+    @Query("""
+    SELECT t FROM Team t
+    LEFT JOIN FETCH t.userRoles ur
+    LEFT JOIN FETCH ur.user
+    WHERE t.id = :id
+""")
+    Optional<TeamWithUserRoles> findTeamWithUserRolesByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
@@ -47,4 +64,8 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
     @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
     @Query("SELECT t FROM Team t WHERE t.id = :id")
     Optional<Team> findTeamEntityFullByID(@Param("id") long id);
+
+    @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
+    @Query("SELECT t FROM Team t WHERE t.id = :id")
+    Optional<TeamFull> findTeamFullByID(@Param("id") long id);
 }
