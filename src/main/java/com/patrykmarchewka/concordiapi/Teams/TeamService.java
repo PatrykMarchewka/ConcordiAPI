@@ -206,7 +206,6 @@ public class TeamService {
 
     /**
      * Returns DTO of a team <br>
-     * WARNING: Tends to randomly fail in tests, no failure seen in production usage, because of that keep using {@link #getTeamDTOByRole(User, Team)} until those issues are resolved
      * @param userID ID of User calling the action
      * @param teamID ID of Team to return DTO of
      * @return TeamDTO based on User Role

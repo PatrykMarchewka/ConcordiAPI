@@ -32,6 +32,7 @@ public class TeamUserRoleService {
      * @param team Team in which user belongs and has valid UserRole
      * @return TeamUserRole which holds given User, Team and UserRole information
      */
+    @Deprecated
     public TeamUserRole getByUserAndTeam(User user, Team team){
         return teamUserRoleRepository.findByUserAndTeam(user,team).orElseThrow(NotFoundException::new);
     }
@@ -54,6 +55,7 @@ public class TeamUserRoleService {
      * @param team Team to check role of user for
      * @return UserRole of User in given Team
      */
+    @Deprecated
     public UserRole getRole(User user, Team team){
         return getByUserAndTeam(user,team).getUserRole();
     }
@@ -69,15 +71,31 @@ public class TeamUserRoleService {
     }
 
     /**
+     * @deprecated Will be replaced by {@link #setRole(UserRole, long, long, UserRole)}
      * Changes already existing UserRole of User in a team
      * @param myRole Role of the user asking for change
      * @param user User to change role for
      * @param team Team in which the role change occurs
      * @param role UserRole to change it to
      */
+    @Deprecated
     public void setRole(UserRole myRole, User user, Team team, UserRole role){
         forceCheckRoles(myRole, role);
         TeamUserRole tmr = getByUserAndTeam(user,team);
+        tmr.setUserRole(role);
+        saveTMR(tmr);
+    }
+
+    /**
+     * Changes already existing UserRole of User in a team
+     * @param myRole Role of the user asking for change
+     * @param userID User to change role for
+     * @param teamID Team in which the role change occurs
+     * @param role UserRole to change it to
+     */
+    public void setRole(UserRole myRole, long userID, long teamID, UserRole role){
+        forceCheckRoles(myRole, role);
+        TeamUserRole tmr = getByUserAndTeam(userID, teamID);
         tmr.setUserRole(role);
         saveTMR(tmr);
     }

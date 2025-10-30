@@ -54,7 +54,7 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldSaveAndRetrieveTeamUserRoleCorrectly(){
-        TeamUserRole found = teamUserRoleService.getByUserAndTeam(user, team);
+        TeamUserRole found = teamUserRoleService.getByUserAndTeam(user.getID(), team.getID());
 
         assertNotNull(found.getID());
         assertEquals(UserRole.OWNER, found.getUserRole());

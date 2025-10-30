@@ -189,7 +189,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldCreateTeamDTO(){
-        TeamDTO teamDTO = teamService.getTeamDTOByRole(user, team);
+        TeamDTO teamDTO = teamService.getTeamDTOByRole(user.getID(), team.getID());
 
         assertInstanceOf(TeamAdminDTO.class, teamDTO);
         assertTrue(teamDTO.equalsTeam(team));
