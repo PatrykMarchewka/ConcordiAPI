@@ -9,7 +9,6 @@ import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,13 +36,11 @@ import java.util.Set;
 public class InvitationController {
 
     private final InvitationService invitationService;
-    private final TeamUserRoleService teamUserRoleService;
     private ControllerContext context;
 
     @Autowired
-    public InvitationController(InvitationService invitationService, TeamUserRoleService teamUserRoleService, ControllerContext context){
+    public InvitationController(InvitationService invitationService, ControllerContext context){
         this.invitationService = invitationService;
-        this.teamUserRoleService = teamUserRoleService;
         this.context = context;
 
     }
@@ -89,10 +86,10 @@ public class InvitationController {
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @ValidateGroup(OnCreate.class) InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (!context.getUserRole().isAdminGroup() || !teamUserRoleService.checkRoles(context.getUserRole(),body.getRole())){
+        if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getUserRole(), body, teamID))));
     }
 
     /**

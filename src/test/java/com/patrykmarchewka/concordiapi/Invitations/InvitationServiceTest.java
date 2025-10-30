@@ -57,7 +57,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         UserRequestBody userRequestBody = createUserRequestBody("JohnD");
         user = userService.createUser(userRequestBody);
         team = teamService.createTeam(teamRequestBody, user);
-        invitation = invitationService.createInvitation(body, team.getID());
+        invitation = invitationService.createInvitation(UserRole.OWNER,body, team.getID());
     }
 
     @AfterEach
@@ -129,7 +129,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldUseInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MANAGER, (short) 2, OffsetDateTimeConverter.MAXConverted());
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJohnD");
-        Invitation invitation1 = invitationService.createInvitation(body1, team.getID());
+        Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
         invitation = invitationService.useInvitation(invitation1, user1);
@@ -144,7 +144,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldThrowForExpiredInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MINConverted());
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJohnD");
-        Invitation invitation1 = invitationService.createInvitation(body1, team.getID());
+        Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
         assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1, user1));
@@ -154,7 +154,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldThrowForUnusableInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)0, OffsetDateTimeConverter.MAXConverted());
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJohnD");
-        Invitation invitation1 = invitationService.createInvitation(body1, team.getID());
+        Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
         assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1, user1));
@@ -163,7 +163,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     @Test
     void shouldThrowForAlreadyJoinedInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MAXConverted());
-        Invitation invitation1 = invitationService.createInvitation(body1, team.getID());
+        Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
 
         assertThrows(ConflictException.class, () -> invitationService.useInvitation(invitation1, user));
     }
@@ -171,7 +171,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     @Test
     void shouldGetInvitationsDTO(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MAXConverted());
-        Invitation invitation1 = invitationService.createInvitation(body1, team.getID());
+        Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         Set<InvitationManagerDTO> found = invitationService.getInvitationsDTO(team);
 
         assertEquals(2, found.size());

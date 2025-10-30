@@ -10,7 +10,8 @@ import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
-import com.patrykmarchewka.concordiapi.UpdateType;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
+import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,12 +25,14 @@ public class InvitationService {
     private final InvitationRepository invitationRepository;
     private final TeamService teamService;
     private final InvitationUpdatersService invitationUpdatersService;
+    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService){
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService, TeamUserRoleService teamUserRoleService){
         this.invitationRepository = invitationRepository;
         this.teamService = teamService;
         this.invitationUpdatersService = invitationUpdatersService;
+        this.teamUserRoleService = teamUserRoleService;
     }
     
 
@@ -39,7 +42,8 @@ public class InvitationService {
      * @return Created invitation
      */
     @Transactional
-    public Invitation createInvitation(InvitationRequestBody body, long teamID){
+    public Invitation createInvitation(UserRole userRole,InvitationRequestBody body, long teamID){
+        teamUserRoleService.forceCheckRoles(userRole, body.getRole());
         Invitation invitation = new Invitation();
         Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
         invitationUpdatersService.createUpdate(invitation,body,teamSupplier);
