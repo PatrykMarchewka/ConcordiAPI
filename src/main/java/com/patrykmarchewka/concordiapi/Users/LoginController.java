@@ -192,11 +192,10 @@ public class LoginController {
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
-        context = context.withUserWithTeams(authentication).withInvitation(invID);
+        context = context.withUserWithTeams(authentication);
         User user = context.getUser();
-        Invitation invitation = context.getInvitation();
+        Invitation invitation = invitationService.useInvitation(invID, user);
         Team team = invitation.getInvitingTeam();
-        invitationService.useInvitation(invitation, user);
         return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user)));
     }
 }

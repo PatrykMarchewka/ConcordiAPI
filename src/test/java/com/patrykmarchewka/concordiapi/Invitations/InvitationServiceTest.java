@@ -83,7 +83,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPutInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MINConverted());
 
-        Invitation found = invitationService.putInvitation(invitation, body1);
+        Invitation found = invitationService.putInvitation(invitation.getUUID(), body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MEMBER, found.getRole());
@@ -96,7 +96,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPatchInvitation(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MANAGER);
 
-        Invitation found = invitationService.patchInvitation(invitation, body1);
+        Invitation found = invitationService.patchInvitation(invitation.getUUID(), body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MANAGER, found.getRole());
@@ -109,7 +109,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldPatchInvitationFull(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MINConverted());
 
-        Invitation found = invitationService.patchInvitation(invitation, body1);
+        Invitation found = invitationService.patchInvitation(invitation.getUUID(), body1);
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(UserRole.MEMBER, found.getRole());
@@ -120,7 +120,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
 
     @Test
     void shouldDeleteInvitation(){
-        invitationService.deleteInvitation(invitation);
+        invitationService.deleteInvitation(invitation.getUUID());
 
         assertThrows(NotFoundException.class, () -> invitationService.getInvitationByUUID(invitation.getUUID()));
     }
@@ -132,7 +132,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
-        invitation = invitationService.useInvitation(invitation1, user1);
+        invitation = invitationService.useInvitation(invitation1.getUUID(), user1);
         team = teamService.getTeamWithUserRoles(team);
 
         assertEquals(1, invitation.getUses());
@@ -147,7 +147,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
-        assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1, user1));
+        assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1.getUUID(), user1));
     }
 
     @Test
@@ -157,7 +157,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
         User user1 = userService.createUser(userRequestBody1);
 
-        assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1, user1));
+        assertThrows(BadRequestException.class, () -> invitationService.useInvitation(invitation1.getUUID(), user1));
     }
 
     @Test
@@ -165,7 +165,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MAXConverted());
         Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
 
-        assertThrows(ConflictException.class, () -> invitationService.useInvitation(invitation1, user));
+        assertThrows(ConflictException.class, () -> invitationService.useInvitation(invitation1.getUUID(), user));
     }
 
     @Test

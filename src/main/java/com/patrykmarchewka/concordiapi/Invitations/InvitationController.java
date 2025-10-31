@@ -132,11 +132,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup(OnPut.class) InvitationRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(context.getInvitation(), body))));
+        return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(invID, body))));
     }
 
     /**
@@ -156,11 +156,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup InvitationRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(context.getInvitation(), body))));
+        return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(invID, body))));
     }
 
     /**
@@ -178,11 +178,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<String>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
+        context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        invitationService.deleteInvitation(context.getInvitation());
+        invitationService.deleteInvitation(invID);
         return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
     }
 }

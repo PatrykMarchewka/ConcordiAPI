@@ -113,6 +113,7 @@ public class ControllerContext {
      * @param UUID String to get Invitation
      * @return Invitation
      */
+    @Deprecated
     public ControllerContext withInvitation(String UUID){
         this.invitation = invitationService.getInvitationByUUID(UUID);
         return this;
@@ -124,6 +125,7 @@ public class ControllerContext {
     public Task getTask() {return task;}
     public UserRole getUserRole() {return userRole;}
     public UserRole getOtherRole() {return otherRole;}
+    @Deprecated
     public Invitation getInvitation(){return invitation;}
 
 }

@@ -52,43 +52,46 @@ public class InvitationService {
 
     /**
      * Edits Invitation completely with new values
-     * @param invitation Invitation to edit
+     * @param invitationID UUID of Invitation to edit
      * @param body InvitationRequestBody with new values
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation putInvitation(Invitation invitation, InvitationRequestBody body){
+    public Invitation putInvitation(String invitationID, InvitationRequestBody body){
+        Invitation invitation = getInvitationByUUID(invitationID);
         invitationUpdatersService.putUpdate(invitation, body);
         return saveInvitation(invitation);
     }
 
     /**
      * Edits Invitation with new values
-     * @param invitation Invitation to edit
+     * @param invitationID UUID of Invitation to edit
      * @param body InvitationRequestBody with new values
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation patchInvitation(Invitation invitation, InvitationRequestBody body){
+    public Invitation patchInvitation(String invitationID, InvitationRequestBody body){
+        Invitation invitation = getInvitationByUUID(invitationID);
         invitationUpdatersService.patchUpdate(invitation, body);
         return saveInvitation(invitation);
     }
 
     /**
      * Uses invitation and adds user to the team
-     * @param invitation Invitation to use
-     * @param user User using the invitation
+     * @param invitationID ID of Invitation to use
+     * @param userWithTeamRoles User using the invitation, requires user.teamRoles to be initialized
      * @throws ConflictException Thrown when user tries to join a team they are already part of
      * @throws BadRequestException Thrown when user can't join the specified team due to invitation being no longer usable
      */
     @Transactional
-    public Invitation useInvitation(Invitation invitation,User user){
+    public Invitation useInvitation(String invitationID,User userWithTeamRoles){
+        Invitation invitation = getInvitationByUUID(invitationID);
         Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
-        if (team.checkUser(user.getID())){
+        if (team.checkUser(userWithTeamRoles.getID())){
             throw new ConflictException("You are already part of that team!");
         }
         invitation.useOne();
-        teamService.addUser(team, user, invitation.getRole());
+        teamService.addUser(team, userWithTeamRoles, invitation.getRole());
         return saveInvitation(invitation);
     }
 
@@ -113,9 +116,10 @@ public class InvitationService {
 
     /**
      * Deletes invitation completely
-     * @param invitation Invitation to delete
+     * @param invID ID of Invitation to delete
      */
-    public void deleteInvitation(Invitation invitation){
+    public void deleteInvitation(String invID){
+        Invitation invitation = getInvitationByUUID(invID);
         invitationRepository.delete(invitation);
     }
 
