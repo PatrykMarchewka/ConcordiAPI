@@ -69,7 +69,7 @@ public class SubtaskService {
     @Transactional
     public Subtask createSubtask(SubtaskRequestBody body, long teamID, long taskID){
         Subtask subtask = new Subtask();
-        Team team = teamService.getTeamByID(teamID);
+        Team team = teamService.getTeamEntityByID(teamID);
         Supplier<Task> task = () -> taskService.getTaskByIDAndTeam(taskID,team);
         subtaskUpdatersService.createUpdate(subtask, body, task);
         return saveSubtask(subtask);

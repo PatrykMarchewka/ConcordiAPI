@@ -61,7 +61,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectly(){
-        Team found = teamService.getTeamByID(team.getID());
+        Team found = teamService.getTeamEntityByID(team.getID());
 
         assertEquals(team.getID(), found.getID());
         assertEquals("TEST", found.getName());
@@ -73,16 +73,16 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldThrowForNonExistingTeamID(){
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(0));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(0));
     }
 
     @Test
     void shouldPutTeam(){
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
 
-        Team found = teamService.getTeamByID(team.getID());
+        Team found = teamService.getTeamEntityByID(team.getID());
         teamService.putTeam(found,newBody);
-        Team newFound = teamService.getTeamByID(team.getID());
+        Team newFound = teamService.getTeamEntityByID(team.getID());
 
         assertEquals(team.getID(), newFound.getID());
         assertEquals("NEWTEST", newFound.getName());
@@ -92,9 +92,9 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     void shouldPatchTeam(){
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
 
-        Team found = teamService.getTeamByID(team.getID());
+        Team found = teamService.getTeamEntityByID(team.getID());
         teamService.patchTeam(found,newBody);
-        Team newFound = teamService.getTeamByID(team.getID());
+        Team newFound = teamService.getTeamEntityByID(team.getID());
 
         assertEquals(team.getID(), newFound.getID());
         assertEquals("NEWTEST", newFound.getName());
@@ -102,17 +102,17 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldDeleteTeam(){
-        Team found = teamService.getTeamByID(team.getID());
+        Team found = teamService.getTeamEntityByID(team.getID());
         teamService.deleteTeam(found);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(team.getID()));
     }
 
     @Test
     void shouldDeleteTeamByUserLeaving(){
         teamService.removeUser(team.getID(), user);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(team.getID()));
     }
 
     @Test
@@ -151,7 +151,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
         teamService.removeAllUsers(found);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getID()));
+        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(found.getID()));
     }
 
     @Test

@@ -64,7 +64,7 @@ public class ControllerContext {
      * @return Team
      */
     public ControllerContext withTeam(long teamID){
-        this.team = teamService.getTeamByID(teamID);
+        this.team = teamService.getTeamEntityByID(teamID);
         return this;
     }
 

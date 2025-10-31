@@ -45,7 +45,7 @@ public class InvitationService {
     public Invitation createInvitation(UserRole userRole,InvitationRequestBody body, long teamID){
         teamUserRoleService.forceCheckRoles(userRole, body.getRole());
         Invitation invitation = new Invitation();
-        Supplier<Team> teamSupplier = () -> teamService.getTeamByID(teamID);
+        Supplier<Team> teamSupplier = () -> teamService.getTeamEntityByID(teamID);
         invitationUpdatersService.createUpdate(invitation,body,teamSupplier);
         return saveInvitation(invitation);
     }

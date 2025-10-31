@@ -93,15 +93,6 @@ public class TeamService {
     }
 
     /**
-     * Gives the Team based on provided ID
-     * @param id ID of the team to get of
-     * @return Team that has the specified ID
-     */
-    public Team getTeamByID(long id){
-        return teamRepository.findTeamById(id).orElseThrow(NotFoundException::new);
-    }
-
-    /**
      * Saves pending changes to the Team
      * @param team Team to save
      * @return Team after changes
@@ -217,6 +208,15 @@ public class TeamService {
         TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(teamID);
         UserRole role = teamUserRoleService.getRole(userID, teamWithUserRolesAndTasks.getID());
         return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
+    }
+
+    /**
+     * Gives the Team based on provided ID
+     * @param id ID of the team to get of
+     * @return Team that has the specified ID
+     */
+    public Team getTeamEntityByID(long id){
+        return teamRepository.findTeamById(id).orElseThrow(NotFoundException::new);
     }
 
     public Team getTeamWithUserRoles(Team team){
