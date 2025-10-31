@@ -46,10 +46,9 @@ public class Team {
 
     public void setName(String name){ this.name = name; }
 
-    @Deprecated
-    public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
-
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
+    public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
+    public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
     public Set<Task> getTeamTasks() { return teamTasks; }
@@ -61,9 +60,9 @@ public class Team {
     public void setInvitations(Set<Invitation> invitations){this.invitations = invitations;}
 
 
-    public TeamUserRole addUserRole(User user, UserRole role) {
-        TeamUserRole tmr = new TeamUserRole(user, this, role);
-        user.addTeamRole(tmr);
+    public TeamUserRole addUserRole(User userWithTeamRoles, UserRole role) {
+        TeamUserRole tmr = new TeamUserRole(userWithTeamRoles, this, role);
+        userWithTeamRoles.addTeamRole(tmr);
         this.userRoles.add(tmr);
         return tmr;
     }
@@ -78,10 +77,6 @@ public class Team {
 
         return this;
     }
-
-    @Deprecated
-    public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
-
 
     public Task addTask(Task task){
         task.setAssignedTeam(this);
