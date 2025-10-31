@@ -26,13 +26,19 @@ public class UserMeDTO implements UserDTO{
 
     public UserMeDTO(){}
 
+    @Override
     public long getID() {return id;}
+    @Override
     public void setID(Long id) {this.id = id;}
 
+    @Override
     public String getName() {return name;}
+    @Override
     public void setName(String name) {this.name = name;}
 
+    @Override
     public String getLastName(){return lastName;}
+    @Override
     public void setLastName(String lastName){this.lastName = lastName;}
 
     public Set<TeamMemberDTO> getTeams(){return teams;}

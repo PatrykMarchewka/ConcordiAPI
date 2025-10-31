@@ -9,26 +9,28 @@ public class UserMemberDTO implements UserDTO{
     private String lastName;
 
 
+    @Deprecated
     public UserMemberDTO(User user){
         this.id = user.getID();
         this.name = user.getName();
         this.lastName = user.getLastName();
     }
 
-    @Override
-    public String toString(){
-        return id + ":" + name + " " + lastName;
-    }
-
     public UserMemberDTO(){}
 
+    @Override
     public long getID() {return id;}
+    @Override
     public void setID(Long id) {this.id = id;}
 
+    @Override
     public String getName() {return name;}
+    @Override
     public void setName(String name) {this.name = name;}
 
+    @Override
     public String getLastName(){return lastName;}
+    @Override
     public void setLastName(String lastName){this.lastName = lastName;}
 
     @Override
