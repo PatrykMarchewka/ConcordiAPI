@@ -136,7 +136,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         team = teamService.getTeamWithUserRoles(team);
 
         assertEquals(1, invitation.getUses());
-        assertDoesNotThrow(() -> teamUserRoleService.getByUserAndTeam(user1, team));
+        assertDoesNotThrow(() -> teamUserRoleService.getByUserAndTeam(user1.getID(), team.getID()));
         assertEquals(2, team.getTeammates().size());
     }
 
