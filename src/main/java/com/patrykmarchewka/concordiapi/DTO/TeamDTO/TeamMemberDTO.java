@@ -53,10 +53,14 @@ public class TeamMemberDTO implements TeamDTO {
 
     public TeamMemberDTO(){}
 
+    @Override
     public long getID() {return id;}
-    public void setID(long id) {this.id = id;}
+    @Override
+    public void setID(long id){this.id = id;}
 
+    @Override
     public String getName(){return name;}
+    @Override
     public void setName(String name){this.name = name;}
 
     public int getTeammateCount(){return teammateCount;}

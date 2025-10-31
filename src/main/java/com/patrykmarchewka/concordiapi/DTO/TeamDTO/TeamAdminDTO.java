@@ -54,10 +54,14 @@ public class TeamAdminDTO implements TeamDTO {
 
     public TeamAdminDTO(){}
 
+    @Override
     public long getID() {return id;}
+    @Override
     public void setID(long id){this.id = id;}
 
+    @Override
     public String getName(){return name;}
+    @Override
     public void setName(String name){this.name = name;}
 
     public Set<TaskMemberDTO> getTasks(){return tasks;}

@@ -7,7 +7,11 @@ import java.util.Objects;
 
 public interface TeamDTO extends TeamIdentity {
 
-    //Legacy, scheduled for removal
+    void setID(long id);
+    void setName(String name);
+
+
+
     default boolean equalsTeam(Team team){
         return Objects.equals(this.getID(), team.getID()) &&
                 Objects.equals(this.getName(), team.getName());
