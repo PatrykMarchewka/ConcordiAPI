@@ -108,8 +108,8 @@ public class TeamService {
     }
 
     @Transactional
-    public Team addUser(Team team, User user, UserRole role){
-        team.addUserRole(user, role);
+    public Team addUser(Team team, User userWithTeamRoles, UserRole role){
+        team.addUserRole(userWithTeamRoles, role);
         return saveTeam(team);
     }
 
