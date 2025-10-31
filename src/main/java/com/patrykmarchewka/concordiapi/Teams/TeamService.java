@@ -13,6 +13,7 @@ import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
@@ -217,6 +218,10 @@ public class TeamService {
      */
     public Team getTeamEntityByID(long id){
         return teamRepository.findTeamById(id).orElseThrow(NotFoundException::new);
+    }
+
+    public TeamIdentity getTeamByID(long id){
+        return teamRepository.findTeamByID(id).orElseThrow(NotFoundException::new);
     }
 
     public Team getTeamWithUserRoles(Team team){
