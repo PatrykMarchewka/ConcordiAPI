@@ -71,22 +71,6 @@ public class TeamUserRoleService {
     }
 
     /**
-     * @deprecated Will be replaced by {@link #setRole(UserRole, long, long, UserRole)}
-     * Changes already existing UserRole of User in a team
-     * @param myRole Role of the user asking for change
-     * @param user User to change role for
-     * @param team Team in which the role change occurs
-     * @param role UserRole to change it to
-     */
-    @Deprecated
-    public void setRole(UserRole myRole, User user, Team team, UserRole role){
-        forceCheckRoles(myRole, role);
-        TeamUserRole tmr = getByUserAndTeam(user,team);
-        tmr.setUserRole(role);
-        saveTMR(tmr);
-    }
-
-    /**
      * Changes already existing UserRole of User in a team
      * @param myRole Role of the user asking for change
      * @param userID User to change role for
