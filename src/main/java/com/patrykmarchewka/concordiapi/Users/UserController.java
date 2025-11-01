@@ -161,7 +161,7 @@ public class UserController {
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<APIResponse<String>> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
-        if (!context.getUserRole().isOwnerOrAdmin() || !teamUserRoleService.checkRoles(context.getUserRole(), newRole)){
+        if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
         teamUserRoleService.setRole(context.getUserRole(), userService.getUserByID(ID), context.getTeam(), newRole);
