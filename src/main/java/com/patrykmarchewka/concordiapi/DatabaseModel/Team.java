@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Teams")
-public class Team {
+public class Team implements TeamFull {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,23 +40,27 @@ public class Team {
     @Column(nullable = false)
     private Set<Invitation> invitations = new HashSet<>();
 
-    //Nullable Long to support equals and hashCode in TeamUserRole.java
-    public Long getID(){ return this.id; }
+    @Override
+    //0L to support equals and hashCode in TeamUserRole.java
+    public long getID(){ return this.id != null ? id : 0L; }
 
+    @Override
     public String getName(){ return this.name; }
-
     public void setName(String name){ this.name = name; }
 
+    @Override
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
     public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
     public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
+    @Override
     public Set<Task> getTeamTasks() { return teamTasks; }
     public void setTeamTasks(Set<Task> tasks) {
         this.teamTasks = tasks;
     }
 
+    @Override
     public Set<Invitation> getInvitations(){ return this.invitations; }
     public void setInvitations(Set<Invitation> invitations){this.invitations = invitations;}
 
@@ -103,8 +108,7 @@ public class Team {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Team)) return false;
-        Team team = (Team) o;
+        if (!(o instanceof Team team)) return false;
         return id != null && id.equals(team.getID());
     }
 
