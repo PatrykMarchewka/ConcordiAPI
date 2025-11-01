@@ -80,9 +80,9 @@ public class LoginController {
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateGroup(OnCreate.class) UserRequestLogin body){
         String token;
-        User user = userService.getUserByLoginAndPassword(body);
+        long userID = userService.getUserWithCredentialsByLoginAndPassword(body).getID();
         try {
-            token = JSONWebToken.GenerateJWToken(user.getID());
+            token = JSONWebToken.GenerateJWToken(userID);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new JWTException(e.getMessage(),e);
         }

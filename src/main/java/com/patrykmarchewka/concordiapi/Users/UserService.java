@@ -10,6 +10,7 @@ import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
@@ -54,8 +55,8 @@ public class UserService {
      * @return User with the given credentials
      * @throws WrongCredentialsException Thrown when credentials don't match
      */
-    public User getUserByLoginAndPassword(UserRequestLogin body){
-        User user = userRepository.findByLogin(body.getLogin()).orElse(null);
+    public UserWithCredentials getUserWithCredentialsByLoginAndPassword(final UserRequestLogin body){
+        UserWithCredentials user = userRepository.findUserWithCredentialsByLogin(body.getLogin()).orElse(null);
 
         //If user doesnt exist, we still run hash check
         //This is done to prevent timing attacks that could reveal valid usernames

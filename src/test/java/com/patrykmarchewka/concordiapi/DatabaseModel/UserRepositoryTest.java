@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.Passwords;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldSaveAndRetrieveUserCorrectlyBasic() {
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findByLogin("TEST").orElse(null);
+        UserWithCredentials found = userRepository.findUserWithCredentialsByLogin("TEST").orElse(null);
 
         assertNotNull(found);
         assertEquals(id, found.getID());
@@ -109,14 +110,14 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserByLogin(){
         createUser("TEST",userRepository);
 
-        User found = userRepository.findByLogin("TEST").orElse(null);
+        UserWithCredentials found = userRepository.findUserWithCredentialsByLogin("TEST").orElse(null);
 
         assertNotNull(found);
     }
 
     @Test
     void shouldReturnTrueForNonExistingUserByLogin() {
-        Optional<User> found = userRepository.findByLogin("NonExistingUser");
+        Optional<UserWithCredentials> found = userRepository.findUserWithCredentialsByLogin("NonExistingUser");
         assertTrue(found.isEmpty());
     }
 

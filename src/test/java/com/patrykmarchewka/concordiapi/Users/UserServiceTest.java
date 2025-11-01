@@ -9,6 +9,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -85,7 +86,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     void shouldSaveAndRetrieveUserByLoginAndPassword(){
         UserRequestLogin loginBody = createUserRequestLogin(user.getLogin(), "d");
 
-        User found = userService.getUserByLoginAndPassword(loginBody);
+        UserWithCredentials found = userService.getUserWithCredentialsByLoginAndPassword(loginBody);
 
         assertNotNull(found);
         assertEquals(user.getID(), found.getID());
@@ -100,7 +101,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     void shouldThrowForIncorrectLoginAndPassword(){
         UserRequestLogin loginBody = createUserRequestLogin("JaneD", "doe");
 
-        assertThrows(WrongCredentialsException.class, () -> userService.getUserByLoginAndPassword(loginBody));
+        assertThrows(WrongCredentialsException.class, () -> userService.getUserWithCredentialsByLoginAndPassword(loginBody));
     }
 
     @Test
