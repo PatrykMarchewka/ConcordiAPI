@@ -157,10 +157,10 @@ public class TestDataLoader {
     }
 
     private void getFullEntities(){
-        this.userReadOwner = userService.getUserFull(userReadOwner);
-        this.userWriteOwner = userService.getUserFull(userWriteOwner);
-        this.userDeleteOwner = userService.getUserFull(userDeleteOwner);
-        this.userMember = userService.getUserFull(userMember);
+        this.userReadOwner = userService.getUserEntityFull(userReadOwner);
+        this.userWriteOwner = userService.getUserEntityFull(userWriteOwner);
+        this.userDeleteOwner = userService.getUserEntityFull(userDeleteOwner);
+        this.userMember = userService.getUserEntityFull(userMember);
 
         this.teamRead = teamService.getTeamEntityFull(teamRead.getID());
         this.teamWrite = teamService.getTeamEntityFull(teamWrite.getID());
@@ -171,7 +171,7 @@ public class TestDataLoader {
         this.taskDelete = taskService.getTaskFull(taskDelete);
     }
 
-    public User refreshUser(User user){ return userService.getUserFull(user); }
+    public User refreshUser(User user){ return userService.getUserEntityFull(user); }
     public Team refreshTeam(Team team){ return teamService.getTeamEntityFull(team.getID()); }
     public Task refreshTask(Task task){ return taskService.getTaskFull(task); }
     public Subtask refreshSubtask(Subtask subtask){ return subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }

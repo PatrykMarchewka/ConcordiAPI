@@ -129,7 +129,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
                 user1, UserRole.ADMIN
         ));
 
-        Team found = teamService.getTeamWithUserRoles(team);
+        Team found = teamService.getTeamEntityWithUserRoles(team.getID());
         Map<User, UserRole> actual = found.getUserRoles().stream().collect(Collectors.toMap(TeamUserRole::getUser, TeamUserRole::getUserRole));
 
 
@@ -151,7 +151,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
         User user1 = userService.createUser(userRequestBody1);
         teamService.addUser(team, user1, UserRole.ADMIN);
 
-        Team found = teamService.getTeamWithUserRoles(team);
+        Team found = teamService.getTeamEntityWithUserRoles(team.getID());
 
         teamService.removeAllUsers(found);
 

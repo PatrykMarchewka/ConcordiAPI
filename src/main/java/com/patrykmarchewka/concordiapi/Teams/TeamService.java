@@ -172,30 +172,12 @@ public class TeamService {
 
 
     /**
-     * @deprecated Deprecated method, pending removal once replacement is made
-     * Returns Set of TeamDTO by calling {@link #getTeamDTOByRole(long, long)} (currently calls {@link #getTeamDTOByRole(User, Team)} as former one doesn't work yet)
+     * Returns Set of TeamDTO by calling {@link #getTeamDTOByRole(long, long)}
      * @param user User calling the action
      * @return Set of TeamDTO based on User Role
      */
-    @Deprecated
     public Set<TeamDTO> getTeamsDTO(User user){
-        return user.getTeams().stream().map(team -> getTeamDTOByRole(user, team)).collect(Collectors.toUnmodifiableSet());
-    }
-
-
-    /**
-     * @deprecated Deprecated method, currently used for compatibility. Delete once the replacement {@link #getTeamDTOByRole(long, long)} will work
-     * Returns one DTO of a team
-     * @param user User calling the action
-     * @param team Team to return DTO of
-     * @return TeamDTO based on User Role
-     * @throws NoPrivilegesException Thrown if user doesn't have enough privileges to generate DTO
-     */
-    @Deprecated
-    public TeamDTO getTeamDTOByRole(User user, Team team){
-        UserRole role = teamUserRoleService.getRole(user, team);
-        TeamWithUserRolesAndTasks teamWithUserRolesAndTasks = getTeamWithUserRolesAndTasksByID(team.getID());
-        return roleToTeamDTO.get(role).apply(teamWithUserRolesAndTasks);
+        return user.getTeams().stream().map(team -> getTeamDTOByRole(user.getID(), team.getID())).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -224,32 +206,32 @@ public class TeamService {
         return teamRepository.findTeamByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public Team getTeamWithUserRoles(Team team){
-        return teamRepository.findTeamWithUserRolesAndUsersByID(team.getID()).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+    public Team getTeamEntityWithUserRoles(long teamID){
+        return teamRepository.findTeamWithUserRolesAndUsersByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithUserRoles getTeamWithUserRoles(long teamID){
-        return teamRepository.findTeamWithUserRolesByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithUserRolesByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithTasks getTeamWithTeamTasks(long teamID){
-        return teamRepository.findTeamWithTeamTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithTeamTasksByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithUserRolesAndTasks getTeamWithUserRolesAndTasksByID(long teamID){
-        return teamRepository.findTeamWithUserRolesAndTasksByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithUserRolesAndTasksByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithInvitations getTeamWithInvitations(long teamID){
-        return teamRepository.findTeamWithInvitationsByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamWithInvitationsByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public Team getTeamEntityFull(long teamID){
-        return teamRepository.findTeamEntityFullByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamEntityFullByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamFull getTeamFull(long teamID){
-        return teamRepository.findTeamFullByID(teamID).orElseThrow(() -> new ImpossibleStateException("Team not found with provided ID"));
+        return teamRepository.findTeamFullByID(teamID).orElseThrow(NotFoundException::new);
     }
 
 

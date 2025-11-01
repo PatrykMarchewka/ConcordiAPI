@@ -86,7 +86,7 @@ public class InvitationService {
     @Transactional
     public Invitation useInvitation(String invitationID,User userWithTeamRoles){
         Invitation invitation = getInvitationByUUID(invitationID);
-        Team team = teamService.getTeamWithUserRoles(invitation.getInvitingTeam());
+        Team team = teamService.getTeamEntityWithUserRoles(invitation.getInvitingTeam().getID());
         if (team.checkUser(userWithTeamRoles.getID())){
             throw new ConflictException("You are already part of that team!");
         }

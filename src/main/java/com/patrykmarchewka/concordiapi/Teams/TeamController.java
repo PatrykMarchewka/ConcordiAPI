@@ -87,8 +87,8 @@ public class TeamController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/teams/{ID}")
     public ResponseEntity<APIResponse<TeamDTO>> getTeam(@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(ID);
-        return ResponseEntity.ok(new APIResponse<>("Information about the team", teamService.getTeamDTOByRole(context.getUser(), context.getTeam())));
+        context = context.withUser(authentication);
+        return ResponseEntity.ok(new APIResponse<>("Information about the team", teamService.getTeamDTOByRole(context.getUser().getID(), ID)));
     }
 
     /**
