@@ -91,7 +91,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", SubtaskMemberDTO.from(subtaskService.createSubtask(body,teamID,taskID))));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Subtask created", new SubtaskMemberDTO(subtaskService.createSubtask(body,teamID,taskID))));
 
     }
 
@@ -142,7 +142,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskEntityByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", SubtaskMemberDTO.from(subtaskService.putUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body))));
     }
 
     /**
@@ -168,7 +168,7 @@ public class SubtaskController {
             throw new NoPrivilegesException();
         }
         Subtask subtask = subtaskService.getSubtaskEntityByID(taskID,ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask updated", SubtaskMemberDTO.from(subtaskService.patchUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask updated", new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body))));
     }
 
     /**

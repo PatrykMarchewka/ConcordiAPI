@@ -1,4 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +16,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "Subtasks")
-public class Subtask {
+public class Subtask implements SubtaskIdentity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,10 +33,12 @@ public class Subtask {
     private TaskStatus taskStatus;
 
 
+    @Override
     public long getID() {
         return id;
     }
 
+    @Override
     public String getName(){
         return name;
     }
@@ -43,10 +46,10 @@ public class Subtask {
         this.name = name;
     }
 
+    @Override
     public String getDescription(){
         return description;
     }
-
     public void setDescription(String description){
         this.description = description;
     }
@@ -54,19 +57,17 @@ public class Subtask {
     public Task getTask() {
         return task;
     }
-
     public void setTask(Task task) {
         this.task = task;
     }
 
+    @Override
     public TaskStatus getTaskStatus() {
         return taskStatus;
     }
-
     public void setTaskStatus(TaskStatus taskStatus) {
         this.taskStatus = taskStatus;
     }
-
 
 
     @Override

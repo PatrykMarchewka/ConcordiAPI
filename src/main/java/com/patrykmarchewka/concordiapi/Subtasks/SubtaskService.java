@@ -116,7 +116,7 @@ public class SubtaskService {
     public Set<SubtaskMemberDTO> getSubtasksDTO(final Task task){
         final Set<SubtaskMemberDTO> subtasks = new HashSet<>();
         for (final Subtask sub : task.getSubtasks()){
-            subtasks.add(SubtaskMemberDTO.from(sub));
+            subtasks.add(new SubtaskMemberDTO(sub));
         }
         return subtasks;
     }
