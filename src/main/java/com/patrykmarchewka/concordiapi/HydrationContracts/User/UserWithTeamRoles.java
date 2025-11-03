@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public interface UserWithTeamRoles extends UserIdentity{
-    Set<TeamUserRole> teamRoles();
-    default Set<Team> getTeams(){return teamRoles().stream().map(TeamUserRole::getTeam).collect(Collectors.toUnmodifiableSet());}
-    default Set<Long> getTeamsIDs(){return teamRoles().stream().map(teamUserRole -> teamUserRole.getTeam().getID()).collect(Collectors.toUnmodifiableSet());}
+    Set<TeamUserRole> getTeamRoles();
+    default Set<Team> getTeams(){return getTeamRoles().stream().map(TeamUserRole::getTeam).collect(Collectors.toUnmodifiableSet());}
+    default Set<Long> getTeamsIDs(){return getTeamRoles().stream().map(teamUserRole -> teamUserRole.getTeam().getID()).collect(Collectors.toUnmodifiableSet());}
 }
