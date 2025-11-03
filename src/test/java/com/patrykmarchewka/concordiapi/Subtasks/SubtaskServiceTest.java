@@ -71,7 +71,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
 
     @Test
     void shouldSaveAndRetrieveSubtaskCorrectly(){
-        Subtask found = subtaskService.getSubtaskByID(task.getID(), subtask.getID());
+        Subtask found = subtaskService.getSubtaskEntityByID(task.getID(), subtask.getID());
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("Test Subtask", found.getName());

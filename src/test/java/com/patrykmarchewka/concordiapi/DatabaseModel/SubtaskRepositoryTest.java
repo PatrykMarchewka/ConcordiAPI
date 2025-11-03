@@ -40,7 +40,7 @@ public class SubtaskRepositoryTest implements SubtaskTestHelper, TaskTestHelper,
         Task task = createTask(team,taskRepository);
         long id = createSubtask(task,subtaskRepository).getID();
 
-        Subtask found = subtaskRepository.findSubtaskByIdAndTaskId(id, task.getID()).orElse(null);
+        Subtask found = subtaskRepository.findSubtaskEntityByIDAndTaskID(id, task.getID()).orElse(null);
 
         assertNotNull(found);
         assertEquals(id,found.getID());

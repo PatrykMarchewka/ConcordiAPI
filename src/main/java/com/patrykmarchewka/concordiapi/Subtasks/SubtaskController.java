@@ -116,7 +116,7 @@ public class SubtaskController {
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Subtask details", new SubtaskMemberDTO(subtaskService.getSubtaskIdentityByID(taskID,ID))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask details", new SubtaskMemberDTO(subtaskService.getSubtaskByID(taskID,ID))));
     }
 
     /**
@@ -141,7 +141,7 @@ public class SubtaskController {
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
         }
-        Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
+        Subtask subtask = subtaskService.getSubtaskEntityByID(taskID,ID);
         return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", SubtaskMemberDTO.from(subtaskService.putUpdate(subtask,body))));
     }
 
@@ -167,7 +167,7 @@ public class SubtaskController {
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser())){
             throw new NoPrivilegesException();
         }
-        Subtask subtask = subtaskService.getSubtaskByID(taskID,ID);
+        Subtask subtask = subtaskService.getSubtaskEntityByID(taskID,ID);
         return ResponseEntity.ok(new APIResponse<>("Subtask updated", SubtaskMemberDTO.from(subtaskService.patchUpdate(subtask,body))));
     }
 
@@ -191,7 +191,7 @@ public class SubtaskController {
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        taskService.removeSubtaskFromTaskAndDelete(context.getTask(), subtaskService.getSubtaskByID(taskID,ID));
+        taskService.removeSubtaskFromTaskAndDelete(context.getTask(), subtaskService.getSubtaskEntityByID(taskID,ID));
         return ResponseEntity.ok(new APIResponse<>("Subtask has been deleted", null));
     }
 

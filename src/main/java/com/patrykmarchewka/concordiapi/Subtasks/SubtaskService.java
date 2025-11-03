@@ -44,8 +44,8 @@ public class SubtaskService {
      * @return Subtask with provided ID in provided task
      * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
      */
-    public Subtask getSubtaskByID(long taskID, long subtaskID){
-        return subtaskRepository.findSubtaskByIdAndTaskId(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
+    public Subtask getSubtaskEntityByID(long taskID, long subtaskID){
+        return subtaskRepository.findSubtaskEntityByIDAndTaskID(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
     }
 
     /**
@@ -55,7 +55,7 @@ public class SubtaskService {
      * @return Subtask with provided ID in provided task
      * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
      */
-    public SubtaskIdentity getSubtaskIdentityByID(final long taskID, final long subtaskID){
+    public SubtaskIdentity getSubtaskByID(final long taskID, final long subtaskID){
         return subtaskRepository.findSubtaskIdentityByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
     }
 

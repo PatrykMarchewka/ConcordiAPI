@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface SubtaskRepository extends JpaRepository<Subtask,Long> {
 
-    Optional<Subtask> findSubtaskByIdAndTaskId(long subtaskID,long taskID);
+    Optional<Subtask> findSubtaskEntityByIDAndTaskID(long subtaskID,long taskID);
 
     @Query("""
     SELECT s FROM Subtask s
