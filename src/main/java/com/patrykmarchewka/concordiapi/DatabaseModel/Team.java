@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Teams")
@@ -50,8 +49,6 @@ public class Team implements TeamFull {
 
     @Override
     public Set<TeamUserRole> getUserRoles(){ return this.userRoles;}
-    public boolean checkUser(long ID){ return this.userRoles.stream().anyMatch(ur -> ur.getUser().getID() == ID); }
-    public Set<User> getTeammates(){ return this.userRoles.stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()); }
     public void setUserRoles(Set<TeamUserRole> userRoles){this.userRoles = userRoles;}
 
     @Override
