@@ -161,8 +161,8 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TaskRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getTeam(), context.getTask(), context.getUser(), context.getUserRole()))));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID);
+        return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getUser().getID(), context.getTeam(), context.getTask()))));
     }
 
     /**
@@ -182,8 +182,8 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody @ValidateGroup TaskRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getTeam(), context.getTask(), context.getUser(), context.getUserRole()))));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID);
+        return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getUser().getID(), context.getTeam(), context.getTask()))));
     }
 
     /**

@@ -22,6 +22,7 @@ import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -42,13 +43,15 @@ public class TaskService {
     private final TeamService teamService;
     private final TaskUpdatersService taskUpdatersService;
     private final UserTaskRepository userTaskRepository;
+    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository){
+    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository, TeamUserRoleService teamUserRoleService){
         this.taskRepository = taskRepository;
         this.teamService = teamService;
         this.taskUpdatersService = taskUpdatersService;
         this.userTaskRepository = userTaskRepository;
+        this.teamUserRoleService = teamUserRoleService;
     }
 
     /**
@@ -68,15 +71,15 @@ public class TaskService {
 
     /**
      * Map of UserRoles and whether they can edit task
-     * @param user User asking
+     * @param userID ID of User asking
      * @return True if user can edit task, otherwise false
      */
-    private Map<UserRole, Predicate<TaskWithUserTasks>> editTaskRoleMap(final User user) {
+    private Map<UserRole, Predicate<TaskWithUserTasks>> editTaskRoleMap(final long userID) {
         return Map.of(
                 UserRole.OWNER, t -> true,
                 UserRole.ADMIN, t -> true,
                 UserRole.MANAGER, t -> true,
-                UserRole.MEMBER, t -> t.hasUser(user)
+                UserRole.MEMBER, t -> t.hasUser(userID)
         );
     }
 
@@ -162,15 +165,14 @@ public class TaskService {
     /**
      * Edits task completely with all values
      * @param body TaskRequestBody with new values
+     * @param userID ID of User asking for edit
      * @param team Team in which task exists
      * @param task Task to edit
-     * @param user User asking for edit
-     * @param role Role of the user
      * @return Edited task
      */
     @Transactional
-    public Task putTask(TaskRequestBody body, Team team, Task task, User user, UserRole role) {
-        verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
+    public Task putTask(TaskRequestBody body, long userID, Team team, Task task) {
+        verifyTaskEditPrivilege(userID, team.getID(), task.getID());
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.putUpdate(task, body);
         return saveTask(task);
@@ -178,16 +180,15 @@ public class TaskService {
 
     /**
      * Edits partially task with new values from body
-     * @param task Task to edit
      * @param body TeamRequestBody with new updated values
+     * @param userID ID of User asking for edit
      * @param team Team in which task exists
-     * @param user User asking for edit
-     * @param role Role of the user
+     * @param task Task to edit
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(TaskRequestBody body, Team team, Task task, User user, UserRole role){
-        verifyTaskEditPrivilege(user, role, task.getID(), team.getID());
+    public Task patchTask(TaskRequestBody body, long userID, Team team, Task task){
+        verifyTaskEditPrivilege(userID, team.getID(), task.getID());
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.patchUpdate(task, body);
         return saveTask(task);
@@ -299,15 +300,15 @@ public class TaskService {
 
     /**
      * Checks whether user can modify task
-     * @param user User asking for permission
-     * @param role Role of the user in the Team
-     * @param taskID ID of Task to edit
+     * @param userID ID of User asking for permission
      * @param teamID ID of Team in which task is in
+     * @param taskID ID of Task to edit
      * @throws NoPrivilegesException Thrown when user cannot modify task
      */
-    private void verifyTaskEditPrivilege(User user, UserRole role, long taskID, long teamID){
-        final TaskWithUserTasks taskWithUserTasks = getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
-        if (!editTaskRoleMap(user).getOrDefault(role, t -> false).test(taskWithUserTasks)){
+    private void verifyTaskEditPrivilege(final long userID, final long teamID, final long taskID){
+        TaskWithUserTasks taskWithUserTasks = getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
+        UserRole role = teamUserRoleService.getRole(userID, teamID);
+        if (!editTaskRoleMap(userID).getOrDefault(role, t -> false).test(taskWithUserTasks)){
             throw new NoPrivilegesException();
         }
     }

@@ -113,7 +113,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPutTask(){
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.putTask(body1, team, task, user, UserRole.OWNER);
+        taskService.putTask(body1, user.getID(), team, task);
         Task found = taskService.getTaskFull(task);
 
         assertEquals("Task name", found.getName());
@@ -128,7 +128,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPatchTask(){
         TaskRequestBody body1 = createTaskRequestBodyPATCH(TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.patchTask(body1, team, task, user, UserRole.OWNER);
+        taskService.patchTask(body1, user.getID(), team, task);
         Task found = taskService.getTaskFull(task);
 
         assertEquals("Test task", found.getName());
@@ -143,7 +143,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPatchTaskFull(){
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.patchTask(body1, team, task, user, UserRole.OWNER);
+        taskService.patchTask(body1, user.getID(), team, task);
         Task found = taskService.getTaskFull(task);
 
         assertEquals("Task name", found.getName());

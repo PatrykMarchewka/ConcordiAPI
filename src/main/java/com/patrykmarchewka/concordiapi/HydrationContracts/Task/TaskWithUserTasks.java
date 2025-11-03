@@ -10,5 +10,6 @@ public interface TaskWithUserTasks extends TaskIdentity{
     Set<UserTask> getUserTasks();
     default Set<User> getUsers() {return getUserTasks().stream().map(UserTask::getAssignedUser).collect(Collectors.toUnmodifiableSet());}
     default boolean hasUser(User user){return getUserTasks().stream().map(UserTask::getAssignedUser).anyMatch(u -> u.equals(user));}
+    default boolean hasUser(long userID){return getUserTasks().stream().anyMatch(userTask -> userTask.getAssignedUser().getID() == userID);}
 
 }
