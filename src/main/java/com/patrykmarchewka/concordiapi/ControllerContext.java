@@ -60,12 +60,8 @@ public class ControllerContext {
         return this;
     }
 
-    /**
-     * @param teamID long to convert into Team object
-     * @return Team
-     */
-    public ControllerContext withTeam(long teamID){
-        this.team = teamService.getTeamEntityByID(teamID);
+    public ControllerContext withTeam(final long teamID){
+        this.team = (Team) teamService.getTeamByID(teamID);
         return this;
     }
 
