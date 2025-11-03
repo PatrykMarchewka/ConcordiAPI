@@ -237,7 +237,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithTeams(){
-        User found = userService.getUserWithTeams(user);
+        User found = userService.getUserEntityWithTeams(user);
 
         assertTrue(found.getTeams().isEmpty());
         assertTrue(found.getTeamRoles().isEmpty());
@@ -245,14 +245,14 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithUserTasks(){
-        User found = userService.getUserWithUserTasks(user);
+        User found = userService.getUserEntityWithUserTasks(user);
 
         assertTrue(found.getUserTasks().isEmpty());
     }
 
     @Test
     void shouldSaveAndRetrieveUserCorrectlyFull(){
-        User found = userService.getUserFull(user);
+        User found = userService.getUserEntityFull(user);
 
         assertEquals(user.getID(), found.getID());
         assertEquals("Jane", found.getName());

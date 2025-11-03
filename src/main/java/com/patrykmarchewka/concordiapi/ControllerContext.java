@@ -54,8 +54,9 @@ public class ControllerContext {
         return this;
     }
 
-    public ControllerContext withUserWithTeams(Authentication authentication){
-        this.user = userService.getUserWithTeams((User)authentication.getPrincipal());
+    public ControllerContext withUserWithTeams(final Authentication authentication){
+        long userID = ((User)authentication.getPrincipal()).getID();
+        this.user = (User) userService.getUserWithTeamRolesAndTeams(userID);
         return this;
     }
 

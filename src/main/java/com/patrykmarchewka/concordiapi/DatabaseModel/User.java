@@ -1,4 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Users")
-public class User {
+public class User implements UserFull {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,47 +41,38 @@ public class User {
     private Set<TeamUserRole> teamRoles = new HashSet<>();
 
 
+    @Override
     public long getID() {
         return id;
     }
 
-    public String getLogin(){
-        return this.login;
-    }
+    @Override
+    public String getLogin(){ return this.login; }
+    public void setLogin(String login) { this.login = login; }
 
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
+    @Override
     public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    @Override
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    @Override
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
+    @Override
     public Set<UserTask> getUserTasks() { return userTasks; }
     public void addUserTask(UserTask task){ this.userTasks.add(task); }
     public void removeUserTask(UserTask task){ this.userTasks.remove(task); }
     public void setUserTasks(Set<UserTask> tasks) {this.userTasks = tasks;}
 
+    @Override
     public Set<Team> getTeams(){return this.teamRoles.stream().map(TeamUserRole::getTeam).collect(Collectors.toUnmodifiableSet());}
 
+    @Override
     public Set<TeamUserRole> getTeamRoles() { return this.teamRoles; }
     public void addTeamRole(TeamUserRole tmr){this.teamRoles.add(tmr);}
     public void removeTeamRole(TeamUserRole tmr){this.teamRoles.remove(tmr);}
@@ -89,8 +81,7 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof User)) return false;
-        User user = (User) o;
+        if (!(o instanceof User user)) return false;
         return id != null && login != null && id.equals(user.getID()) && login.equals(user.getLogin());
     }
 

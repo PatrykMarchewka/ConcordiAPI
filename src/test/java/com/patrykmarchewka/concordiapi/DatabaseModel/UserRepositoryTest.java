@@ -52,7 +52,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserWithTeams(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
+        User found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getTeams().isEmpty());
@@ -61,7 +61,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUserWithNoTeamRoles(){
-        Optional<User> found = userRepository.findUserWithTeamRolesAndTeamsByID(0);
+        Optional<User> found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -69,7 +69,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserWithTasks(){
         long id = createUser("TEST", userRepository).getID();
 
-        User found = userRepository.findUserWithUserTasksByID(id).orElse(null);
+        User found = userRepository.findUserEntityWithUserTasksByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getUserTasks().isEmpty());
@@ -77,7 +77,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUserWithNoUserTasks(){
-        Optional<User> found = userRepository.findUserWithUserTasksByID(0);
+        Optional<User> found = userRepository.findUserEntityWithUserTasksByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -85,7 +85,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldSaveAndRetrieveUserCorrectlyFull(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserFullByID(id).orElse(null);
+        User found = userRepository.findUserEntityFullByID(id).orElse(null);
 
         assertNotNull(found);
         assertEquals(id, found.getID());
@@ -102,7 +102,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUser(){
-        Optional<User> found = userRepository.findUserFullByID(0);
+        Optional<User> found = userRepository.findUserEntityFullByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -131,7 +131,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserByID(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
+        User found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(id).orElse(null);
 
         assertNotNull(found);
     }

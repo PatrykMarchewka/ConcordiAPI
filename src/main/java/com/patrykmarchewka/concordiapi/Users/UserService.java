@@ -10,7 +10,10 @@ import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
@@ -193,16 +196,28 @@ public class UserService {
         return users;
     }
 
-    public User getUserWithTeams(User user){
-        return userRepository.findUserWithTeamRolesAndTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    public User getUserEntityWithTeams(User user){
+        return userRepository.findUserEntityWithTeamRolesAndTeamsByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
     }
 
-    public User getUserWithUserTasks(User user){
-        return userRepository.findUserWithUserTasksByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    public UserWithTeamRoles getUserWithTeamRolesAndTeams(long id){
+        return userRepository.findUserWithTeamRolesAndTeamsByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public User getUserFull(User user){
-        return userRepository.findUserFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    public User getUserEntityWithUserTasks(User user){
+        return userRepository.findUserEntityWithUserTasksByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public UserWithUserTasks getUserWithUserTasks(long id){
+        return userRepository.findUserWithUserTasksByID(id).orElseThrow(NotFoundException::new);
+    }
+
+    public User getUserEntityFull(User user){
+        return userRepository.findUserEntityFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
+    }
+
+    public UserFull getUserFull(long id){
+        return userRepository.findUserFullByID(id).orElseThrow(NotFoundException::new);
     }
 
     /**
