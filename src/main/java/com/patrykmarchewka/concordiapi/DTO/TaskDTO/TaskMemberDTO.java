@@ -40,7 +40,7 @@ public class TaskMemberDTO implements TaskDTO {
             users.add(new UserMemberDTO(user));
         }
         for (Subtask subtask : task.getSubtasks()){
-            subtasks.add(SubtaskMemberDTO.from(subtask));
+            subtasks.add(new SubtaskMemberDTO(subtask));
         }
         this.creationDate = task.getCreationDate();
         this.updateDate = task.getUpdateDate();
@@ -56,7 +56,7 @@ public class TaskMemberDTO implements TaskDTO {
             users.add(new UserMemberDTO(user));
         }
         for (Subtask subtask : task.getSubtasks()){
-            subtasks.add(SubtaskMemberDTO.from(subtask));
+            subtasks.add(new SubtaskMemberDTO(subtask));
         }
         this.creationDate = task.getCreationDate();
         this.updateDate = task.getUpdateDate();
