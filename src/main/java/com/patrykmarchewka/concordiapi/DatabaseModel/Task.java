@@ -1,4 +1,5 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskFull;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import jakarta.persistence.CascadeType;
@@ -19,11 +20,10 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Tasks")
-public class Task {
+public class Task implements TaskFull {
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private Long id;
@@ -52,10 +52,12 @@ public class Task {
     @JoinColumn(name = "team_id")
     private Team assignedTeam;
 
+    @Override
     public long getID() {
         return id;
     }
 
+    @Override
     public String getName(){
         return name;
     }
@@ -63,6 +65,7 @@ public class Task {
         this.name = name;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
@@ -70,6 +73,7 @@ public class Task {
         this.description = description;
     }
 
+    @Override
     public TaskStatus getTaskStatus() {
         return taskStatus;
     }
@@ -77,11 +81,13 @@ public class Task {
         this.taskStatus = taskStatus;
     }
 
+    @Override
     public OffsetDateTime getCreationDate() {
         return creationDate;
     }
     public void setCreationDate(OffsetDateTime creationDate) {this.creationDate = creationDate;}
 
+    @Override
     public OffsetDateTime getUpdateDate() {
         return updateDate;
     }
@@ -89,6 +95,7 @@ public class Task {
         this.updateDate = updateDate;
     }
 
+    @Override
     public Set<Subtask> getSubtasks() {
         return subtasks;
     }
@@ -96,11 +103,11 @@ public class Task {
         this.subtasks = subtasks;
     }
 
+    @Override
     public Set<UserTask> getUserTasks() { return userTasks; }
-    public Set<User> getUsers() {return userTasks.stream().map(UserTask::getAssignedUser).collect(Collectors.toUnmodifiableSet());}
-    public boolean hasUser(User user){return userTasks.stream().map(UserTask::getAssignedUser).anyMatch(u -> u.equals(user));}
     public void setUserTasks(Set<UserTask> userTasks) { this.userTasks = userTasks; }
 
+    @Override
     public Team getAssignedTeam(){ return this.assignedTeam; }
     public void setAssignedTeam(Team assignedTeam){ this.assignedTeam = assignedTeam; }
 
