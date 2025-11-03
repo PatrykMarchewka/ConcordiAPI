@@ -225,7 +225,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
@@ -250,7 +250,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userService.getUserByID(userID));
+        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 

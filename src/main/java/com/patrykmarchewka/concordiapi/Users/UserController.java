@@ -90,7 +90,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users/{ID}")
     public ResponseEntity<APIResponse<UserMemberDTO>> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
+        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(ID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
@@ -112,7 +112,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<APIResponse<String>> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userService.getUserByID(ID));
+        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(ID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 

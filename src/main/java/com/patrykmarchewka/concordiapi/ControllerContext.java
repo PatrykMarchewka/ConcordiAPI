@@ -80,10 +80,12 @@ public class ControllerContext {
     }
 
     /**
+     * @deprecated Prefer to use {@link #withRole(long, long)}
      * Requires withUser and withTeam to be called before
      * @return UserRole
      * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)} and {@link #withUser(Authentication)}
      */
+    @Deprecated
     public ControllerContext withRole(){
         if (user == null || team == null){
             throw new ImpossibleStateException("Cannot call withRole before specifying user and team!");
@@ -93,16 +95,27 @@ public class ControllerContext {
     }
 
     /**
+     *
+     * @param userID ID of User to check
+     * @param teamID ID of Team to check in
+     * @return UserRole
+     */
+    public ControllerContext withRole(long userID, long teamID){
+        this.userRole = teamUserRoleService.getRole(userID, teamID);
+        return this;
+    }
+
+    /**
      * Requires withTeam to be called before
-     * @param otherUser User to get UserRole
+     * @param userID ID of User to get UserRole
      * @return UserRole
      * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)}
      */
-    public ControllerContext withOtherRole(User otherUser){
+    public ControllerContext withOtherRole(long userID){
         if (team == null){
             throw new ImpossibleStateException("Cannot call withOtherRole before specifying team!");
         }
-        this.otherRole = teamUserRoleService.getRole(otherUser,team);
+        this.otherRole = teamUserRoleService.getRole(userID, team.getID());
         return this;
     }
 
