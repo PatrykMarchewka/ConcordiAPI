@@ -54,6 +54,7 @@ public class Subtask implements SubtaskIdentity {
         this.description = description;
     }
 
+    @Override
     public Task getTask() {
         return task;
     }
