@@ -4,7 +4,6 @@ import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamManagerDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
-import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentityAdapter;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -100,7 +99,7 @@ public class TaskControllerTest {
         assertNotNull(response.getBody());
         assertEquals("Tasks assigned to me", response.getBody().getMessage());
         assertEquals(testDataLoader.userReadOwner.getUserTasks().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(taskMemberDTO -> taskMemberDTO.equalsTask(new TaskIdentityAdapter(testDataLoader.taskRead))));
+        assertTrue(response.getBody().getData().stream().anyMatch(taskMemberDTO -> taskMemberDTO.equalsTask(testDataLoader.taskRead)));
     }
 
     @Test
@@ -118,7 +117,7 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task details", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTask(new TaskIdentityAdapter(testDataLoader.taskRead)));
+        assertTrue(response.getBody().getData().equalsTask(testDataLoader.taskRead));
     }
 
     @Test
