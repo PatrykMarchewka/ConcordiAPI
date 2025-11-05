@@ -9,7 +9,10 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
 import com.patrykmarchewka.concordiapi.Passwords;
 import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -237,7 +240,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithTeams(){
-        User found = userService.getUserEntityWithTeams(user);
+        UserWithTeamRoles found = userService.getUserWithTeamRolesAndTeams(user.getID());
 
         assertTrue(found.getTeams().isEmpty());
         assertTrue(found.getTeamRoles().isEmpty());
@@ -245,14 +248,14 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldReturnUserWithUserTasks(){
-        User found = userService.getUserEntityWithUserTasks(user);
+        UserWithUserTasks found = userService.getUserWithUserTasks(user.getID());
 
         assertTrue(found.getUserTasks().isEmpty());
     }
 
     @Test
     void shouldSaveAndRetrieveUserCorrectlyFull(){
-        User found = userService.getUserEntityFull(user);
+        UserFull found = userService.getUserFull(user.getID());
 
         assertEquals(user.getID(), found.getID());
         assertEquals("Jane", found.getName());
