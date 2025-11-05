@@ -2,7 +2,7 @@ package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
-import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -133,6 +133,6 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("The team has been disbanded", response.getBody().getMessage());
-        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTeam(testDataLoader.teamDelete));
+        assertThrows(NotFoundException.class, () -> testDataLoader.refreshTeam(testDataLoader.teamDelete));
     }
 }
