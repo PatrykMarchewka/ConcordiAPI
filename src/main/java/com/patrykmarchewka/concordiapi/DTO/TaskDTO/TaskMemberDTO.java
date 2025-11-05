@@ -31,22 +31,6 @@ public class TaskMemberDTO implements TaskDTO {
     @JsonIgnore
     private Team assignedTeam;
 
-    public TaskMemberDTO(Task task){
-        this.id = task.getID();
-        this.name = task.getName();
-        this.description = task.getDescription();
-        this.taskStatus = task.getTaskStatus();
-        for (User user : task.getUsers()){
-            users.add(new UserMemberDTO(user));
-        }
-        for (Subtask subtask : task.getSubtasks()){
-            subtasks.add(new SubtaskMemberDTO(subtask));
-        }
-        this.creationDate = task.getCreationDate();
-        this.updateDate = task.getUpdateDate();
-        this.assignedTeam = task.getAssignedTeam();
-    }
-
     public TaskMemberDTO(TaskFull task){
         this.id = task.getID();
         this.name = task.getName();
