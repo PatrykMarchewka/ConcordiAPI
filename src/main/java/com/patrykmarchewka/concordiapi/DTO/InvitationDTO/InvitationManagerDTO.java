@@ -1,7 +1,10 @@
 package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
+import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.time.OffsetDateTime;
@@ -12,14 +15,15 @@ public class InvitationManagerDTO implements InvitationDTO{
     private TeamMemberDTO team;
     private UserRole role;
     private short uses;
-    private String dueTime;
+    @JsonIgnore
+    private OffsetDateTime dueTime;
 
-    public InvitationManagerDTO(Invitation invitation){
+    public InvitationManagerDTO(InvitationWithTeam invitation){
         this.UUID = invitation.getUUID();
-        this.team = new TeamMemberDTO(invitation.getInvitingTeam(), null);
+        this.team = new TeamMemberDTO(invitation.getInvitingTeam());
         this.role = invitation.getRole();
         this.uses = invitation.getUses();
-        this.dueTime = (invitation.getDueTime() != null) ? invitation.getDueTime().toString() : null;
+        this.dueTime = invitation.getDueTime();
     }
 
     public InvitationManagerDTO(){}
@@ -36,6 +40,9 @@ public class InvitationManagerDTO implements InvitationDTO{
     public short getUses(){return this.uses;}
     public void setUses(short uses){this.uses = uses;}
 
-    public String getDueTime(){return this.dueTime;}
-    public void setDueTime(OffsetDateTime dueTime){this.dueTime = (dueTime != null) ? dueTime.toString() : null;}
+    public OffsetDateTime getDueTime(){return this.dueTime;}
+    public void setDueTime(OffsetDateTime dueTime){this.dueTime = dueTime;}
+
+    @JsonProperty("dueTime")
+    public String getDueTimeString(){return OffsetDateTimeConverter.formatDate(this.dueTime);}
 }

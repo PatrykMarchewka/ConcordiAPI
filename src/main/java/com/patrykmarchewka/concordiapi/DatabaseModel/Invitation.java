@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationFull;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.persistence.Column;
@@ -19,7 +20,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "Invitations")
-public class Invitation {
+public class Invitation implements InvitationFull {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String UUID;
@@ -34,18 +35,23 @@ public class Invitation {
     @Convert(converter = OffsetDateTimeConverter.class)
     private OffsetDateTime dueTime;
 
+    @Override
     public String getUUID(){return this.UUID;}
     public void setUUID(String UUID){this.UUID = UUID;}
 
+    @Override
     public Team getInvitingTeam(){return this.invitingTeam;}
     public void setInvitingTeam(Team invitingTeam){this.invitingTeam = invitingTeam;}
 
+    @Override
     public short getUses(){return uses;}
     public void setUses(short uses){this.uses = uses;}
 
+    @Override
     public UserRole getRole() {return role;}
     public void setRole(UserRole role) {this.role = role;}
 
+    @Override
     public OffsetDateTime getDueTime() {return dueTime;}
     public void setDueTime(OffsetDateTime dueTime) {this.dueTime = dueTime;}
 
