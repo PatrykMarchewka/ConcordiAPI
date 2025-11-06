@@ -61,7 +61,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users")
     public ResponseEntity<APIResponse<Set<UserMemberDTO>>> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
-        context = context.withUser(authentication).withTeam(teamID).withRole(context.getUser().getID(), teamID);
+        context = context.withUser(authentication).withTeam(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -90,11 +90,14 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users/{ID}")
     public ResponseEntity<APIResponse<UserMemberDTO>> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withRole(context.getUser().getID(), teamID).withOtherRole(ID);
+        context = context.withUser(authentication).withRole(teamID).withOtherRole(teamID, ID);
+        if (!context.getUserRole().isAllowedBasic()){
+            throw new NoPrivilegesException();
+        }
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
-        return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
+        return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(context.getUser())));
     }
 
     /**
@@ -112,7 +115,10 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<APIResponse<String>> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withRole(context.getUser().getID(), teamID).withOtherRole(ID);
+        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(ID);
+        if (!context.getUserRole().isAllowedBasic()){
+            throw new NoPrivilegesException();
+        }
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
@@ -133,7 +139,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/me")
     public ResponseEntity<APIResponse<String>> leaveTeam(@PathVariable long teamID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole(context.getUser().getID(), teamID);
+        context = context.withUser(authentication).withTeam(teamID).withRole();
 
         if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
@@ -160,7 +166,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/users/{ID}/role")
     public ResponseEntity<APIResponse<String>> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
-        context = context.withUser(authentication).withRole(context.getUser().getID(), teamID);
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
