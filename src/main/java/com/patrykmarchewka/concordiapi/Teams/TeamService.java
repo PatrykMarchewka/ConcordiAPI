@@ -118,31 +118,31 @@ public class TeamService {
      * Removes specified user from the team, removes the user from tasks attached to the team and removes role mention for that user. <br>
      * If the team would end up empty without any pending invitations the team gets deleted too
      * @param teamID ID of Team that contains the user that we want to remove
-     * @param user User to be removed
+     * @param userID ID of User to be removed
      */
     @Transactional
-    public Team removeUser(long teamID, User user){
+    public Team removeUser(long teamID, long userID){
         Team newteam = getTeamEntityFull(teamID);
-        removeTeamUserRoleForUser(newteam, user);
-        removeTeamTasksForUser(newteam, user);
+        removeTeamUserRoleForUser(newteam, userID);
+        removeTeamTasksForUser(newteam, userID);
         return deleteTeamIfEmpty(newteam);
     }
 
-    public void removeTeamUserRoleForUser(Team team, User user){
+    public void removeTeamUserRoleForUser(Team team, long userID){
         if (!Hibernate.isInitialized(team.getUserRoles())){
             throw new ImpossibleStateException("Cannot access userRoles for given team");
         }
-        team.removeUserRole(teamUserRoleService.getByUserAndTeam(user, team));
+        team.removeUserRole(teamUserRoleService.getByUserAndTeam(userID, team.getID()));
         saveTeam(team);
     }
 
-    public void removeTeamTasksForUser(Team team, User user){
+    public void removeTeamTasksForUser(Team team, long userID){
         if (!Hibernate.isInitialized(team.getTeamTasks())){
             throw new ImpossibleStateException("Cannot access teamTasks for given team");
         }
         for (Task task : team.getTeamTasks()){
-            if (task.getUsers().contains(user)){
-                taskService.removeUserFromTask(task, user);
+            if (task.getUsers().stream().anyMatch(user -> user.getID() == userID)){
+                taskService.removeUserFromTask(task, userID);
             }
         }
         saveTeam(team);
@@ -160,13 +160,13 @@ public class TeamService {
     }
 
     /**
-     * Removes all users from team using {@link #removeUser(long, User)}
+     * Removes all users from team using {@link #removeUser(long, long)}
      * @param team Team to remove everyone from
      */
     @Transactional
     public void removeAllUsers(Team team){
         for (User user : team.getTeammates()){
-            removeUser(team.getID(),user);
+            removeUser(team.getID(),user.getID());
         }
     }
 

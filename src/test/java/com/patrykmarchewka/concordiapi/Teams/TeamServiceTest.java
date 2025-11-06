@@ -113,7 +113,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldDeleteTeamByUserLeaving(){
-        teamService.removeUser(team.getID(), user);
+        teamService.removeUser(team.getID(), user.getID());
 
         assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(team.getID()));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
@@ -137,7 +137,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
         assertEquals(expected, actual);
 
 
-        found = teamService.removeUser(found.getID(),user1);
+        found = teamService.removeUser(found.getID(),user1.getID());
         expected.remove(user1);
         actual = found.getUserRoles().stream().collect(Collectors.toMap(TeamUserRole::getUser, TeamUserRole::getUserRole));
 
