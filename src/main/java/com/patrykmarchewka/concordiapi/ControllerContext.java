@@ -80,17 +80,23 @@ public class ControllerContext {
     }
 
     /**
-     * @deprecated Prefer to use {@link #withRole(long, long)}
      * Requires withUser and withTeam to be called before
      * @return UserRole
      * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)} and {@link #withUser(Authentication)}
      */
-    @Deprecated
     public ControllerContext withRole(){
-        if (user == null || team == null){
-            throw new ImpossibleStateException("Cannot call withRole before specifying user and team!");
-        }
-        this.userRole = teamUserRoleService.getRole(user,team);
+        resolveRole(null, null);
+        return this;
+    }
+
+    /**
+     * Requires withUser to be called before
+     * @param teamID ID of the Team to check in
+     * @return UserRole of the user in the provided Team
+     * @throws ImpossibleStateException Thrown when called before {@link #withUser(Authentication)}
+     */
+    public ControllerContext withRole(long teamID){
+        resolveRole(null, teamID);
         return this;
     }
 
@@ -101,8 +107,19 @@ public class ControllerContext {
      * @return UserRole
      */
     public ControllerContext withRole(long userID, long teamID){
-        this.userRole = teamUserRoleService.getRole(userID, teamID);
+        resolveRole(userID, teamID);
         return this;
+    }
+
+    private void resolveRole(Long userID, Long teamID){
+        Long resolvedUserID = (userID != null) ? userID : (user != null) ? user.getID() : null;
+        Long resolvedTeamID = (teamID != null) ? teamID : (team != null) ? team.getID() : null;
+
+        if (resolvedUserID == null || resolvedTeamID == null){
+            throw new ImpossibleStateException("Cannot resolve user/team for withRole");
+        }
+
+        this.userRole = teamUserRoleService.getRole(resolvedUserID, resolvedTeamID);
     }
 
     /**
