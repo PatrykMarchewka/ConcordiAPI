@@ -65,18 +65,52 @@ public class ControllerContext {
         return this;
     }
 
+
+
+    public ControllerContext withTaskWithUserTasks(long taskID){
+       resolveTaskWithUserTasks(null, taskID);
+        return this;
+    }
+
+    public ControllerContext withTaskWithUserTasks(long teamID, long taskID){
+        resolveTaskWithUserTasks(teamID, taskID);
+        return this;
+    }
+
+    private void resolveTaskWithUserTasks(Long teamID, long taskID){
+        Long resolvedTeamID = (teamID != null) ? teamID : (team != null) ? team.getID() : null;
+
+        if (resolvedTeamID == null){
+            throw new ImpossibleStateException("Cannot resolve team for withTaskWithUserTasks");
+        }
+
+        this.task = (Task) taskService.getTaskWithUserTasksByIDAndTeamID(taskID, resolvedTeamID);
+    }
+
     /**
      * Requires withTeam to be called before
-     * @param taskID long to convert into Task object
+     * @param taskID ID of the task to check for
      * @return Task
      * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)}
      */
-    public ControllerContext withTask(long taskID){
-        if (team == null){
-            throw new ImpossibleStateException("Cannot call withTask before specifying team!");
-        }
-        this.task = taskService.getTaskByIDAndTeam(taskID,team);
+    public ControllerContext withTaskFull(long taskID){
+        resolveTaskFull(null, taskID);
         return this;
+    }
+
+    public ControllerContext withTaskFull(long teamID, long taskID){
+        resolveTaskFull(teamID, taskID);
+        return this;
+    }
+
+    private void resolveTaskFull(Long teamID, long taskID){
+        Long resolvedTeamID = (teamID != null) ? teamID : (team != null) ? team.getID() : null;
+
+        if (resolvedTeamID == null){
+            throw new ImpossibleStateException("Cannot resolve team for withTaskFull");
+        }
+
+        this.task = (Task) taskService.getTaskFullByIDAndTeamID(taskID, resolvedTeamID);
     }
 
     /**
