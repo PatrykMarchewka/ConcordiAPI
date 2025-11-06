@@ -10,6 +10,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -70,7 +71,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
 
     @Test
     void shouldSaveAndRetrieveInvitationCorrectly(){
-        Invitation found = invitationService.getInvitationByUUID(invitation.getUUID());
+        InvitationWithTeam found = invitationService.getInvitationWithTeamByUUID(invitation.getUUID());
 
         assertEquals(invitation.getUUID(), found.getUUID());
         assertEquals(invitation.getRole(), found.getRole());
@@ -172,7 +173,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     void shouldGetInvitationsDTO(){
         InvitationRequestBody body1 = createInvitationRequestBody(UserRole.MEMBER, (short)101, OffsetDateTimeConverter.MAXConverted());
         Invitation invitation1 = invitationService.createInvitation(UserRole.OWNER,body1, team.getID());
-        Set<InvitationManagerDTO> found = invitationService.getInvitationsDTO(team);
+        Set<InvitationManagerDTO> found = invitationService.getInvitationsDTO(team.getID());
 
         assertEquals(2, found.size());
         assertTrue(found.stream().anyMatch(i -> i.equalsInvitation(invitation)));

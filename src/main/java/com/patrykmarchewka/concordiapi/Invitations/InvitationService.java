@@ -8,6 +8,8 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationIdentity;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
@@ -58,7 +60,7 @@ public class InvitationService {
      */
     @Transactional
     public Invitation putInvitation(String invitationID, InvitationRequestBody body){
-        Invitation invitation = getInvitationByUUID(invitationID);
+        Invitation invitation = getInvitationEntityByUUID(invitationID);
         invitationUpdatersService.putUpdate(invitation, body);
         return saveInvitation(invitation);
     }
@@ -71,7 +73,7 @@ public class InvitationService {
      */
     @Transactional
     public Invitation patchInvitation(String invitationID, InvitationRequestBody body){
-        Invitation invitation = getInvitationByUUID(invitationID);
+        Invitation invitation = getInvitationEntityByUUID(invitationID);
         invitationUpdatersService.patchUpdate(invitation, body);
         return saveInvitation(invitation);
     }
@@ -85,7 +87,7 @@ public class InvitationService {
      */
     @Transactional
     public Invitation useInvitation(String invitationID,User userWithTeamRoles){
-        Invitation invitation = getInvitationByUUID(invitationID);
+        Invitation invitation = getInvitationEntityByUUID(invitationID);
         Team team = teamService.getTeamEntityWithUserRoles(invitation.getInvitingTeam().getID());
         if (team.checkUser(userWithTeamRoles.getID())){
             throw new ConflictException("You are already part of that team!");
@@ -105,36 +107,52 @@ public class InvitationService {
     }
 
     /**
+     * Deletes invitation completely
+     * @param invID ID of Invitation to delete
+     */
+    public void deleteInvitation(String invID){
+        Invitation invitation = getInvitationEntityByUUID(invID);
+        invitationRepository.delete(invitation);
+    }
+
+    /**
+     * Gets all invitations in a team and converts them to DTOs
+     * @param teamID ID of Team to check in
+     * @return Set of InvitationManagerDTO for all invitations in the team
+     */
+    @Transactional(readOnly = true)
+    public Set<InvitationManagerDTO> getInvitationsDTO(long teamID){
+        Set<InvitationManagerDTO> invitations = new HashSet<>();
+        for (InvitationWithTeam inv : invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID).orElseThrow(NotFoundException::new)){
+            invitations.add(new InvitationManagerDTO(inv));
+        }
+        return invitations;
+    }
+
+    /**
      * Gets invitation with provided UUID
      * @param UUID UUID to check for
      * @return Invitation with specified UUID
      * @throws NotFoundException Thrown when no invitation can be found with given UUID
      */
-    public Invitation getInvitationByUUID(String UUID){
-        return invitationRepository.findByUUID(UUID).orElseThrow(NotFoundException::new);
+    public Invitation getInvitationEntityByUUID(String UUID){
+        return invitationRepository.findInvitationEntityByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 
-    /**
-     * Deletes invitation completely
-     * @param invID ID of Invitation to delete
-     */
-    public void deleteInvitation(String invID){
-        Invitation invitation = getInvitationByUUID(invID);
-        invitationRepository.delete(invitation);
+    public InvitationIdentity getInvitationByUUID(String UUID){
+        return invitationRepository.findInvitationByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 
-    /**
-     * Gets all invitations in a team and converts them to DTO
-     * @param team Team to check in
-     * @return Set of InvitationDTO for all invitations in the team
-     */
-    @Transactional(readOnly = true)
-    public Set<InvitationManagerDTO> getInvitationsDTO(Team team){
-            Set<InvitationManagerDTO> invitations = new HashSet<>();
-            for (Invitation inv : invitationRepository.getAllByInvitingTeam(team)){
-                invitations.add(new InvitationManagerDTO(inv));
-            }
-            return invitations;
+    public InvitationWithTeam getInvitationWithTeamByUUID(String UUID){
+        return invitationRepository.findInvitationWithTeamByUUID(UUID).orElseThrow(NotFoundException::new);
+    }
+
+    public Set<InvitationWithTeam> getAllInvitationsWithTeamByInvitingTeamID(long teamID){
+        return invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public Invitation getInvitationEntityFullByUUID(String UUID){
+        return invitationRepository.findInvitationEntityFullByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 
     /**

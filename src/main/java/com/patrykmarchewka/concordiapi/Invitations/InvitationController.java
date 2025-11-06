@@ -60,12 +60,12 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(context.getUser().getID(), teamID);
 
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team",invitationService.getInvitationsDTO(context.getTeam())));
+        return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team",invitationService.getInvitationsDTO(teamID)));
     }
 
     /**

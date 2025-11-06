@@ -125,7 +125,7 @@ public class ControllerContext {
      */
     @Deprecated
     public ControllerContext withInvitation(String UUID){
-        this.invitation = invitationService.getInvitationByUUID(UUID);
+        this.invitation = invitationService.getInvitationEntityFullByUUID(UUID);
         return this;
     }
 

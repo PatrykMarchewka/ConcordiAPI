@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.junit.jupiter.api.AfterEach;
@@ -8,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
-
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,9 +36,9 @@ public class InvitationRepositoryTest implements InvitationTestHelper, TeamTestH
     @Test
     void shouldSaveAndRetrieveInvitationCorrectly(){
         Team team = createTeam(teamRepository);
-        Invitation invitation = createInvitation(team, UserRole.MEMBER,1,invitationRepository);
+        String uuid = createInvitation(team, UserRole.MEMBER,1,invitationRepository).getUUID();
 
-        Invitation found = invitationRepository.findByUUID(invitation.getUUID()).orElse(null);
+        InvitationWithTeam found = invitationRepository.findInvitationWithTeamByUUID(uuid).orElse(null);
 
         assertNotNull(found);
         assertEquals(team,found.getInvitingTeam());
