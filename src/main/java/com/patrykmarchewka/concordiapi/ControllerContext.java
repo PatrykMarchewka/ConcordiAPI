@@ -163,11 +163,22 @@ public class ControllerContext {
      * @throws ImpossibleStateException Thrown when called before {@link #withTeam(long)}
      */
     public ControllerContext withOtherRole(long userID){
-        if (team == null){
-            throw new ImpossibleStateException("Cannot call withOtherRole before specifying team!");
-        }
-        this.otherRole = teamUserRoleService.getRole(userID, team.getID());
+        resolveOtherRole(null, userID);
         return this;
+    }
+
+    public ControllerContext withOtherRole(long teamID, long userID){
+        resolveOtherRole(teamID, userID);
+        return this;
+    }
+
+    private void resolveOtherRole(Long teamID, long userID){
+        Long resolvedTeamID = (teamID != null) ? teamID : (team != null) ? team.getID() : null;
+        if (resolvedTeamID == null){
+            throw new ImpossibleStateException("Cannot resolve team for withOtherRole");
+        }
+
+        this.otherRole = teamUserRoleService.getRole(userID,resolvedTeamID);
     }
 
     /**
