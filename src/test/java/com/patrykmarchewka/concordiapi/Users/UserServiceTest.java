@@ -59,7 +59,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldSaveAndRetrieveUserCorrectlyBasic(){
-        User found = userService.getUserByID(user.getID());
+        User found = userService.getUserEntityByID(user.getID());
 
         assertNotNull(found);
         assertEquals(user.getID(), found.getID());
@@ -118,9 +118,9 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     void shouldPutUser(){
         UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
 
-        User found = userService.getUserByID(user.getID());
+        User found = userService.getUserEntityByID(user.getID());
         userService.putUser(found,newBody);
-        User newFound = userService.getUserByID(user.getID());
+        User newFound = userService.getUserEntityByID(user.getID());
 
 
         assertNotNull(newFound);
@@ -136,9 +136,9 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     void shouldPatchUser(){
         UserRequestBody newBody = createUserRequestBodyPATCH("NotJane");
 
-        User found = userService.getUserByID(user.getID());
+        User found = userService.getUserEntityByID(user.getID());
         userService.patchUser(found, newBody);
-        User newFound = userService.getUserByID(user.getID());
+        User newFound = userService.getUserEntityByID(user.getID());
 
         assertNotNull(newFound);
         assertEquals(user.getID(), newFound.getID());
@@ -153,9 +153,9 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     void shouldPatchUserFull(){
         UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
 
-        User found = userService.getUserByID(user.getID());
+        User found = userService.getUserEntityByID(user.getID());
         userService.patchUser(found,newBody);
-        User newFound = userService.getUserByID(user.getID());
+        User newFound = userService.getUserEntityByID(user.getID());
 
         assertNotNull(newFound);
         assertEquals(user.getID(), newFound.getID());
@@ -168,10 +168,10 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
 
     @Test
     void shouldDeleteUser(){
-        User found = userService.getUserByID(user.getID());
+        User found = userService.getUserEntityByID(user.getID());
         userService.deleteUser(found);
 
-        assertThrows(NotFoundException.class, () -> userService.getUserByID(user.getID()));
+        assertThrows(NotFoundException.class, () -> userService.getUserEntityByID(user.getID()));
     }
 
     @Test

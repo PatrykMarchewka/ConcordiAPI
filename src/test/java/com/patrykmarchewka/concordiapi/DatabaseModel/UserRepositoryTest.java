@@ -2,6 +2,8 @@ package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
 import com.patrykmarchewka.concordiapi.Passwords;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +54,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserWithTeams(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(id).orElse(null);
+        UserWithTeamRoles found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getTeams().isEmpty());
@@ -61,7 +63,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUserWithNoTeamRoles(){
-        Optional<User> found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(0);
+        Optional<UserWithTeamRoles> found = userRepository.findUserWithTeamRolesAndTeamsByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -69,7 +71,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnUserWithTasks(){
         long id = createUser("TEST", userRepository).getID();
 
-        User found = userRepository.findUserEntityWithUserTasksByID(id).orElse(null);
+        UserWithUserTasks found = userRepository.findUserWithUserTasksByID(id).orElse(null);
 
         assertNotNull(found);
         assertTrue(found.getUserTasks().isEmpty());
@@ -77,7 +79,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUserWithNoUserTasks(){
-        Optional<User> found = userRepository.findUserEntityWithUserTasksByID(0);
+        Optional<UserWithUserTasks> found = userRepository.findUserWithUserTasksByID(0);
         assertTrue(found.isEmpty());
     }
 
@@ -125,15 +127,6 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldReturnTrueForExistsByLogin() {
         createUser("TEST",userRepository);
         assertTrue(userRepository.existsByLogin("TEST"));
-    }
-
-    @Test
-    void shouldReturnUserByID(){
-        long id = createUser("TEST",userRepository).getID();
-
-        User found = userRepository.findUserEntityWithTeamRolesAndTeamsByID(id).orElse(null);
-
-        assertNotNull(found);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
@@ -14,6 +15,14 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User,Long> {
     boolean existsByLogin(String login);
 
+    Optional<User> findUserEntityByID(long id);
+
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.id = :id
+""")
+    Optional<UserIdentity> findUserByID(@Param("id") long id);
+
     @Query("""
         SELECT u from User u
         WHERE u.login = :login
@@ -26,22 +35,7 @@ public interface UserRepository extends JpaRepository<User,Long> {
         LEFT JOIN FETCH tr.team
         WHERE u.id = :id
 """)
-    Optional<User>findUserEntityWithTeamRolesAndTeamsByID(@Param("id") long id);
-
-    @Query("""
-        SELECT u FROM User u
-        LEFT JOIN FETCH u.teamRoles tr
-        LEFT JOIN FETCH tr.team
-        WHERE u.id = :id
-""")
     Optional<UserWithTeamRoles> findUserWithTeamRolesAndTeamsByID(@Param("id") long id);
-
-    @Query("""
-    SELECT u FROM User u
-    LEFT JOIN FETCH u.userTasks
-    WHERE u.id = :id
-""")
-    Optional<User>findUserEntityWithUserTasksByID(@Param("id") long id);
 
     @Query("""
     SELECT u FROM User u
