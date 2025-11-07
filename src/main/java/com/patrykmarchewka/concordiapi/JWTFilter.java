@@ -62,13 +62,11 @@ public class JWTFilter extends OncePerRequestFilter {
             if (now > exp) {
                 throw new JWTAuthenticationException("Token expired");
             } else {
-                Long ID = Long.valueOf(payload.get("uID").toString());
+                long ID = Long.parseLong(payload.get("uID").toString());
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    User user = userService.getUserByID(ID);
-                    if (user != null) {
-                        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, List.of());
-                        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                    }
+                    User user = (User) userService.getUserByID(ID);
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
         }
