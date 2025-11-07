@@ -97,7 +97,7 @@ public class UserController {
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
-        return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(context.getUser())));
+        return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
     }
 
     /**
