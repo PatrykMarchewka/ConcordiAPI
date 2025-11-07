@@ -1,5 +1,5 @@
 package com.patrykmarchewka.concordiapi.DTO.UserDTO;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserIdentity;
 
 import java.util.Objects;
 
@@ -9,8 +9,7 @@ public class UserMemberDTO implements UserDTO{
     private String lastName;
 
 
-    @Deprecated
-    public UserMemberDTO(User user){
+    public UserMemberDTO(UserIdentity user){
         this.id = user.getID();
         this.name = user.getName();
         this.lastName = user.getLastName();
