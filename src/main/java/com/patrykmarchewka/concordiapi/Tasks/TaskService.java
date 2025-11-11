@@ -396,11 +396,19 @@ public class TaskService {
      * @return Set of all TaskFull in given Team
      */
     public Set<TaskFull> getAllTaskFullByTeamID(final long teamID){
-        return taskRepository.findAllTaskFullByAssignedTeamID(teamID).orElseThrow(NotFoundException::new);
+        Set<TaskFull> result = taskRepository.findAllTaskFullByAssignedTeamID(teamID);
+        if (result.isEmpty()){
+            throw new NotFoundException(String.format("Couldnt find any tasks for team with ID of %d ", teamID));
+        }
+        return result;
     }
 
     public Set<TaskFull> getAllTaskFullByTeamIDAndUserID(final long teamID, final long userID){
-        return taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(teamID, userID).orElseThrow(NotFoundException::new);
+        Set<TaskFull> result = taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(teamID, userID);
+        if (result.isEmpty()){
+            throw new NotFoundException(String.format("Couldnt find any tasks for team with ID of %d and user ID of %d ", teamID, userID));
+        }
+        return result;
     }
 
     public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){

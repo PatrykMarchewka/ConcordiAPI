@@ -19,22 +19,6 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
         WHERE t.id = :id AND t.assignedTeam.id = :teamID
 """)
     Optional<TaskIdentity> findTaskByIDAndAssignedTeamID(@Param("id") long id, @Param("teamID") long teamID);
-
-    @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.assignedTeam
-    WHERE t.assignedTeam.id = :teamID
-""")
-    Set<TaskIdentity> getByAssignedTeamID(@Param("teamID") long teamID);
-
-    @Query("""
-    SELECT DISTINCT t FROM Task t
-    JOIN t.userTasks ut
-    LEFT JOIN FETCH t.assignedTeam
-    WHERE t.assignedTeam.id = :teamID AND ut.assignedUser.id = :userID
-""")
-    Set<TaskIdentity> getByAssignedTeamIDAndAssignedUserID(@Param("teamID") long teamID, @Param("userID") long userID);
-
     @Query("""
     SELECT t FROM Task t
     LEFT JOIN FETCH t.userTasks ut
@@ -53,6 +37,19 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     @EntityGraph(attributePaths = {"userTasks", "userTasks.assignedUser", "subtasks", "assignedTeam"})
     @Query("SELECT t FROM Task t WHERE t.id = :id AND t.assignedTeam.id = :teamID")
     Optional<TaskFull> findTaskFullByIDAndAssignedTeamID(@Param("id") long id, @Param("teamID") long teamID);
+
+    @EntityGraph(attributePaths = {"userTasks", "userTasks.assignedUser", "subtasks", "assignedTeam"})
+    @Query("SELECT DISTINCT t FROM Task t WHERE t.assignedTeam.id = :teamID")
+    Set<TaskFull> findAllTaskFullByAssignedTeamID(@Param("teamID") long teamID);
+
+    @EntityGraph(attributePaths = {"userTasks", "userTasks.assignedUser", "subtasks", "assignedTeam"})
+    @Query("""
+    SELECT DISTINCT t FROM Task t
+    JOIN t.userTasks ut
+    WHERE t.assignedTeam.id = :teamID AND ut.assignedUser.id = :userID
+""")
+    Set<TaskFull> findAllTaskFullByAssignedTeamIDAndAssignedUserID(@Param("teamID") long teamID, @Param("userID") long userID);
+
 
     /// Legacy
     Optional<Task> findByIdAndAssignedTeam(long id, Team assignedTeam);
