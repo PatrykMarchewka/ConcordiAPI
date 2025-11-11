@@ -10,9 +10,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.JWTException;
@@ -133,7 +131,7 @@ public class LoginController {
     @PatchMapping("/me")
     @Transactional
     public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody @ValidateGroup UserRequestBody body, Authentication authentication){
-        context = context.withUser(authentication);
+        context = context.withUserFull(authentication);
         return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(userService.patchUser(context.getUser(), body))));
     }
 
@@ -173,8 +171,7 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationMemberDTO>> getInfoAboutInvitation(@PathVariable String invID){
-        context = context.withInvitation(invID);
-        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(context.getInvitation())));
+        return ResponseEntity.ok(new APIResponse<>("The provided invitation information",new InvitationMemberDTO(invitationService.getInvitationWithTeamByUUID(invID))));
     }
 
     /**
@@ -193,9 +190,7 @@ public class LoginController {
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
         context = context.withUserWithTeams(authentication);
-        User user = context.getUser();
-        Invitation invitation = invitationService.useInvitation(invID, user);
-        Team team = invitation.getInvitingTeam();
-        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, user)));
+        Team team = invitationService.useInvitation(invID, context.getUser()).getInvitingTeam();
+        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, context.getUser())));
     }
 }

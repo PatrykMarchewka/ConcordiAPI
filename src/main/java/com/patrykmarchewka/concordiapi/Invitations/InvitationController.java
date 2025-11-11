@@ -42,7 +42,6 @@ public class InvitationController {
     public InvitationController(InvitationService invitationService, ControllerContext context){
         this.invitationService = invitationService;
         this.context = context;
-
     }
 
     /**
@@ -60,8 +59,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
-        context = context.withUser(authentication).withRole(context.getUser().getID(), teamID);
-
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -84,8 +82,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @ValidateGroup(OnCreate.class) InvitationRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
-
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -107,12 +104,11 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withInvitation(invID);
-
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(context.getInvitation())));
+        return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(invitationService.getInvitationWithTeamByUUID(invID))));
     }
 
     /**
@@ -132,7 +128,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup(OnPut.class) InvitationRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -156,7 +152,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateGroup InvitationRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -178,7 +174,7 @@ public class InvitationController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<String>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
