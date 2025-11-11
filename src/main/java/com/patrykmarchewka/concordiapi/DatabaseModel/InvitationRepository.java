@@ -31,7 +31,7 @@ public interface InvitationRepository extends JpaRepository<Invitation,String> {
     LEFT JOIN FETCH i.invitingTeam
     WHERE i.invitingTeam.id = :teamID
 """)
-    Optional<Set<InvitationWithTeam>> findAllInvitationsWithTeamByInvitingTeam(@Param("teamID") long teamID);
+    Set<InvitationWithTeam> findAllInvitationsWithTeamByInvitingTeam(@Param("teamID") long teamID);
 
     @EntityGraph(attributePaths = {"invitingTeam"})
     @Query("SELECT i FROM Invitation i WHERE i.UUID = :uuid")

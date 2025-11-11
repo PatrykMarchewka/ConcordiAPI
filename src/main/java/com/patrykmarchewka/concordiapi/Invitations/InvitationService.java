@@ -123,7 +123,7 @@ public class InvitationService {
     @Transactional(readOnly = true)
     public Set<InvitationManagerDTO> getInvitationsDTO(long teamID){
         Set<InvitationManagerDTO> invitations = new HashSet<>();
-        for (InvitationWithTeam inv : invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID).orElseThrow(NotFoundException::new)){
+        for (InvitationWithTeam inv : getAllInvitationsWithTeamByInvitingTeamID(teamID)){
             invitations.add(new InvitationManagerDTO(inv));
         }
         return invitations;
@@ -148,7 +148,11 @@ public class InvitationService {
     }
 
     public Set<InvitationWithTeam> getAllInvitationsWithTeamByInvitingTeamID(long teamID){
-        return invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID).orElseThrow(NotFoundException::new);
+        Set<InvitationWithTeam> result = invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID);
+        if (result.isEmpty()){
+            throw new NotFoundException(String.format("Couldnt find invitations with inviting team if of %d", teamID));
+        }
+        return result;
     }
 
     public Invitation getInvitationEntityFullByUUID(String UUID){
