@@ -224,21 +224,6 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @Test
-    void shouldReturnUsersWithIDs(){
-        UserRequestBody otherBody = createUserRequestBody("JohnD");
-        User user1 = userService.createUser(otherBody);
-        Set<Integer> setIDs = Set.of((int)user.getID(), (int)user1.getID());
-
-        Set<User> foundUsers = userService.getUsersFromIDs(setIDs);
-
-        assertNotNull(foundUsers);
-        assertFalse(foundUsers.isEmpty());
-        assertEquals(2, foundUsers.size());
-        assertTrue(foundUsers.contains(user));
-        assertTrue(foundUsers.contains(user1));
-    }
-
-    @Test
     void shouldReturnUserWithTeams(){
         UserWithTeamRoles found = userService.getUserWithTeamRolesAndTeams(user.getID());
 

@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 
@@ -124,10 +123,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public List<User> saveAllUsers(Set<User> users){
-        return userRepository.saveAll(users);
-    }
-
     /**
      * Returns DTO of given Set of Users
      * @param users Set of Users to get DTO of
@@ -168,23 +163,6 @@ public class UserService {
             throw new NoPrivilegesException();
         }
         return userMemberDTOSetProcess(team.getTeammates());
-    }
-
-    /**
-     * Returns Users with provided IDs
-     * @param userIDs Set of IDs to check for
-     * @return Set of Users with given IDs
-     */
-    public Set<User> getUsersFromIDs(Set<Integer> userIDs){
-        //For loop instead of stream for performance
-        //After running on my personal PC average times for 1000 runs stream vs for loop execution on very small set (2 items) in ns
-        //STREAM: 348942
-        //FORLOOP: 119438
-        Set<User> users = new HashSet<>();
-        for(int id : userIDs){
-            users.add(getUserEntityByID(id));
-        }
-        return users;
     }
 
     /**
