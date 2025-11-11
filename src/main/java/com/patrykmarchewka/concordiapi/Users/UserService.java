@@ -3,13 +3,14 @@ package com.patrykmarchewka.concordiapi.Users;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -154,11 +156,11 @@ public class UserService {
     /**
      * Returns DTO of users in team
      * @param myRole Role of User asking for information
-     * @param team Team in which to search
+     * @param team TeamWithUserRoles in which to search
      * @return UserMemberDTO of each user in the team
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, Team team){
+    public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, TeamWithUserRoles team){
         if (!myRole.isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -175,7 +177,7 @@ public class UserService {
         return userRepository.findUserEntityByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public UserIdentity getUserByID(Long id){
+    public UserIdentity getUserByID(long id){
         return userRepository.findUserByID(id).orElseThrow(NotFoundException::new);
     }
 
