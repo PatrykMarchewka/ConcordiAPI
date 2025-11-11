@@ -21,12 +21,12 @@ public class TaskUserUpdaterHelper {
     /**
      * Shared logic for changing task users, removes all existing users from task then adds those from body
      * @param task Task to edit
-     * @param userIds Set of Integers containing user IDs to add
+     * @param userIDs Set of Integers containing user IDs to add
      */
-    protected void sharedUpdate(Task task, Set<Integer> userIds) {
+    protected void sharedUpdate(Task task, Set<Integer> userIDs) {
         task.getUserTasks().clear();
-        for (User user : userService.getUsersFromIDs(userIds)){
-            task.addUserTask(user);
+        for (int userID : userIDs){
+            task.addUserTask((User) userService.getUserWithUserTasks(userID));
         }
     }
 }
