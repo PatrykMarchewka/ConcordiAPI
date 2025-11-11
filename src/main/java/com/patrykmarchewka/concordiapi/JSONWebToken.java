@@ -39,13 +39,7 @@ public class JSONWebToken {
      */
     @PostConstruct
     private void swapSecret(){
-        if (SECRET_KEY.isBlank()){
-            secret_key = SecureSecretKeyGenerator();
-        }
-        else{
-            secret_key = SECRET_KEY;
-        }
-
+        secret_key = SECRET_KEY.isBlank() ? SecureSecretKeyGenerator() : SECRET_KEY;
     }
 
     /**
@@ -114,7 +108,7 @@ public class JSONWebToken {
      * @throws NoSuchAlgorithmException Thrown when it can't use HMacSHA256 from javax.Mac class
      * @throws InvalidKeyException Thrown when key is invalid
      */
-    public static String GenerateJWToken(Long uID) throws NoSuchAlgorithmException, InvalidKeyException {
+    public static String GenerateJWToken(long uID) throws NoSuchAlgorithmException, InvalidKeyException {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
         long issuedAt = System.currentTimeMillis()/1000;
