@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
+import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Users.UserService;
@@ -69,16 +70,16 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks")
     public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactivedays){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
 
         if (inactivedays != null){
-            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasks(inactivedays, teamID)));
+            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasksDTO(inactivedays, teamID, context.getUser().getID())));
         }
 
-        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasksWithRoleCheck(context.getUser().getID(), teamID, context.getUserRole())));
+        return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasksWithRoleCheck(context.getUser().getID(), teamID)));
     }
 
     /**
@@ -118,7 +119,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/me")
     public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasksAssignedToMe(@PathVariable long teamID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
@@ -139,9 +140,11 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole().withTask(ID);
-        return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
-        
+        context = context.withUser(authentication).withRole(teamID).withTaskFull(teamID, ID);
+        if (!context.getUserRole().isAllowedBasic()){
+            throw new NoPrivilegesException();
+        }
+        return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(context.getTask())));
     }
 
     /**
@@ -161,7 +164,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> putTask(@PathVariable long teamID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TaskRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID);
+        context = context.withUser(authentication).withTeam(teamID).withTaskFull(ID);
         return ResponseEntity.ok(new APIResponse<>("Task fully changed",new TaskMemberDTO(taskService.putTask(body, context.getUser().getID(), context.getTeam(), context.getTask()))));
     }
 
@@ -182,7 +185,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> patchTask(@PathVariable long teamID,@PathVariable long ID, @RequestBody @ValidateGroup TaskRequestBody body, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID);
+        context = context.withUser(authentication).withTeam(teamID).withTaskFull(ID);
         return ResponseEntity.ok(new APIResponse<>("Task updated",new TaskMemberDTO(taskService.patchTask(body, context.getUser().getID(), context.getTeam(), context.getTask()))));
     }
 
@@ -225,12 +228,12 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userID);
+        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userID).withTaskWithUserTasks(ID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 
-        taskService.addUserToTask(context.getTask(), userService.getUserByID(userID));
-        return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskByIDAndTeam(ID, context.getTeam()))));
+        taskService.addUserToTask(context.getTask(), (User) userService.getUserWithUserTasks(userID));
+        return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
 
     }
 
@@ -250,7 +253,7 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}/users/{userID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withTask(ID).withRole().withOtherRole(userID);
+        context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(userID).withTaskWithUserTasks(ID);
 
         teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
 

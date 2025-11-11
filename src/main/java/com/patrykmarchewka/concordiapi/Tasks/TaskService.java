@@ -54,19 +54,16 @@ public class TaskService {
         this.teamUserRoleService = teamUserRoleService;
     }
 
-    /**
-     * Map to get appropriate tasks in a team
-     * @param userID ID of User calling the method
-     * @param teamID ID of Team in which to check
-     * @return Map of UserRoles and Set of tasks privileged to see
-     */
-    private Map<UserRole, Supplier<Set<TaskMemberDTO>>> roleSetMap(final long userID, final long teamID){
-        return Map.of(
-                UserRole.OWNER, () -> getAllTasks(teamID),
-                UserRole.ADMIN, () -> getAllTasks(teamID),
-                UserRole.MANAGER, () -> getAllTasks(teamID),
-                UserRole.MEMBER, () -> getAllTasksAssignedToMe(teamID, userID)
-        );
+    private Supplier<Set<TaskFull>> getAllowedTasks(final long userID, final long teamID){
+        UserRole role = teamUserRoleService.getRole(userID, teamID);
+        return switch (role){
+            case OWNER -> () -> getAllTaskFullByTeamID(teamID);
+            case ADMIN -> () -> getAllTaskFullByTeamID(teamID);
+            case MANAGER -> () -> getAllTaskFullByTeamID(teamID);
+            case MEMBER -> () -> getAllTaskFullByTeamIDAndUserID(teamID, userID);
+            case BANNED -> throw new NoPrivilegesException();
+            case null, default -> throw new ImpossibleStateException("Called TaskService.getAllowedTaskIDs with unknown role: " + role);
+        };
     }
 
     /**
@@ -83,69 +80,38 @@ public class TaskService {
         );
     }
 
-
-
-    public TaskIdentity getTaskByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
     /**
-     * Returns all tasks in given team
-     * @param teamID ID of Team to get tasks from
-     * @return Set of tasks in given Team
-     */
-    public Set<TaskIdentity> getAllTasksByTeamID(final long teamID){
-        return taskRepository.getByAssignedTeamID(teamID);
-    }
-
-    public Set<TaskIdentity> getAllTasksByTeamIDAndUserID(final long teamID, final long userID){
-        return taskRepository.getByAssignedTeamIDAndAssignedUserID(teamID, userID);
-    }
-
-    public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
-    public TaskWithSubtasks getTaskWithSubtasksByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
-    public TaskFull getTaskFullByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
-    /**
-     * Unused, returns all tasks that don't have any users assigned
+     * Unused, returns tasks that don't have any users assigned
      * @param teamID ID of Team in which to search
-     * @return Set of tasks that have no users assigned to them
+     * @return Set of tasks allowed to see that have no users assigned to them
      */
     @Transactional(readOnly = true)
-    public Set<TaskMemberDTO> getAllTasksWithoutUsers(final long teamID){
-        return getAllTasks(teamID).stream().filter(task -> task.getUsers().isEmpty()).collect(Collectors.toUnmodifiableSet());
+    public Set<TaskFull> getTasksWithoutUsers(final long teamID, final long userID){
+        return getAllowedTasks(userID, teamID).get().stream().filter(taskFull -> taskFull.getUsers().isEmpty()).collect(Collectors.toUnmodifiableSet());
     }
     /**
-     * Unused, returns all tasks with given task status in a team
+     * Unused, returns tasks with given task status in a team
      * @param status TaskStatus to check for
      * @param teamID ID of Team in which to search
-     * @return Set of tasks that have given TaskStatus
+     * @return Set of tasks allowed to see that have given TaskStatus
      */
     @Transactional(readOnly = true)
-    public Set<TaskMemberDTO> getAllTasksByStatus(final TaskStatus status, long teamID){
-        return getAllTasks(teamID).stream().filter(task -> task.getTaskStatus().equals(status)).collect(Collectors.toUnmodifiableSet());
+    public Set<TaskFull> getTasksByStatus(final TaskStatus status, final long teamID, final long userID){
+        return getAllowedTasks(userID, teamID).get().stream().filter(task -> task.getTaskStatus().equals(status)).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * Returns all tasks that didn't had any update in given number of days, should only be called from {@link #getInactiveTasks(Integer, long)}
+     * Returns tasks that didn't had any update in given number of days, should only be called from {@link #getInactiveTasksDTO(int, long, long)}
      * @param days Minimum number of days to search for
      * @param teamID ID of Team in which to search for
      * @return Set of tasks that weren't updated in days
      * @throws IllegalArgumentException thrown when number is set to zero or less
      */
-    public Set<TaskIdentity> getAllTasksNoUpdatesIn(final int days, final long teamID){
+    public Set<TaskFull> getTasksNoUpdatesIn(final int days, final long teamID, final long userID){
         if(days <= 0){
             throw new IllegalArgumentException("Number of days cannot be zero or negative!");
         }
-        return getAllTasksByTeamID(teamID).stream().filter( task -> ChronoUnit.DAYS.between(task.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
+        return getAllowedTasks(userID, teamID).get().stream().filter(taskFull -> ChronoUnit.DAYS.between(taskFull.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -202,7 +168,7 @@ public class TaskService {
      */
     @Transactional
     public void deleteTaskByID(long ID, Team team){
-        Task task = getTaskByIDAndTeam(ID,team);
+        Task task = (Task) getTaskByIDAndTeamID(ID,team.getID());
         team.removeTask(task);
         teamService.saveTeam(team);
     }
@@ -224,20 +190,10 @@ public class TaskService {
      */
     @Transactional
     public void saveAllTasks(Set<Task> tasks){
+        for (Task task : tasks){
+            task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
+        }
         taskRepository.saveAll(tasks);
-    }
-
-    /**
-     * @deprecated Will be replaced by {@link #getTaskByIDAndTeamID(long, long)}
-     * Returns task with given ID and team
-     * @param id ID of the task to search for
-     * @param team Team in which task is located
-     * @return Task with given ID
-     * @throws NotFoundException Thrown when can't find task with specified ID and Team
-     */
-    @Deprecated
-    public Task getTaskByIDAndTeam(long id, Team team){
-        return taskRepository.findByIdAndAssignedTeam(id,team).orElseThrow(() -> new NotFoundException());
     }
 
     /**
@@ -256,11 +212,10 @@ public class TaskService {
      * Returns TaskMemberDTO of either all tasks in team or all tasks in team assigned to user based on UserRole
      * @param userID ID of User performing the check
      * @param teamID ID of Team in which to check for
-     * @param role Role of the user in a team
      * @return Set of TaskDTO with information about the tasks
      */
-    public Set<TaskMemberDTO> getAllTasksWithRoleCheck(final long userID, final long teamID, final UserRole role){
-        return roleSetMap(userID, teamID).get(role).get();
+    public Set<TaskMemberDTO> getAllTasksWithRoleCheck(final long userID, final long teamID){
+        return getAllowedTasks(userID, teamID).get().stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -268,14 +223,12 @@ public class TaskService {
      * @param teamID ID of Team in which to search for
      * @return Set of TaskMemberDTO with all tasks in a team
      */
-    public Set<TaskMemberDTO> getAllTasks(final long teamID){
-        final Set<Long> allTasks = getAllTasksByTeamID(teamID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
-        return getTaskMemberDTOFromIDs(allTasks, teamID);
+    public Set<TaskMemberDTO> getAllTasksDTO(final long teamID){
+        return getAllTaskFullByTeamID(teamID).stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
     }
 
     public Set<TaskMemberDTO> getAllTasksAssignedToMe(final long teamID, final long userID){
-        final Set<Long> allTasks = getAllTasksByTeamIDAndUserID(teamID, userID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
-        return getTaskMemberDTOFromIDs(allTasks, teamID);
+        return getAllTaskFullByTeamIDAndUserID(teamID, userID).stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
     }
 
     /**
@@ -285,15 +238,14 @@ public class TaskService {
      * @return Set of TaskMemberDTO with information about the tasks
      * @throws RuntimeException Thrown when Task couldn't get converted into proper DTO object
      */
-    public Set<TaskMemberDTO> getInactiveTasks(final Integer days, final long teamID){
-        Set<Long> allTasks = getAllTasksNoUpdatesIn(days, teamID).stream().map(TaskIdentity::getID).collect(Collectors.toUnmodifiableSet());
-        return getTaskMemberDTOFromIDs(allTasks, teamID);
+    public Set<TaskMemberDTO> getInactiveTasksDTO(final int days, final long teamID, final long userID){
+        return getTasksNoUpdatesIn(days, teamID, userID).stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
     }
 
     public Set<TaskMemberDTO> getTaskMemberDTOFromIDs(final Set<Long> taskIDs, final long teamID){
         final Set<TaskMemberDTO> dtoSet = new HashSet<>();
-        for (final Long id : taskIDs){
-            dtoSet.add(new TaskMemberDTO(taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new)));
+        for (final long id : taskIDs){
+            dtoSet.add(new TaskMemberDTO(getTaskFullByIDAndTeamID(id, teamID)));
         }
         return dtoSet;
     }
@@ -432,6 +384,35 @@ public class TaskService {
     @Deprecated
     public Task getTaskFull(Task task){
         return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
+    }
+
+    public TaskIdentity getTaskByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    /**
+     * Returns all tasks in given team
+     * @param teamID ID of Team to get tasks from
+     * @return Set of all TaskFull in given Team
+     */
+    public Set<TaskFull> getAllTaskFullByTeamID(final long teamID){
+        return taskRepository.findAllTaskFullByAssignedTeamID(teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public Set<TaskFull> getAllTaskFullByTeamIDAndUserID(final long teamID, final long userID){
+        return taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(teamID, userID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskWithSubtasks getTaskWithSubtasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskFull getTaskFullByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
     }
 
     /**

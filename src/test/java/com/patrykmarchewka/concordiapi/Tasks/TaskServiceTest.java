@@ -8,7 +8,10 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentity;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -64,7 +67,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @Test
     void shouldSaveAndRetrieveTaskCorrectlyBasic(){
-        Task found = taskService.getTaskByIDAndTeam(task.getID(), team);
+        TaskIdentity found = taskService.getTaskByIDAndTeamID(task.getID(), team.getID());
 
         assertEquals(task.getID(), found.getID());
         assertEquals("Test task", found.getName());
@@ -75,8 +78,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @Test
     void shouldReturnTaskWithUserTasks(){
-        Task found = taskService.getTaskByIDAndTeam(task.getID(), team);
-        found = taskService.getTaskWithUserTasks(found);
+        TaskWithUserTasks found = taskService.getTaskWithUserTasksByIDAndTeamID(task.getID(), team.getID());
 
         assertTrue(found.getUserTasks().isEmpty());
         assertTrue(found.getUsers().isEmpty());
@@ -84,8 +86,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @Test
     void shouldReturnTaskWithSubtasks(){
-        Task found = taskService.getTaskByIDAndTeam(task.getID(), team);
-        found = taskService.getTaskWithSubtasks(found);
+        TaskWithSubtasks found = taskService.getTaskWithSubtasksByIDAndTeamID(task.getID(), team.getID());
 
         assertTrue(found.getSubtasks().isEmpty());
     }
@@ -95,9 +96,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
         Task task = taskService.createTask(body, team);
 
-        Task found = taskService.getTaskByIDAndTeam(task.getID(), team);
-
-        found = taskService.getTaskFull(found);
+        TaskFull found = taskService.getTaskFullByIDAndTeamID(task.getID(), team.getID());
 
         assertEquals(task.getID(), found.getID());
         assertEquals("Task name", found.getName());
@@ -161,7 +160,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
         taskService.deleteTaskByID(task.getID(), team);
 
-        Set<TaskMemberDTO> found = taskService.getAllTasks(team.getID());
+        Set<TaskMemberDTO> found = taskService.getAllTasksDTO(team.getID());
 
         assertEquals(1, found.size());
         assertFalse(found.contains(new TaskMemberDTO(task)));
@@ -173,7 +172,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body = createTaskRequestBody();
         Task task1 = taskService.createTask(body, team);
 
-        Set<TaskMemberDTO> found = taskService.getAllTasks(team.getID());
+        Set<TaskMemberDTO> found = taskService.getAllTasksDTO(team.getID());
 
         assertEquals(2, found.size());
         assertTrue(found.contains(new TaskMemberDTO(task)));
@@ -185,11 +184,11 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
         Task task1 = taskService.createTask(body1, team);
 
-        Set<TaskMemberDTO> found = taskService.getAllTasksWithoutUsers(team.getID());
+        Set<TaskFull> found = taskService.getTasksWithoutUsers(team.getID(), user.getID());
 
         assertEquals(1, found.size());
-        assertTrue(found.contains(new TaskMemberDTO(task)));
-        assertFalse(found.contains(new TaskMemberDTO(task1)));
+        assertTrue(found.contains(task));
+        assertFalse(found.contains(task1));
     }
 
     @Test
@@ -214,31 +213,12 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         Task task1 = taskService.createTask(body1, team);
         Task task2 = taskService.createTask(body2, team);
 
-        Set<TaskMemberDTO> found = taskService.getAllTasksByStatus(TaskStatus.NEW, team.getID());
+        Set<TaskFull> found = taskService.getTasksByStatus(TaskStatus.NEW, team.getID(), user.getID());
 
         assertEquals(2, found.size());
-        assertTrue(found.contains(new TaskMemberDTO(task)));
-        assertTrue(found.contains(new TaskMemberDTO(task1)));
-        assertFalse(found.contains(new TaskMemberDTO(task2)));
-    }
-
-    @Test
-    void shouldRetrieveTasksWithoutUpdatesInDays(){
-        TaskRequestBody body1 = createTaskRequestBody("First Task name", "First Task desc", TaskStatus.NEW, Set.of((int)user.getID()));
-        TaskRequestBody body2 = createTaskRequestBody("Second Task name", "Second Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
-        Task task1 = taskService.createTask(body1, team);
-        Task task2 = taskService.createTask(body2, team);
-
-        task.setUpdateDate(task.getUpdateDate().minusDays(1));
-        task1.setUpdateDate(task1.getUpdateDate().minusDays(2));
-        task2.setUpdateDate(task2.getUpdateDate().minusDays(3));
-        taskService.saveAllTasks(Set.of(task,task1,task2));
-        Set<TaskIdentity> found = taskService.getAllTasksNoUpdatesIn(2, team.getID());
-
-        assertEquals(2, found.size());
-        assertFalse(found.stream().anyMatch(taskIdentity -> taskIdentity.getID() == task.getID()));
-        assertTrue(found.stream().anyMatch(taskIdentity -> taskIdentity.getID() == task1.getID()));
-        assertTrue(found.stream().anyMatch(taskIdentity -> taskIdentity.getID() == task2.getID()));
+        assertTrue(found.contains(task));
+        assertTrue(found.contains(task1));
+        assertFalse(found.contains(task2));
     }
 
     @Test
@@ -246,7 +226,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of());
         Task task1 = taskService.createTask(body1, team);
 
-        Set<TaskMemberDTO> found = taskService.getAllTasksWithRoleCheck(user.getID(), team.getID(), UserRole.OWNER);
+        Set<TaskMemberDTO> found = taskService.getAllTasksWithRoleCheck(user.getID(), team.getID());
 
         assertEquals(2, found.size());
         assertTrue(found.contains(new TaskMemberDTO(task)));
