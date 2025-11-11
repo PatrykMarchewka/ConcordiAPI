@@ -151,9 +151,11 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
         User user1 = userService.createUser(userRequestBody1);
         teamService.addUser(team, user1, UserRole.ADMIN);
 
-        Team found = teamService.getTeamEntityWithUserRoles(team.getID());
+        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
 
-        teamService.removeAllUsers(found);
+        for (TeamUserRole role : found.getUserRoles()){
+            teamService.removeUser(team.getID(), role.getUser().getID());
+        }
 
         assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(found.getID()));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getID()));

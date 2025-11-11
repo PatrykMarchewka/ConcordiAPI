@@ -140,15 +140,15 @@ public class UserService {
      * Returns DTO of each user with the given UserRole
      * @param myRole Role of User asking for information
      * @param param UserRole of users to get
-     * @param team Team in which to search
+     * @param teamID ID of Team in which to search for
      * @return UserMemberDTO of each user with provided role
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, Team team){
+    public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, long teamID){
         if (!myRole.isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return userMemberDTOSetProcess(teamUserRoleService.getAllByTeamAndUserRole(team, param));
+        return userMemberDTOSetProcess(teamUserRoleService.getAllByTeamAndUserRole(teamID, param).stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()));
     }
 
     /**

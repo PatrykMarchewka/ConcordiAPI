@@ -160,7 +160,7 @@ public class TeamController {
         if (!context.getUserRole().isOwner()){
             throw new NoPrivilegesException();
         }
-        teamService.removeAllUsers(context.getTeam());
+        teamService.deleteTeam(context.getTeam());
         return ResponseEntity.ok(new APIResponse<>("The team has been disbanded",null));
     }
 

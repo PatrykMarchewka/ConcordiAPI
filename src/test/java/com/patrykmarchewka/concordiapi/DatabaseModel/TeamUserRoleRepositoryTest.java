@@ -46,7 +46,7 @@ public class TeamUserRoleRepositoryTest implements TeamUserRoleTestHelper, UserT
         Team team = createTeam(teamRepository);
         TeamUserRole teamUserRole = createTeamUserRole(team,user, UserRole.OWNER,teamUserRoleRepository);
 
-        TeamUserRole found = teamUserRoleRepository.findByUserAndTeam(user,team).orElse(null);
+        TeamUserRole found = teamUserRoleRepository.findByUserAndTeam(user.getID(),team.getID()).orElse(null);
 
         assertNotNull(found);
         assertEquals(team, found.getTeam());
@@ -60,7 +60,7 @@ public class TeamUserRoleRepositoryTest implements TeamUserRoleTestHelper, UserT
         User user = createUser("TEST", userRepository);
         Team team = createTeam(teamRepository);
 
-        Optional<TeamUserRole> found = teamUserRoleRepository.findByUserAndTeam(user,team);
+        Optional<TeamUserRole> found = teamUserRoleRepository.findByUserAndTeam(user.getID(),team.getID());
 
         assertTrue(found.isEmpty());
     }
@@ -74,7 +74,7 @@ public class TeamUserRoleRepositoryTest implements TeamUserRoleTestHelper, UserT
         createTeamUserRole(team,user,UserRole.OWNER,teamUserRoleRepository);
         createTeamUserRole(team,user1,UserRole.OWNER,teamUserRoleRepository);
 
-        assertEquals(2, teamUserRoleRepository.getAllByTeamAndUserRole(team, UserRole.OWNER).size());
+        assertEquals(2, teamUserRoleRepository.findAllByTeamAndUserRole(team.getID(), UserRole.OWNER).size());
     }
 
 

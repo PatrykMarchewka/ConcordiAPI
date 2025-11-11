@@ -67,7 +67,7 @@ public class UserController {
         }
 
         if (role != null){
-            return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",userService.userMemberDTOSetParam(context.getUserRole(),role, context.getTeam())));
+            return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",userService.userMemberDTOSetParam(context.getUserRole(),role, teamID)));
         }
         else{
             return ResponseEntity.ok(new APIResponse<>("All users in the team",userService.userMemberDTOSetNoParam(context.getUserRole(), context.getTeam())));
@@ -141,8 +141,8 @@ public class UserController {
     public ResponseEntity<APIResponse<String>> leaveTeam(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (context.getUserRole().isOwner() && teamUserRoleService.getAllByTeamAndUserRole(context.getTeam(), UserRole.OWNER).size() == 1 && context.getTeam().getTeammates().size() != 1){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team or add new owners",null));
+        if (context.getUserRole().isOwner() && teamUserRoleService.canOwnerLeave(teamID)){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team instead or add new owners",null));
         }
         else{
             teamService.removeUser(teamID, context.getUser().getID());
@@ -170,9 +170,10 @@ public class UserController {
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        teamUserRoleService.setRole(context.getUserRole(), ID, teamID, newRole);
-        return ResponseEntity.ok(new APIResponse<>("Role changed",null));
+        teamUserRoleService.forceCheckRoles(context.getUserRole(), newRole);
 
+        teamUserRoleService.setRole(ID, teamID, newRole);
+        return ResponseEntity.ok(new APIResponse<>("Role changed",null));
     }
 
 

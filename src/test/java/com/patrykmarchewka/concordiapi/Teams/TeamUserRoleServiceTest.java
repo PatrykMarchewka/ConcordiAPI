@@ -64,15 +64,15 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldGetRoleFromUser(){
-        UserRole role = teamUserRoleService.getRole(user, team);
+        UserRole role = teamUserRoleService.getRole(user.getID(), team.getID());
 
         assertEquals(UserRole.OWNER, role);
     }
 
     @Test
     void shouldSetRoleToUser(){
-        teamUserRoleService.setRole(UserRole.OWNER, user.getID(), team.getID(), UserRole.ADMIN);
-        UserRole role = teamUserRoleService.getRole(user, team);
+        teamUserRoleService.setRole(user.getID(), team.getID(), UserRole.ADMIN);
+        UserRole role = teamUserRoleService.getRole(user.getID(), team.getID());
 
         assertEquals(UserRole.ADMIN, role);
     }
@@ -83,13 +83,13 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
        User user1 = userService.createUser(userRequestBody1);
        teamService.addUser(team, user1, UserRole.OWNER);
 
-       Set<User> found = teamUserRoleService.getAllByTeamAndUserRole(team, UserRole.OWNER);
+       Set<TeamUserRole> found = teamUserRoleService.getAllByTeamAndUserRole(team.getID(), UserRole.OWNER);
 
        assertNotNull(found);
        assertFalse(found.isEmpty());
        assertEquals(2, found.size());
-       assertTrue(found.contains(user));
-       assertTrue(found.contains(user1));
+       assertTrue(found.stream().anyMatch(teamUserRole -> teamUserRole.getUser().equals(user)));
+       assertTrue(found.stream().anyMatch(teamUserRole -> teamUserRole.getUser().equals(user1)));
    }
 
    @Test

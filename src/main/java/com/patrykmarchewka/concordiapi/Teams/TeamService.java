@@ -5,11 +5,9 @@ import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamManagerDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
-import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
@@ -21,7 +19,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
 import com.patrykmarchewka.concordiapi.UserRole;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,58 +113,23 @@ public class TeamService {
 
     /**
      * Removes specified user from the team, removes the user from tasks attached to the team and removes role mention for that user. <br>
-     * If the team would end up empty without any pending invitations the team gets deleted too
+     * If the team would end up empty the team gets deleted too
      * @param teamID ID of Team that contains the user that we want to remove
      * @param userID ID of User to be removed
      */
     @Transactional
     public Team removeUser(long teamID, long userID){
-        Team newteam = getTeamEntityFull(teamID);
-        removeTeamUserRoleForUser(newteam, userID);
-        removeTeamTasksForUser(newteam, userID);
-        return deleteTeamIfEmpty(newteam);
-    }
-
-    public void removeTeamUserRoleForUser(Team team, long userID){
-        if (!Hibernate.isInitialized(team.getUserRoles())){
-            throw new ImpossibleStateException("Cannot access userRoles for given team");
-        }
-        team.removeUserRole(teamUserRoleService.getByUserAndTeam(userID, team.getID()));
-        saveTeam(team);
-    }
-
-    public void removeTeamTasksForUser(Team team, long userID){
-        if (!Hibernate.isInitialized(team.getTeamTasks())){
-            throw new ImpossibleStateException("Cannot access teamTasks for given team");
-        }
-        for (Task task : team.getTeamTasks()){
-            if (task.getUsers().stream().anyMatch(user -> user.getID() == userID)){
-                taskService.removeUserFromTask(task, userID);
-            }
-        }
-        saveTeam(team);
-    }
-
-    public Team deleteTeamIfEmpty(Team team){
-        if (!Hibernate.isInitialized(team.getTeammates()) || !Hibernate.isInitialized(team.getInvitations())){
-            throw new ImpossibleStateException("Cannot access userRoles and/or invitations for given team");
-        }
-        if (team.getTeammates().isEmpty()){
+        Team team = (Team) getTeamFull(teamID);
+        team.removeUserRole(teamUserRoleService.getByUserAndTeam(userID, teamID));
+        if (team.getUserRoles().isEmpty()){
             deleteTeam(team);
             return null;
         }
-        return team;
-    }
+        team.getTeamTasks().stream()
+                .filter(task -> task.getUsers().stream().anyMatch(user -> user.getID() == userID))
+                .forEach(task -> taskService.removeUserFromTask(task, userID));
 
-    /**
-     * Removes all users from team using {@link #removeUser(long, long)}
-     * @param team Team to remove everyone from
-     */
-    @Transactional
-    public void removeAllUsers(Team team){
-        for (User user : team.getTeammates()){
-            removeUser(team.getID(),user.getID());
-        }
+        return saveTeam(team);
     }
 
 
