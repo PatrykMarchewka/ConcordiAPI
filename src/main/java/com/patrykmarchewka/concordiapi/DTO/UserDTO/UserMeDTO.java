@@ -20,7 +20,7 @@ public class UserMeDTO implements UserDTO{
         this.name = user.getName();
         this.lastName = user.getLastName();
         for (Team team : user.getTeams()){
-            this.teams.add(new TeamMemberDTO(team,user));
+            this.teams.add(new TeamMemberDTO(team,user.getID()));
         }
     }
 

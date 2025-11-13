@@ -191,6 +191,6 @@ public class LoginController {
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
         context = context.withUserWithTeams(authentication);
         Team team = invitationService.useInvitation(invID, context.getUser()).getInvitingTeam();
-        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, context.getUser())));
+        return ResponseEntity.ok(new APIResponse<>("Joined the following team:", new TeamMemberDTO(team, context.getUser().getID())));
     }
 }

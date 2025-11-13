@@ -2,8 +2,6 @@ package com.patrykmarchewka.concordiapi.DTO.TeamDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 
@@ -19,28 +17,11 @@ public class TeamMemberDTO implements TeamDTO {
     private Set<TaskMemberDTO> tasks = new HashSet<>();
     private Set<UserMemberDTO> owners = new HashSet<>();
 
-    /**
-     * @deprecated Will be replaced by {@link #TeamMemberDTO(TeamWithUserRolesAndTasks, User)}
-     * @param team
-     * @param user
-     */
-    @Deprecated
-    public TeamMemberDTO(Team team, User user) {
+    public TeamMemberDTO(TeamWithUserRolesAndTasks team, long userID){
         this.id = team.getID();
         this.name = team.getName();
         this.teammateCount = team.getUserRoles().size();
-        if (user != null){
-            this.tasks = team.getTeamTasks().stream().filter(t -> t.getUsers().contains(user)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
-        }
-
-        this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
-    }
-
-    public TeamMemberDTO(TeamWithUserRolesAndTasks team, User user){
-        this.id = team.getID();
-        this.name = team.getName();
-        this.teammateCount = team.getUserRoles().size();
-        this.tasks = team.getTeamTasks().stream().filter(t -> t.getUsers().contains(user)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
+        this.tasks = team.getTeamTasks().stream().filter(t -> t.hasUser(userID)).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
         this.owners = team.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).map(ur -> new UserMemberDTO(ur.getUser())).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -67,6 +48,7 @@ public class TeamMemberDTO implements TeamDTO {
     public void setTeammateCount(int teammateCount){this.teammateCount = teammateCount;}
 
     public Set<TaskMemberDTO> getTasks(){return tasks;}
+    @Override
     public void setTasks(Set<TaskMemberDTO> tasks){this.tasks = tasks;}
 
     public Set<UserMemberDTO> getOwners(){return owners;}
