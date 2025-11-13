@@ -108,6 +108,18 @@ public class SubtaskService {
         return subtaskRepository.save(subtask);
     }
 
+
+    /**
+     * Deletes Subtask completely
+     * @param taskID ID of Task in which subtask exists
+     * @param subtaskID ID of Subtask to delete
+     */
+    @Transactional
+    public void deleteSubtask(long taskID, long subtaskID){
+        Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
+        subtaskRepository.delete(subtask);
+    }
+
     /**
      * Returns SubtaskDTOs in given task
      * @param task Task to check in

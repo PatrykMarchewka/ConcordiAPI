@@ -158,7 +158,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
         Task task1 = taskService.createTask(body1, team);
 
-        taskService.deleteTaskByID(task.getID(), team);
+        taskService.deleteTask(task.getID(), team.getID());
 
         Set<TaskMemberDTO> found = taskService.getAllTasksDTO(team.getID());
 

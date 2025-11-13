@@ -160,19 +160,6 @@ public class TaskService {
         return saveTask(task);
     }
 
-
-    /**
-     * Deletes task with the specified ID
-     * @param ID ID of the task to delete
-     * @param team Team in which to delete
-     */
-    @Transactional
-    public void deleteTaskByID(long ID, Team team){
-        Task task = (Task) getTaskByIDAndTeamID(ID,team.getID());
-        team.removeTask(task);
-        teamService.saveTeam(team);
-    }
-
     /**
      * Saves pending changes to the task
      * @param task Task to save
@@ -182,6 +169,17 @@ public class TaskService {
     public Task saveTask(Task task){
         task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
         return taskRepository.save(task);
+    }
+
+    /**
+     * Deletes Task completely
+     * @param taskID ID of Task to delete
+     * @param teamID ID of Team in which task is
+     */
+    @Transactional
+    public void deleteTask(long taskID, long teamID){
+        Task task = (Task) getTaskByIDAndTeamID(taskID, teamID);
+        taskRepository.delete(task);
     }
 
     /**
@@ -195,18 +193,6 @@ public class TaskService {
         }
         taskRepository.saveAll(tasks);
     }
-
-    /**
-     * Removes subtask from Task and deletes the subtask
-     * @param task Task to edit
-     * @param subtask Subtask to remove and delete
-     */
-    @Transactional
-    public void removeSubtaskFromTaskAndDelete(Task task, Subtask subtask){
-        task.removeSubtask(subtask);
-        saveTask(task);
-    }
-
 
     /**
      * Returns TaskMemberDTO of either all tasks in team or all tasks in team assigned to user based on UserRole

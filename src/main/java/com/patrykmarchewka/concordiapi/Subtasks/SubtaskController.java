@@ -36,13 +36,11 @@ import java.util.Set;
 @Tag(name = "Subtasks", description = "Managing subtasks assigned to task")
 public class SubtaskController {
     private final SubtaskService subtaskService;
-    private final TaskService taskService;
     private ControllerContext context;
 
     @Autowired
-    public SubtaskController(SubtaskService subtaskService,TaskService taskService, ControllerContext context){
+    public SubtaskController(SubtaskService subtaskService, ControllerContext context){
         this.subtaskService = subtaskService;
-        this.taskService = taskService;
         this.context = context;
     }
 
@@ -187,11 +185,11 @@ public class SubtaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/subtasks/{ID}")
     public ResponseEntity<APIResponse<String>> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withRole(teamID).withTaskWithSubtasks(teamID, taskID);
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        taskService.removeSubtaskFromTaskAndDelete(context.getTask(), (Subtask) subtaskService.getSubtaskByID(taskID, ID));
+        subtaskService.deleteSubtask(taskID, ID);
         return ResponseEntity.ok(new APIResponse<>("Subtask has been deleted", null));
     }
 

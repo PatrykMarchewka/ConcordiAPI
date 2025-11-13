@@ -204,11 +204,11 @@ public class TaskController {
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<String>> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        taskService.deleteTaskByID(ID, context.getTeam());
+        taskService.deleteTask(ID, teamID);
         return ResponseEntity.ok().body(new APIResponse<>("Task has been deleted",null));
     }
 
