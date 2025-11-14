@@ -109,17 +109,17 @@ public class TestDataLoader {
     }
 
     private void addUsersToTeams(){
-        this.teamRead = teamService.addUser(teamRead, userAdmin, UserRole.ADMIN);
-        this.teamRead = teamService.addUser(teamRead, userManager, UserRole.MANAGER);
-        this.teamRead = teamService.addUser(teamRead, userMember, UserRole.MEMBER);
+        this.teamRead = teamService.addUser(teamRead.getID(), userAdmin, UserRole.ADMIN);
+        this.teamRead = teamService.addUser(teamRead.getID(), userManager, UserRole.MANAGER);
+        this.teamRead = teamService.addUser(teamRead.getID(), userMember, UserRole.MEMBER);
 
-        this.teamWrite = teamService.addUser(teamWrite, userAdmin, UserRole.ADMIN);
-        this.teamWrite = teamService.addUser(teamWrite, userManager, UserRole.MANAGER);
-        this.teamWrite = teamService.addUser(teamWrite, userMember, UserRole.MEMBER);
+        this.teamWrite = teamService.addUser(teamWrite.getID(), userAdmin, UserRole.ADMIN);
+        this.teamWrite = teamService.addUser(teamWrite.getID(), userManager, UserRole.MANAGER);
+        this.teamWrite = teamService.addUser(teamWrite.getID(), userMember, UserRole.MEMBER);
 
-        this.teamDelete = teamService.addUser(teamDelete, userAdmin, UserRole.ADMIN);
-        this.teamDelete = teamService.addUser(teamDelete, userManager, UserRole.MANAGER);
-        this.teamDelete = teamService.addUser(teamDelete, userMember, UserRole.MEMBER);
+        this.teamDelete = teamService.addUser(teamDelete.getID(), userAdmin, UserRole.ADMIN);
+        this.teamDelete = teamService.addUser(teamDelete.getID(), userManager, UserRole.MANAGER);
+        this.teamDelete = teamService.addUser(teamDelete.getID(), userMember, UserRole.MEMBER);
     }
 
     private void createTasks(){
@@ -162,9 +162,9 @@ public class TestDataLoader {
         this.userDeleteOwner = userService.getUserEntityFull(userDeleteOwner);
         this.userMember = userService.getUserEntityFull(userMember);
 
-        this.teamRead = teamService.getTeamEntityFull(teamRead.getID());
-        this.teamWrite = teamService.getTeamEntityFull(teamWrite.getID());
-        this.teamDelete = teamService.getTeamEntityFull(teamDelete.getID());
+        this.teamRead =  (Team) teamService.getTeamFull(teamRead.getID());
+        this.teamWrite = (Team) teamService.getTeamFull(teamWrite.getID());
+        this.teamDelete = (Team) teamService.getTeamFull(teamDelete.getID());
 
         this.taskRead = (Task) taskService.getTaskFullByIDAndTeamID(taskRead.getID(), teamRead.getID());
         this.taskWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskWrite.getID(), teamWrite.getID());
@@ -172,7 +172,7 @@ public class TestDataLoader {
     }
 
     public User refreshUser(User user){ return userService.getUserEntityFull(user); }
-    public Team refreshTeam(Team team){ return teamService.getTeamEntityFull(team.getID()); }
+    public Team refreshTeam(Team team){ return (Team) teamService.getTeamFull(team.getID()); }
     public Task refreshTask(Task task){ return (Task) taskService.getTaskFullByIDAndTeamID(task.getID(), task.getAssignedTeam().getID()); }
     public Subtask refreshSubtask(Subtask subtask){ return (Subtask) subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
     public Invitation refreshInvitation(Invitation invitation){ return  (Invitation) invitationService.getInvitationFullByUUID(invitation.getUUID()); }

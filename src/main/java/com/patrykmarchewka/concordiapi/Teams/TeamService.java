@@ -16,6 +16,7 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitatio
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.Updaters.TeamUpdatersService;
 import com.patrykmarchewka.concordiapi.UserRole;
@@ -59,33 +60,35 @@ public class TeamService {
      * @return Team that has been created
      */
     @Transactional
-    public Team createTeam(TeamRequestBody body, User user){
+    public Team createTeam(TeamRequestBody body, UserWithTeamRoles user){
         Team team = new Team();
         teamUpdatersService.createUpdate(team, body);
-        team.addUserRole(user,UserRole.OWNER);
+        team.addUserRole((User) user,UserRole.OWNER);
         return saveTeam(team);
     }
 
     /**
      * Edits entire team with values specified in the body
-     * @param team Team to edit
+     * @param teamID ID of Team to edit
      * @param body TeamRequestBody with new values
      * @return Team after changes
      */
     @Transactional
-    public Team putTeam(Team team, TeamRequestBody body){
+    public Team putTeam(long teamID, TeamRequestBody body){
+        Team team = (Team) getTeamFull(teamID);
         teamUpdatersService.putUpdate(team, body);
         return saveTeam(team);
     }
 
     /**
      * Edits team values with those specified in the body
-     * @param team Team to edit
+     * @param teamID ID of Team to edit
      * @param body TeamRequestBody with new values
      * @return Team after changes
      */
     @Transactional
-    public Team patchTeam(Team team,TeamRequestBody body){
+    public Team patchTeam(long teamID,TeamRequestBody body){
+        Team team = (Team) getTeamFull(teamID);
         teamUpdatersService.patchUpdate(team, body);
         return saveTeam(team);
     }
@@ -106,8 +109,9 @@ public class TeamService {
     }
 
     @Transactional
-    public Team addUser(Team team, User userWithTeamRoles, UserRole role){
-        team.addUserRole(userWithTeamRoles, role);
+    public Team addUser(long teamID, UserWithTeamRoles user, UserRole role){
+        Team team = (Team) getTeamWithUserRoles(teamID);
+        team.addUserRole((User) user, role);
         return saveTeam(team);
     }
 
@@ -119,7 +123,7 @@ public class TeamService {
      */
     @Transactional
     public Team removeUser(long teamID, long userID){
-        Team team = (Team) getTeamFull(teamID);
+        Team team = (Team) getTeamWithUserRolesAndTasksByID(teamID);
         team.removeUserRole(teamUserRoleService.getByUserAndTeam(userID, teamID));
         if (team.getUserRoles().isEmpty()){
             deleteTeam(team);
@@ -127,7 +131,7 @@ public class TeamService {
         }
         team.getTeamTasks().stream()
                 .filter(task -> task.getUsers().stream().anyMatch(user -> user.getID() == userID))
-                .forEach(task -> taskService.removeUserFromTask(task, userID));
+                .forEach(task -> taskService.removeUserFromTask(task.getID(), teamID, userID));
 
         return saveTeam(team);
     }
@@ -138,7 +142,7 @@ public class TeamService {
      * @param user User calling the action
      * @return Set of TeamDTO based on User Role
      */
-    public Set<TeamDTO> getTeamsDTO(User user){
+    public Set<TeamDTO> getTeamsDTO(UserWithTeamRoles user){
         return user.getTeams().stream().map(team -> getTeamDTOByRole(user.getID(), team.getID())).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -158,18 +162,10 @@ public class TeamService {
     /**
      * Gives the Team based on provided ID
      * @param id ID of the team to get of
-     * @return Team that has the specified ID
+     * @return TeamIdentity that has the specified ID
      */
-    public Team getTeamEntityByID(long id){
-        return teamRepository.findTeamById(id).orElseThrow(NotFoundException::new);
-    }
-
     public TeamIdentity getTeamByID(long id){
         return teamRepository.findTeamByID(id).orElseThrow(NotFoundException::new);
-    }
-
-    public Team getTeamEntityWithUserRoles(long teamID){
-        return teamRepository.findTeamWithUserRolesAndUsersByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithUserRoles getTeamWithUserRoles(long teamID){
@@ -186,10 +182,6 @@ public class TeamService {
 
     public TeamWithInvitations getTeamWithInvitations(long teamID){
         return teamRepository.findTeamWithInvitationsByID(teamID).orElseThrow(NotFoundException::new);
-    }
-
-    public Team getTeamEntityFull(long teamID){
-        return teamRepository.findTeamEntityFullByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamFull getTeamFull(long teamID){

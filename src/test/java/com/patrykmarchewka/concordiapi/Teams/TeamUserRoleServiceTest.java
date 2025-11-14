@@ -5,6 +5,7 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Users.UserService;
@@ -71,17 +72,20 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @Test
     void shouldSetRoleToUser(){
-        teamUserRoleService.setRole(user.getID(), team.getID(), UserRole.ADMIN);
-        UserRole role = teamUserRoleService.getRole(user.getID(), team.getID());
+        //Currently unavailable, set to fail until finished
+        assertTrue(false);
+    }
 
-        assertEquals(UserRole.ADMIN, role);
+    @Test
+    void shouldThrowForDemotingOnlyOwner(){
+        assertThrows(NoPrivilegesException.class, () -> teamUserRoleService.setRole(user.getID(), team.getID(), UserRole.ADMIN));
     }
 
    @Test
    void shouldGetAllUsersByRoleAndTeam(){
        UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
        User user1 = userService.createUser(userRequestBody1);
-       teamService.addUser(team, user1, UserRole.OWNER);
+       teamService.addUser(team.getID(), user1, UserRole.OWNER);
 
        Set<TeamUserRole> found = teamUserRoleService.getAllByTeamAndUserRole(team.getID(), UserRole.OWNER);
 

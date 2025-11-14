@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
@@ -62,7 +63,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectly(){
-        Team found = teamService.getTeamEntityByID(team.getID());
+        TeamFull found = teamService.getTeamFull(team.getID());
 
         assertEquals(team.getID(), found.getID());
         assertEquals("TEST", found.getName());
@@ -74,7 +75,6 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldThrowForNonExistingTeamID(){
-        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(0));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(0));
     }
 
@@ -82,32 +82,29 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     void shouldPutTeam(){
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
 
-        Team found = teamService.getTeamEntityByID(team.getID());
-        teamService.putTeam(found,newBody);
-        TeamIdentity newFound = teamService.getTeamByID(team.getID());
+        teamService.putTeam(team.getID(), newBody);
+        TeamIdentity found = teamService.getTeamByID(team.getID());
 
-        assertEquals(team.getID(), newFound.getID());
-        assertEquals("NEWTEST", newFound.getName());
+        assertEquals(team.getID(), found.getID());
+        assertEquals("NEWTEST", found.getName());
     }
 
     @Test
     void shouldPatchTeam(){
         TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
 
-        Team found = teamService.getTeamEntityByID(team.getID());
-        teamService.patchTeam(found,newBody);
-        TeamIdentity newFound = teamService.getTeamByID(team.getID());
+        teamService.patchTeam(team.getID(), newBody);
+        TeamIdentity found = teamService.getTeamByID(team.getID());
 
-        assertEquals(team.getID(), newFound.getID());
-        assertEquals("NEWTEST", newFound.getName());
+        assertEquals(team.getID(), found.getID());
+        assertEquals("NEWTEST", found.getName());
     }
 
     @Test
     void shouldDeleteTeam(){
-        Team found = teamService.getTeamEntityByID(team.getID());
-        teamService.deleteTeam(found);
+        TeamIdentity found = teamService.getTeamByID(team.getID());
+        teamService.deleteTeam((Team) found);
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(team.getID()));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
     }
 
@@ -115,7 +112,6 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     void shouldDeleteTeamByUserLeaving(){
         teamService.removeUser(team.getID(), user.getID());
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(team.getID()));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
     }
 
@@ -123,13 +119,13 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     void shouldRemoveUserFromTeam(){
         UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
         User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
+        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
         Map<User, UserRole> expected = new HashMap<>(Map.of(
                 user, UserRole.OWNER,
                 user1, UserRole.ADMIN
         ));
 
-        Team found = teamService.getTeamEntityWithUserRoles(team.getID());
+        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
         Map<User, UserRole> actual = found.getUserRoles().stream().collect(Collectors.toMap(TeamUserRole::getUser, TeamUserRole::getUserRole));
 
 
@@ -149,7 +145,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
     void shouldDeleteTeamByEveryoneLeaving(){
         UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
         User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
+        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
 
         TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
 
@@ -157,7 +153,6 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
             teamService.removeUser(team.getID(), role.getUser().getID());
         }
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamEntityByID(found.getID()));
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getID()));
     }
 

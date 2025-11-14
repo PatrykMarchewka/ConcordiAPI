@@ -237,7 +237,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldGetMyTasksDTO(){
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
         User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
+        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user1.getID()));
         Task task1 = taskService.createTask(body1, team);
 
@@ -274,7 +274,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldRemoveUserFromTask(){
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
         User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
+        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID(), (int)user1.getID()));
         Task task1 = taskService.createTask(body1, team);
 

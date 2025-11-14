@@ -4,7 +4,6 @@ import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.DatabaseModel.InvitationRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
@@ -49,7 +48,7 @@ public class InvitationService {
     public Invitation createInvitation(UserRole userRole,InvitationRequestBody body, long teamID){
         teamUserRoleService.forceCheckRoles(userRole, body.getRole());
         Invitation invitation = new Invitation();
-        Supplier<Team> teamSupplier = () -> teamService.getTeamEntityByID(teamID);
+        Supplier<Team> teamSupplier = () -> (Team)teamService.getTeamByID(teamID);
         invitationUpdatersService.createUpdate(invitation,body,teamSupplier);
         return saveInvitation(invitation);
     }
@@ -95,7 +94,7 @@ public class InvitationService {
             throw new ConflictException("You are already part of that team!");
         }
         invitation.useOne();
-        teamService.addUser(team, (User) user, invitation.getRole());
+        teamService.addUser(team.getID(), user, invitation.getRole());
         return saveInvitation(invitation);
     }
 
