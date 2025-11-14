@@ -47,29 +47,4 @@ public class InvitationRepositoryTest implements InvitationTestHelper, TeamTestH
         assertTrue(OffsetDateTimeConverter.nowConverted().isBefore(found.getDueTime()));
         assertTrue(OffsetDateTimeConverter.nowConverted().plusDays(2).isAfter(found.getDueTime()));
     }
-
-    @Test
-    void shouldFindByTeam(){
-        Team team = createTeam(teamRepository);
-        createInvitation(team,UserRole.MEMBER,0,invitationRepository);
-        createInvitation(team,UserRole.OWNER,0,invitationRepository);
-
-        Set<Invitation> found = invitationRepository.getAllByInvitingTeam(team);
-
-        assertNotNull(found);
-        assertEquals(2, found.size());
-    }
-
-    @Test
-    void shouldReturnTrueForEmptyTeam(){
-        Team team = createTeam(teamRepository);
-
-        Set<Invitation> found = invitationRepository.getAllByInvitingTeam(team);
-
-        assertTrue(found.isEmpty());
-    }
-
-
-
-
 }

@@ -1,5 +1,6 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -11,8 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface InvitationRepository extends JpaRepository<Invitation,String> {
-    Optional<Invitation> findInvitationEntityByUUID(String uuid);
-
     @Query("""
     SELECT i from Invitation i
     WHERE i.UUID = :uuid
@@ -35,5 +34,5 @@ public interface InvitationRepository extends JpaRepository<Invitation,String> {
 
     @EntityGraph(attributePaths = {"invitingTeam"})
     @Query("SELECT i FROM Invitation i WHERE i.UUID = :uuid")
-    Optional<Invitation> findInvitationEntityFullByUUID(@Param("uuid") String uuid);
+    Optional<InvitationFull> findInvitationFullByUUID(@Param("uuid") String uuid);
 }

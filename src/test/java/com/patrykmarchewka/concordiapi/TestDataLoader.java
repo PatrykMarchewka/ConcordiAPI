@@ -175,6 +175,6 @@ public class TestDataLoader {
     public Team refreshTeam(Team team){ return teamService.getTeamEntityFull(team.getID()); }
     public Task refreshTask(Task task){ return taskService.getTaskFull(task); }
     public Subtask refreshSubtask(Subtask subtask){ return (Subtask) subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
-    public Invitation refreshInvitation(Invitation invitation){ return  invitationService.getInvitationEntityFullByUUID(invitation.getUUID()); }
+    public Invitation refreshInvitation(Invitation invitation){ return  (Invitation) invitationService.getInvitationFullByUUID(invitation.getUUID()); }
 
 }
