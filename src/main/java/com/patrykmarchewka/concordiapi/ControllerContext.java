@@ -78,6 +78,16 @@ public class ControllerContext {
         return this;
     }
 
+    public ControllerContext withTeamWithUserRoles(final long teamID){
+        this.team = (Team) teamService.getTeamWithUserRoles(teamID);
+        return this;
+    }
+
+    public ControllerContext withTeamWithUserRolesAndTasks(final long teamID){
+        this.team = (Team) teamService.getTeamWithUserRolesAndTasksByID(teamID);
+        return this;
+    }
+
     /**
      *
      * @param teamID ID of the team to check for

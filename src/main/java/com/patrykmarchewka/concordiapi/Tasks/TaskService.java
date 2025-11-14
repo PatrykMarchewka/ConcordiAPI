@@ -3,11 +3,11 @@ package com.patrykmarchewka.concordiapi.Tasks;
 
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.DatabaseModel.UserTask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserTaskRepository;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
@@ -17,15 +17,16 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
-import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
+import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.temporal.ChronoUnit;
@@ -40,15 +41,15 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final TeamService teamService;
+    private final UserService userService;
     private final TaskUpdatersService taskUpdatersService;
     private final UserTaskRepository userTaskRepository;
     private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, @Lazy TeamService teamService, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository, TeamUserRoleService teamUserRoleService){
+    public TaskService(TaskRepository taskRepository, UserService userService, TaskUpdatersService taskUpdatersService, UserTaskRepository userTaskRepository, TeamUserRoleService teamUserRoleService){
         this.taskRepository = taskRepository;
-        this.teamService = teamService;
+        this.userService = userService;
         this.taskUpdatersService = taskUpdatersService;
         this.userTaskRepository = userTaskRepository;
         this.teamUserRoleService = teamUserRoleService;
@@ -124,7 +125,7 @@ public class TaskService {
     public Task createTask(TaskRequestBody body, Team team){
         validateUsersForTasksByID(body.getUsers(),team);
         Task task = new Task();
-        taskUpdatersService.createUpdate(task, body, () -> team);
+        taskUpdatersService.createUpdate(task, body, () -> (Team) team);
         return saveTask(task);
     }
 
@@ -133,12 +134,13 @@ public class TaskService {
      * @param body TaskRequestBody with new values
      * @param userID ID of User asking for edit
      * @param team Team in which task exists
-     * @param task Task to edit
+     * @param taskID ID of Task to edit
      * @return Edited task
      */
     @Transactional
-    public Task putTask(TaskRequestBody body, long userID, Team team, Task task) {
-        verifyTaskEditPrivilege(userID, team.getID(), task.getID());
+    public Task putTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID) {
+        Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
+        verifyTaskEditPrivilege(userID, team.getID(), taskID);
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.putUpdate(task, body);
         return saveTask(task);
@@ -149,11 +151,12 @@ public class TaskService {
      * @param body TeamRequestBody with new updated values
      * @param userID ID of User asking for edit
      * @param team Team in which task exists
-     * @param task Task to edit
+     * @param taskID ID of Task to edit
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(TaskRequestBody body, long userID, Team team, Task task){
+    public Task patchTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID){
+        Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
         verifyTaskEditPrivilege(userID, team.getID(), task.getID());
         validateUsersForTasksByID(body.getUsers(),team);
         taskUpdatersService.patchUpdate(task, body);
@@ -253,85 +256,32 @@ public class TaskService {
 
     /**
      * Adds User to specified Task
-     * @param user User to get added to task
-     * @param task Task to attach to user
+     * @param team Team in which user and task is
+     * @param taskID ID of Task to attach user to
+     * @param userID ID of User to add to task
      */
     @Transactional
-    public void addUserToTask(Task task, User user) {
-        TeamWithUserRoles team = teamService.getTeamWithUserRolesAndTasksByID(task.getAssignedTeam().getID());
-        validateUsersForTasksByID(Set.of((int)user.getID()), team);
-
+    public void addUserToTask(TeamWithUserRoles team, long taskID, long userID){
+        validateUsersForTasksByID(Set.of((int)userID), team);
+        Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, team.getID());
+        User user = (User) userService.getUserWithUserTasks(userID);
         task.addUserTask(user);
         saveTask(task);
     }
 
     /**
-     * Adds Users to Task
-     * @param task Task to add users to
-     * @param users Set of Users to add to task
-     */
-    @Transactional
-    public void addUsersToTask(Task task, Set<User> users){
-        TeamWithUserRoles team = teamService.getTeamWithUserRolesAndTasksByID(task.getAssignedTeam().getID());
-        validateUsersForTasks(users, team);
-
-        for (User user : users){
-            task.addUserTask(user);
-        }
-        saveTask(task);
-    }
-
-    /**
-     * @deprecated Will be replaced by {@link #removeUserFromTask(Task, long)}
      * Removes user from Task
-     * @param task Task to edit
-     * @param user User to remove from Task
-     */
-    @Deprecated
-    @Transactional
-    public void removeUserFromTask(Task task, User user){
-        task.removeUserTask(userTaskRepository.findByAssignedUserAndAssignedTask(user, task).orElseThrow(NotFoundException::new));
-        saveTask(task);
-    }
-
-    /**
-     * Removes user from Task
-     * @param task Task to edit
+     * @param taskID ID of Task to edit
+     * @param teamID ID of Team in which task exists
      * @param userID ID of User to remove from Task
      */
     @Transactional
-    public void removeUserFromTask(Task task, long userID){
-        task.removeUserTask(userTaskRepository.findByAssignedUserIDAndAssignedTaskID(userID, task.getID()).orElseThrow(NotFoundException::new));
+    public void removeUserFromTask(long taskID, long teamID, long userID){
+        Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
+        UserTask userTask = userTaskRepository.findByAssignedUserIDAndAssignedTaskID(userID, taskID).orElseThrow(NotFoundException::new);
+        task.removeUserTask(userTask);
         saveTask(task);
     }
-
-    /**
-     * Removes all users from Task
-     * @param task Task to remove users from
-     */
-    @Transactional
-    public void removeUsersFromTask(Task task){
-        task.getUserTasks().clear();
-        saveTask(task);
-    }
-
-    /**
-     * Checks if users belong in a given team <br>
-     * Prefer {@link #validateUsersForTasksByID(Set, TeamWithUserRoles)}
-     * Checks if users belong in a given team
-     * @param userIDs Set of IDs of Users to check
-     * @param team Team in which to search
-     * @throws BadRequestException Thrown when one or more users are not part of the team
-     */
-    @Deprecated
-    public void validateUsersForTasksByID(Set<Integer> userIDs, Team team){
-        for (int id : userIDs) {
-            if (!team.checkUser(id)) {
-                throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
-            }
-        }
-    }
-
 
     /**
      * Checks if users belong in a given team
@@ -345,31 +295,6 @@ public class TaskService {
                 throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
             }
         }
-    }
-
-    /**
-     * Checks if users belong in a given team, calls {@link #validateUsersForTasksByID(Set, Team)}
-     * @param users Set of Users to check
-     * @param team Team in which to search
-     * @throws BadRequestException Thrown when one or more users are not part of the team
-     */
-    public void validateUsersForTasks(Set<User> users, TeamWithUserRoles team){
-        validateUsersForTasksByID(users.stream().map(u -> (int)u.getID()).collect(Collectors.toUnmodifiableSet()),team);
-    }
-
-    @Deprecated
-    public Task getTaskWithUserTasks(Task task){
-        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
-    }
-
-    @Deprecated
-    public Task getTaskWithSubtasks(Task task){
-        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeam(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
-    }
-
-    @Deprecated
-    public Task getTaskFull(Task task){
-        return taskRepository.findTaskFullByID(task.getID(), task.getAssignedTeam()).orElseThrow(() -> new ImpossibleStateException("Task not found with provided ID"));
     }
 
     public TaskIdentity getTaskByIDAndTeamID(final long id, final long teamID){

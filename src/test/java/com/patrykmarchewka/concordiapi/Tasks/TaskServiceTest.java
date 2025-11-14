@@ -112,8 +112,8 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPutTask(){
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.putTask(body1, user.getID(), team, task);
-        Task found = taskService.getTaskFull(task);
+        taskService.putTask(body1, user.getID(), team, task.getID());
+        TaskFull found = taskService.getTaskFullByIDAndTeamID(task.getID(), team.getID());
 
         assertEquals("Task name", found.getName());
         assertEquals("Task desc", found.getDescription());
@@ -127,8 +127,8 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPatchTask(){
         TaskRequestBody body1 = createTaskRequestBodyPATCH(TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.patchTask(body1, user.getID(), team, task);
-        Task found = taskService.getTaskFull(task);
+        taskService.patchTask(body1, user.getID(), team, task.getID());
+        TaskFull found = taskService.getTaskFullByIDAndTeamID(task.getID(), team.getID());
 
         assertEquals("Test task", found.getName());
         assertEquals("Test description", found.getDescription());
@@ -142,8 +142,8 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
     void shouldPatchTaskFull(){
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID()));
 
-        taskService.patchTask(body1, user.getID(), team, task);
-        Task found = taskService.getTaskFull(task);
+        taskService.patchTask(body1, user.getID(), team, task.getID());
+        TaskFull found = taskService.getTaskFullByIDAndTeamID(task.getID(), team.getID());
 
         assertEquals("Task name", found.getName());
         assertEquals("Task desc", found.getDescription());
@@ -249,38 +249,17 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @Test
     void shouldAddUserToTask(){
-        Task found = taskService.getTaskWithUserTasks(task);
+        TaskWithUserTasks found = taskService.getTaskWithUserTasksByIDAndTeamID(task.getID(), team.getID());
 
         assertTrue(found.getUsers().isEmpty());
         assertFalse(found.getUsers().contains(user));
 
-        taskService.addUserToTask(found, user);
+        taskService.addUserToTask(team, task.getID(), user.getID());
 
-        found = taskService.getTaskWithUserTasks(found);
+        found = taskService.getTaskWithUserTasksByIDAndTeamID(found.getID(), team.getID());
 
         assertEquals(1, found.getUsers().size());
         assertTrue(found.getUsers().contains(user));
-    }
-
-    @Test
-    void shouldAddUsersToTask(){
-        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
-        User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
-
-        Task found = taskService.getTaskWithUserTasks(task);
-
-        assertTrue(found.getUsers().isEmpty());
-        assertFalse(found.getUsers().contains(user));
-        assertFalse(found.getUsers().contains(user1));
-
-        taskService.addUsersToTask(found, Set.of(user, user1));
-
-        found = taskService.getTaskWithUserTasks(found);
-
-        assertEquals(2, found.getUsers().size());
-        assertTrue(found.getUsers().contains(user));
-        assertTrue(found.getUsers().contains(user1));
     }
 
     @Test
@@ -288,7 +267,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
         User user1 = userService.createUser(userRequestBody1);
 
-        assertThrows(BadRequestException.class,() -> taskService.addUserToTask(task, user1));
+        assertThrows(BadRequestException.class,() -> taskService.addUserToTask(team, task.getID(), user1.getID()));
     }
 
     @Test
@@ -299,26 +278,12 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID(), (int)user1.getID()));
         Task task1 = taskService.createTask(body1, team);
 
-        taskService.removeUserFromTask(task1, user);
-        Task found = taskService.getTaskWithUserTasks(task1);
+        taskService.removeUserFromTask(task1.getID(), team.getID(), user.getID());
+        TaskWithUserTasks found = taskService.getTaskWithUserTasksByIDAndTeamID(task1.getID(), team.getID());
 
         assertEquals(1, found.getUsers().size());
         assertFalse(found.getUsers().contains(user));
         assertTrue(found.getUsers().contains(user1));
-    }
-
-    @Test
-    void shouldRemoveUsersFromTask(){
-        UserRequestBody userRequestBody1 = createUserRequestBody("NotJaneD");
-        User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team, user1, UserRole.ADMIN);
-        TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID(), (int)user1.getID()));
-        Task task1 = taskService.createTask(body1, team);
-
-        taskService.removeUsersFromTask(task1);
-        Task found = taskService.getTaskWithUserTasks(task1);
-
-        assertTrue(found.getUsers().isEmpty());
     }
 
     @Test

@@ -166,14 +166,14 @@ public class TestDataLoader {
         this.teamWrite = teamService.getTeamEntityFull(teamWrite.getID());
         this.teamDelete = teamService.getTeamEntityFull(teamDelete.getID());
 
-        this.taskRead = taskService.getTaskFull(taskRead);
-        this.taskWrite = taskService.getTaskFull(taskWrite);
-        this.taskDelete = taskService.getTaskFull(taskDelete);
+        this.taskRead = (Task) taskService.getTaskFullByIDAndTeamID(taskRead.getID(), teamRead.getID());
+        this.taskWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskWrite.getID(), teamWrite.getID());
+        this.taskDelete = (Task) taskService.getTaskFullByIDAndTeamID(taskDelete.getID(), teamDelete.getID());
     }
 
     public User refreshUser(User user){ return userService.getUserEntityFull(user); }
     public Team refreshTeam(Team team){ return teamService.getTeamEntityFull(team.getID()); }
-    public Task refreshTask(Task task){ return taskService.getTaskFull(task); }
+    public Task refreshTask(Task task){ return (Task) taskService.getTaskFullByIDAndTeamID(task.getID(), task.getAssignedTeam().getID()); }
     public Subtask refreshSubtask(Subtask subtask){ return (Subtask) subtaskService.getSubtaskByID(subtask.getTask().getID(), subtask.getID()); }
     public Invitation refreshInvitation(Invitation invitation){ return  (Invitation) invitationService.getInvitationFullByUUID(invitation.getUUID()); }
 
