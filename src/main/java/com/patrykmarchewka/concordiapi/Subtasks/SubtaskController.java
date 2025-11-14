@@ -7,9 +7,7 @@ import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
-import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -139,8 +137,7 @@ public class SubtaskController {
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
-        Subtask subtask = (Subtask) subtaskService.getSubtaskByID(taskID, ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", new SubtaskMemberDTO(subtaskService.putUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", new SubtaskMemberDTO(subtaskService.putUpdate(taskID, ID,body))));
     }
 
     /**
@@ -165,8 +162,7 @@ public class SubtaskController {
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
-        Subtask subtask = (Subtask) subtaskService.getSubtaskByID(taskID, ID);
-        return ResponseEntity.ok(new APIResponse<>("Subtask updated", new SubtaskMemberDTO(subtaskService.patchUpdate(subtask,body))));
+        return ResponseEntity.ok(new APIResponse<>("Subtask updated", new SubtaskMemberDTO(subtaskService.patchUpdate(taskID, ID,body))));
     }
 
     /**

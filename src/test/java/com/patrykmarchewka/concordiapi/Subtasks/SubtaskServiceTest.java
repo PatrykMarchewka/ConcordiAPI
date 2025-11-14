@@ -9,6 +9,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.TaskRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
@@ -71,7 +72,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
 
     @Test
     void shouldSaveAndRetrieveSubtaskCorrectly(){
-        Subtask found = subtaskService.getSubtaskEntityByID(task.getID(), subtask.getID());
+        SubtaskIdentity found = subtaskService.getSubtaskByID(task.getID(), subtask.getID());
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("Test Subtask", found.getName());
@@ -84,7 +85,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPutSubtask(){
         SubtaskRequestBody body1 = createSubtaskRequestBody("New name", "New description", TaskStatus.INPROGRESS);
 
-        Subtask found = subtaskService.putUpdate(subtask,body1);
+        Subtask found = subtaskService.putUpdate(task.getID(), subtask.getID(),body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());
@@ -97,7 +98,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPatchSubtask(){
         SubtaskRequestBody body1 = createSubtaskRequestBodyPATCH("New name");
 
-        Subtask found = subtaskService.patchUpdate(subtask,body1);
+        Subtask found = subtaskService.patchUpdate(task.getID(), subtask.getID(),body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());
@@ -110,7 +111,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldPatchSubtaskFull(){
         SubtaskRequestBody body1 = createSubtaskRequestBody("New name", "New description", TaskStatus.INPROGRESS);
 
-        Subtask found = subtaskService.patchUpdate(subtask,body1);
+        Subtask found = subtaskService.patchUpdate(task.getID(), subtask.getID(),body1);
 
         assertEquals(subtask.getID(), found.getID());
         assertEquals("New name", found.getName());

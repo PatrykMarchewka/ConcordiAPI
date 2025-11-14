@@ -5,12 +5,11 @@ import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.DatabaseModel.SubtaskRepository;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
-import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,27 +24,14 @@ public class SubtaskService {
 
 
     private final SubtaskRepository subtaskRepository;
-    private final TeamService teamService;
     private final SubtaskUpdatersService subtaskUpdatersService;
     private final TaskService taskService;
 
     @Autowired
-    public SubtaskService(SubtaskRepository subtaskRepository, @Lazy TeamService teamService, SubtaskUpdatersService subtaskUpdatersService, @Lazy TaskService taskService){
+    public SubtaskService(SubtaskRepository subtaskRepository, SubtaskUpdatersService subtaskUpdatersService, @Lazy TaskService taskService){
         this.subtaskRepository = subtaskRepository;
-        this.teamService = teamService;
         this.subtaskUpdatersService = subtaskUpdatersService;
         this.taskService = taskService;
-    }
-
-    /**
-     * Returns subtask based on task ID and subtask ID
-     * @param taskID ID of task to check for
-     * @param subtaskID ID of subtask to check for
-     * @return Subtask with provided ID in provided task
-     * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
-     */
-    public Subtask getSubtaskEntityByID(long taskID, long subtaskID){
-        return subtaskRepository.findSubtaskEntityByIDAndTaskID(subtaskID,taskID).orElseThrow(() -> new NotFoundException());
     }
 
     /**
@@ -69,32 +55,35 @@ public class SubtaskService {
     @Transactional
     public Subtask createSubtask(SubtaskRequestBody body, long teamID, long taskID){
         Subtask subtask = new Subtask();
-        Team team = teamService.getTeamEntityByID(teamID);
-        Supplier<Task> task = () -> (Task) taskService.getTaskWithSubtasksByIDAndTeamID(taskID,team.getID());
+        Supplier<Task> task = () -> (Task) taskService.getTaskWithSubtasksByIDAndTeamID(taskID,teamID);
         subtaskUpdatersService.createUpdate(subtask, body, task);
         return saveSubtask(subtask);
     }
 
     /**
      * Edit subtask completely with new values
-     * @param subtask Subtask to edit
+     * @param taskID ID of Task in which subtask is
+     * @param subtaskID ID of Subtask to edit
      * @param body SubtaskRequestBody with new values
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask putUpdate(Subtask subtask, SubtaskRequestBody body){
+    public Subtask putUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+        Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.putUpdate(subtask, body);
         return saveSubtask(subtask);
     }
 
     /**
      * Edits subtask with new values
-     * @param subtask Subtask to edit
+     * @param taskID ID of Task in which subtask is
+     * @param subtaskID ID of Subtask to edit
      * @param body SubtaskRequestBody with new values
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask patchUpdate(Subtask subtask, SubtaskRequestBody body){
+    public Subtask patchUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+        Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.patchUpdate(subtask, body);
         return saveSubtask(subtask);
     }
@@ -125,7 +114,7 @@ public class SubtaskService {
      * @param task Task to check in
      * @return Set of SubtaskDTO in provided task
      */
-    public Set<SubtaskMemberDTO> getSubtasksDTO(final Task task){
+    public Set<SubtaskMemberDTO> getSubtasksDTO(final TaskWithSubtasks task){
         final Set<SubtaskMemberDTO> subtasks = new HashSet<>();
         for (final Subtask sub : task.getSubtasks()){
             subtasks.add(new SubtaskMemberDTO(sub));
