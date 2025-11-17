@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,11 +82,43 @@ public class InvitationControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Created new invitation", response.getBody().getMessage());
-        assertEquals(new TeamMemberDTO(testDataLoader.teamWrite, null), response.getBody().getData().getTeam());
+        assertEquals(new TeamMemberDTO(testDataLoader.teamWrite), response.getBody().getData().getTeam());
         assertEquals((short)100, response.getBody().getData().getUses());
         assertEquals(UserRole.MEMBER, response.getBody().getData().getRole());
-        //Some databases convert to UTC and strip offset, that is why compare we accept either solution as they ultimately point to same time
-        assertTrue((dueDate.toString().equals(response.getBody().getData().getDueTime()) || (dueDate.toInstant().toString().equals(response.getBody().getData().getDueTime()))));
+    }
+
+    @Test
+    void shouldCreateInvitationString() {
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(10);
+
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "MEMBER",
+                "dueDate": "%s"
+                }
+                """, dueDate);
+        var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().body(String.class);
+        /*
+        Example Response:
+        {"message":"Created new invitation",
+        "data":{"UUID":"b4d3e5c9-ee3f-4526-8e39-fa2ff48d25a0",
+        "team":{"id":2,"name":"teamWrite","teammateCount":4,"tasks":[],"owners":[{"id":2,"name":"WRITE","lastName":"WRITE"}]},
+        "role":"MEMBER",
+        "uses":100,
+        "dueTime":"2025-11-24 18:25:29+00:00"},
+        "timestamp":"2025-11-14 19:25:29+01:00"}
+         */
+
+        String expectedMessage = "\"message\":\"Created new invitation\"";
+        String expectedRole = "\"role\":\"MEMBER\"";
+        String expectedUses = "\"uses\":100";
+        String expectedDueDate = "\"dueTime\":\"" + OffsetDateTimeConverter.formatDate(dueDate.withOffsetSameInstant(ZoneOffset.UTC)) + "\"";
+
+        assertTrue(response.contains(expectedMessage));
+        assertTrue(response.contains(expectedRole));
+        assertTrue(response.contains(expectedUses));
+        assertTrue(response.contains(expectedDueDate));
     }
 
     @Test
@@ -119,8 +152,41 @@ public class InvitationControllerTest {
         assertEquals("Invitation fully changed", response.getBody().getMessage());
         assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationWrite));
         assertEquals(99, response.getBody().getData().getUses());
-        //Some databases convert to UTC and strip offset, that is why compare we accept either solution as they ultimately point to same time
-        assertTrue((dueDate.toString().equals(response.getBody().getData().getDueTime()) || (dueDate.toInstant().toString().equals(response.getBody().getData().getDueTime()))));
+    }
+
+    @Test
+    void shouldPutInvitationString(){
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+
+        String json = String.format("""
+                {
+                "uses": 99,
+                "role": "OWNER",
+                "dueDate": "%s"
+                }
+                """, dueDate);
+        var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().body(String.class);
+
+        /*
+        Example response:
+        {"message":"Invitation fully changed",
+        "data":{"UUID":"87e84bdc-913d-4793-bb1f-9aa9c08a644c",
+        "team":{"id":2,"name":"teamWrite","teammateCount":4,"tasks":[],"owners":[{"id":2,"name":"WRITE","lastName":"WRITE"}]},
+        "role":"OWNER",
+        "uses":99,
+        "dueTime":"2025-11-15 18:34:12+00:00"},
+        "timestamp":"2025-11-14 19:34:12+01:00"}
+         */
+
+        String expectedMessage = "\"message\":\"Invitation fully changed\"";
+        String expectedRole = "\"role\":\"OWNER\"";
+        String expectedUses = "\"uses\":99";
+        String expectedDueTime = "\"dueTime\":\"" + OffsetDateTimeConverter.formatDate(dueDate.withOffsetSameInstant(ZoneOffset.UTC)) + "\"";
+
+        assertTrue(response.contains(expectedMessage));
+        assertTrue(response.contains(expectedRole));
+        assertTrue(response.contains(expectedUses));
+        assertTrue(response.contains(expectedDueTime));
 
     }
 

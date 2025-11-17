@@ -170,7 +170,7 @@ public class LoginControllerTest {
 
     @Test
     void shouldUseInvitation(){
-        var oldTeamDTO = new TeamMemberDTO(testDataLoader.teamRead, null);
+        var oldTeamDTO = new TeamMemberDTO(testDataLoader.teamRead);
         var response = restClient.post().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
 
         assertNotNull(response.getBody());

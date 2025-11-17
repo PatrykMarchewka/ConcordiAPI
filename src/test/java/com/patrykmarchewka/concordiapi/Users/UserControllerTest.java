@@ -56,7 +56,7 @@ public class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All users in the team", response.getBody().getMessage());
-        assertEquals(new TeamMemberDTO(testDataLoader.teamRead, null).getTeammateCount(), response.getBody().getData().size());
+        assertEquals(new TeamMemberDTO(testDataLoader.teamRead).getTeammateCount(), response.getBody().getData().size());
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userReadOwner)));
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
         assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManager)));

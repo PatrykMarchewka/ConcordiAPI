@@ -134,7 +134,7 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
         User user1 = userService.createUser(userRequestBody1);
 
         invitation = invitationService.useInvitation(invitation1.getUUID(), user1);
-        team = teamService.getTeamEntityWithUserRoles(team.getID());
+        team = (Team) teamService.getTeamWithUserRoles(team.getID());
 
         assertEquals(1, invitation.getUses());
         assertDoesNotThrow(() -> teamUserRoleService.getByUserAndTeam(user1.getID(), team.getID()));

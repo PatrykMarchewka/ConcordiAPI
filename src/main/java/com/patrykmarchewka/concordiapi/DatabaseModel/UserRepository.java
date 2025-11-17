@@ -46,9 +46,5 @@ public interface UserRepository extends JpaRepository<User,Long> {
 
     @EntityGraph(attributePaths = {"teamRoles", "teamRoles.team", "userTasks"})
     @Query("SELECT u FROM User u WHERE u.id = :id")
-    Optional<User> findUserEntityFullByID(@Param("id") long id);
-
-    @EntityGraph(attributePaths = {"teamRoles", "teamRoles.team", "userTasks"})
-    @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<UserFull> findUserFullByID(@Param("id") long id);
 }

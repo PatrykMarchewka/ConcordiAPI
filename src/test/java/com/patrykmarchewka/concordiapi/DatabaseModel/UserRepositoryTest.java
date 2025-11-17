@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
@@ -87,7 +88,7 @@ public class UserRepositoryTest implements UserTestHelper{
     void shouldSaveAndRetrieveUserCorrectlyFull(){
         long id = createUser("TEST",userRepository).getID();
 
-        User found = userRepository.findUserEntityFullByID(id).orElse(null);
+        UserFull found = userRepository.findUserFullByID(id).orElse(null);
 
         assertNotNull(found);
         assertEquals(id, found.getID());
@@ -104,7 +105,7 @@ public class UserRepositoryTest implements UserTestHelper{
 
     @Test
     void shouldReturnTrueForNonExistingUser(){
-        Optional<User> found = userRepository.findUserEntityFullByID(0);
+        Optional<UserFull> found = userRepository.findUserFullByID(0);
         assertTrue(found.isEmpty());
     }
 

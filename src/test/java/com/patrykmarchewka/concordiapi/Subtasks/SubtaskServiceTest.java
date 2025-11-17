@@ -124,7 +124,7 @@ public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequest
     void shouldRetrieveSubtasksDTO(){
         SubtaskRequestBody body1 = createSubtaskRequestBody("New name", "New description", TaskStatus.INPROGRESS);
         Subtask subtask1 = subtaskService.createSubtask(body1, team.getID(), task.getID());
-        task = taskService.getTaskWithSubtasks(task);
+        task = (Task) taskService.getTaskWithSubtasksByIDAndTeamID(task.getID(), team.getID());
 
         Set<SubtaskMemberDTO> found = subtaskService.getSubtasksDTO(task);
 

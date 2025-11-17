@@ -207,9 +207,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
         Team team = teamService.createTeam(teamRequestBody, user);
 
-        Set<UserMemberDTO> found = userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.MEMBER, team.getID());
-
-        assertTrue(found.isEmpty());
+        assertThrows(NotFoundException.class, () -> userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.MEMBER, team.getID()));
     }
 
     @Test

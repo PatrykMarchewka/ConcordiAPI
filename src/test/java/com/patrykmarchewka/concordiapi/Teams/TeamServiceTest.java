@@ -8,7 +8,6 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
-import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
@@ -16,7 +15,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.Users.UserService;
-import org.hibernate.LazyInitializationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,14 +61,10 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldSaveAndRetrieveTeamCorrectly(){
-        TeamFull found = teamService.getTeamFull(team.getID());
+        TeamIdentity found = teamService.getTeamByID(team.getID());
 
         assertEquals(team.getID(), found.getID());
         assertEquals("TEST", found.getName());
-        assertThrows(LazyInitializationException.class, () -> found.getUserRoles().isEmpty());
-        assertThrows(LazyInitializationException.class, () -> found.getTeammates().isEmpty());
-        assertThrows(LazyInitializationException.class, () -> found.getTeamTasks().isEmpty());
-        assertThrows(LazyInitializationException.class, () -> found.getInvitations().isEmpty());
     }
 
     @Test

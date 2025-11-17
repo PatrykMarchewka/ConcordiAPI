@@ -239,6 +239,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         User user1 = userService.createUser(userRequestBody1);
         teamService.addUser(team.getID(), user1, UserRole.ADMIN);
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user1.getID()));
+        this.team = (Team) teamService.getTeamWithUserRolesAndTasksByID(team.getID());
         Task task1 = taskService.createTask(body1, team);
 
         Set<TaskMemberDTO> found = taskService.getAllTasksAssignedToMe(team.getID(), user1.getID());
@@ -276,6 +277,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
         User user1 = userService.createUser(userRequestBody1);
         teamService.addUser(team.getID(), user1, UserRole.ADMIN);
         TaskRequestBody body1 = createTaskRequestBody("Task name", "Task desc", TaskStatus.INPROGRESS, Set.of((int)user.getID(), (int)user1.getID()));
+        this.team = (Team) teamService.getTeamWithUserRolesAndTasksByID(team.getID());
         Task task1 = taskService.createTask(body1, team);
 
         taskService.removeUserFromTask(task1.getID(), team.getID(), user.getID());

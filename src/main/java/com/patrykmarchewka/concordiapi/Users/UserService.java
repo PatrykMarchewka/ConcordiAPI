@@ -189,10 +189,6 @@ public class UserService {
         return userRepository.findUserWithUserTasksByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public User getUserEntityFull(User user){
-        return userRepository.findUserEntityFullByID(user.getID()).orElseThrow(() -> new ImpossibleStateException("User not found with provided ID"));
-    }
-
     public UserFull getUserFull(long id){
         return userRepository.findUserFullByID(id).orElseThrow(NotFoundException::new);
     }

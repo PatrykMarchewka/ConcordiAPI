@@ -164,7 +164,7 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task has been deleted", response.getBody().getMessage());
-        assertThrows(ImpossibleStateException.class, () -> testDataLoader.refreshTask(testDataLoader.taskDelete));
+        assertThrows(NotFoundException.class, () -> testDataLoader.refreshTask(testDataLoader.taskDelete));
     }
 
     @Test
