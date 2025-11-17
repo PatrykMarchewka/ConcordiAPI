@@ -2,7 +2,7 @@ package com.patrykmarchewka.concordiapi.DTO.UserDTO;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -15,7 +15,7 @@ public class UserMeDTO implements UserDTO{
     private Set<TeamMemberDTO> teams = new HashSet<>();
 
 
-    public UserMeDTO(User user){
+    public UserMeDTO(UserWithTeamRoles user){
         this.id = user.getID();
         this.name = user.getName();
         this.lastName = user.getLastName();
