@@ -29,7 +29,7 @@ public class TeamUserRoleService {
      * @return TeamUserRole which holds given User, Team and UserRole information
      */
     public TeamUserRole getByUserAndTeam(long userID, long teamID){
-        return teamUserRoleRepository.findByUserAndTeam(userID, teamID).orElseThrow(NotFoundException::new);
+        return teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(userID, teamID).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -65,7 +65,7 @@ public class TeamUserRoleService {
      */
     @Transactional(readOnly = true)
     public Set<TeamUserRole> getAllByTeamAndUserRole(final long teamID, final UserRole role){
-        Set<TeamUserRole> results = teamUserRoleRepository.findAllByTeamAndUserRole(teamID, role);
+        Set<TeamUserRole> results = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(teamID, role);
         if (results.isEmpty()){
             throw new NotFoundException(String.format("Couldn't find any values for team with ID of %d and user role of %s", teamID, role));
         }

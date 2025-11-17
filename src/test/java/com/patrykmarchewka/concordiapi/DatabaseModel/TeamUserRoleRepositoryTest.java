@@ -1,80 +1,108 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
+import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class TeamUserRoleRepositoryTest implements TeamUserRoleTestHelper, UserTestHelper, TeamTestHelper{
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class TeamUserRoleRepositoryTest {
 
     private final TeamUserRoleRepository teamUserRoleRepository;
-    private final UserRepository userRepository;
-    private final TeamRepository teamRepository;
+    private final TestDataLoader testDataLoader;
 
     @Autowired
-    public TeamUserRoleRepositoryTest(TeamUserRoleRepository teamUserRoleRepository, UserRepository userRepository, TeamRepository teamRepository) {
+    public TeamUserRoleRepositoryTest(TeamUserRoleRepository teamUserRoleRepository, TestDataLoader testDataLoader) {
         this.teamUserRoleRepository = teamUserRoleRepository;
-        this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
+        this.testDataLoader = testDataLoader;
     }
 
-    @AfterEach
+    @BeforeAll
+    void initialize(){
+        testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
     void cleanUp(){
-        teamUserRoleRepository.deleteAll();
-        teamUserRoleRepository.flush();
-        teamRepository.deleteAll();
-        teamRepository.flush();
-        userRepository.deleteAll();
-        userRepository.flush();
+        testDataLoader.clearDB();
     }
 
 
+    /// findAllTeamUserRolesByTeamIDAndUserRole
+
     @Test
-    void shouldSaveAndRetrieveTeamUserRoleCorrectly(){
-        User user = createUser("TEST",userRepository);
-        Team team = createTeam(teamRepository);
-        TeamUserRole teamUserRole = createTeamUserRole(team,user, UserRole.OWNER,teamUserRoleRepository);
+    void shouldFindTeamUserRoleByUserIDAndTeamID(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamRead.getID());
 
-        TeamUserRole found = teamUserRoleRepository.findByUserAndTeam(user.getID(),team.getID()).orElse(null);
-
-        assertNotNull(found);
-        assertEquals(team, found.getTeam());
-        assertEquals(user, found.getUser());
-        assertEquals(UserRole.OWNER, found.getUserRole());
-        assertEquals(teamUserRole.getID(), found.getID());
+        assertTrue(teamUserRole.isPresent());
+        assertEquals(testDataLoader.userMember, teamUserRole.get().getUser());
+        assertEquals(testDataLoader.teamRead, teamUserRole.get().getTeam());
+        assertEquals(UserRole.MEMBER, teamUserRole.get().getUserRole());
     }
 
     @Test
-    void shouldReturnTrueForWrongUserAndTeam() {
-        User user = createUser("TEST", userRepository);
-        Team team = createTeam(teamRepository);
+    void shouldReturnEmptyTeamUserRoleForNonExistentUserIDAndTeamID(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(999L, testDataLoader.teamRead.getID());
 
-        Optional<TeamUserRole> found = teamUserRoleRepository.findByUserAndTeam(user.getID(),team.getID());
-
-        assertTrue(found.isEmpty());
+        assertFalse(teamUserRole.isPresent());
     }
 
     @Test
-    void shouldFindByTeamAndRole(){
-        User user = createUser("ONE",userRepository);
-        User user1 = createUser("TWO",userRepository);
-        Team team = createTeam(teamRepository);
+    void shouldReturnEmptyTeamUserRoleForUserIDAndNonExistentTeamID(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), 999L);
 
-        createTeamUserRole(team,user,UserRole.OWNER,teamUserRoleRepository);
-        createTeamUserRole(team,user1,UserRole.OWNER,teamUserRoleRepository);
+        assertFalse(teamUserRole.isPresent());
+    }
 
-        assertEquals(2, teamUserRoleRepository.findAllByTeamAndUserRole(team.getID(), UserRole.OWNER).size());
+    @Test
+    void shouldReturnEmptyTeamUserRoleForInvalidUserIDAndTeamID(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(-1, testDataLoader.teamRead.getID());
+
+        assertFalse(teamUserRole.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyTeamUserRoleForUserIDAndInvalidTeamID(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), -1);
+
+        assertFalse(teamUserRole.isPresent());
+    }
+
+    /// findAllTeamUserRolesByTeamIDAndUserRole
+
+    @Test
+    void shouldFindSingleTeamUserRolesByTeamIDAndUserRole(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamRead.getID());
+        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamRead.getID(), UserRole.MEMBER);
+
+        assertFalse(teamUserRoleSet.isEmpty());
+        assertEquals(1, teamUserRoleSet.size());
+        assertEquals(Set.of(teamUserRole.get()), teamUserRoleSet);
+    }
+
+    @Test
+    void shouldFindMultipleTeamUserRolesByTeamIDAndUserRole(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamWrite.getID());
+        Optional<TeamUserRole> teamUserRole1 = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userManager.getID(), testDataLoader.teamWrite.getID());
+        teamUserRole1.get().setUserRole(UserRole.MEMBER);
+        teamUserRoleRepository.save(teamUserRole1.get());
+
+        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamWrite.getID(), UserRole.MEMBER);
+        assertFalse(teamUserRoleSet.isEmpty());
+        assertEquals(2, teamUserRoleSet.size());
+        assertEquals(Set.of(teamUserRole.get(), teamUserRole1.get()), teamUserRoleSet);
     }
 
 
