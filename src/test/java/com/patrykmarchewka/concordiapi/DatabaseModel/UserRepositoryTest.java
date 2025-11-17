@@ -2,137 +2,207 @@ package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
-import com.patrykmarchewka.concordiapi.Passwords;
-import org.junit.jupiter.api.AfterEach;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.TestConstructor;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class UserRepositoryTest implements UserTestHelper{
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class UserRepositoryTest{
 
     private final UserRepository userRepository;
+    private final TestDataLoader testDataLoader;
 
     @Autowired
-    public UserRepositoryTest(UserRepository userRepository) {
+    public UserRepositoryTest(UserRepository userRepository, TestDataLoader testDataLoader) {
         this.userRepository = userRepository;
+        this.testDataLoader = testDataLoader;
     }
 
-    @AfterEach
+    @BeforeAll
+    void initialize(){
+        testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
     void cleanUp(){
-        userRepository.deleteAll();
-        userRepository.flush();
+        testDataLoader.clearDB();
     }
 
-    @Test
-    void shouldSaveAndRetrieveUserCorrectlyBasic() {
-        long id = createUser("TEST",userRepository).getID();
 
-        UserWithCredentials found = userRepository.findUserWithCredentialsByLogin("TEST").orElse(null);
-
-        assertNotNull(found);
-        assertEquals(id, found.getID());
-        assertEquals("TEST", found.getLogin());
-        assertEquals("John", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d", found.getPassword()));
-    }
-
-    @Test
-    void shouldReturnUserWithTeams(){
-        long id = createUser("TEST",userRepository).getID();
-
-        UserWithTeamRoles found = userRepository.findUserWithTeamRolesAndTeamsByID(id).orElse(null);
-
-        assertNotNull(found);
-        assertTrue(found.getTeams().isEmpty());
-        assertTrue(found.getTeamRoles().isEmpty());
-    }
-
-    @Test
-    void shouldReturnTrueForNonExistingUserWithNoTeamRoles(){
-        Optional<UserWithTeamRoles> found = userRepository.findUserWithTeamRolesAndTeamsByID(0);
-        assertTrue(found.isEmpty());
-    }
-
-    @Test
-    void shouldReturnUserWithTasks(){
-        long id = createUser("TEST", userRepository).getID();
-
-        UserWithUserTasks found = userRepository.findUserWithUserTasksByID(id).orElse(null);
-
-        assertNotNull(found);
-        assertTrue(found.getUserTasks().isEmpty());
-    }
-
-    @Test
-    void shouldReturnTrueForNonExistingUserWithNoUserTasks(){
-        Optional<UserWithUserTasks> found = userRepository.findUserWithUserTasksByID(0);
-        assertTrue(found.isEmpty());
-    }
-
-    @Test
-    void shouldSaveAndRetrieveUserCorrectlyFull(){
-        long id = createUser("TEST",userRepository).getID();
-
-        UserFull found = userRepository.findUserFullByID(id).orElse(null);
-
-        assertNotNull(found);
-        assertEquals(id, found.getID());
-        assertEquals("TEST", found.getLogin());
-        assertEquals("John", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d", found.getPassword()));
-
-        assertTrue(found.getTeams().isEmpty());
-        assertTrue(found.getTeamRoles().isEmpty());
-        assertTrue(found.getUserTasks().isEmpty());
-    }
-
-    @Test
-    void shouldReturnTrueForNonExistingUser(){
-        Optional<UserFull> found = userRepository.findUserFullByID(0);
-        assertTrue(found.isEmpty());
-    }
-
-    @Test
-    void shouldReturnUserByLogin(){
-        createUser("TEST",userRepository);
-
-        UserWithCredentials found = userRepository.findUserWithCredentialsByLogin("TEST").orElse(null);
-
-        assertNotNull(found);
-    }
-
-    @Test
-    void shouldReturnTrueForNonExistingUserByLogin() {
-        Optional<UserWithCredentials> found = userRepository.findUserWithCredentialsByLogin("NonExistingUser");
-        assertTrue(found.isEmpty());
-    }
+    /// existsByLogin
 
     @Test
     void shouldReturnTrueForExistsByLogin() {
-        createUser("TEST",userRepository);
-        assertTrue(userRepository.existsByLogin("TEST"));
+        assertTrue(userRepository.existsByLogin(testDataLoader.userMember.getLogin()));
     }
 
     @Test
-    void shouldThrowWhenCreatingUserWithAlreadyExistingLogin(){
-        createUser("TEST",userRepository);
-        assertThrows(DataIntegrityViolationException.class,() -> createUser("TEST",userRepository));
+    void shouldReturnFalseForExistsByLogin(){
+        assertFalse(userRepository.existsByLogin("TEST"));
+    }
+
+    /// findUserByID
+
+    @Test
+    void shouldFindUserByID(){
+        Optional<UserIdentity> user = userRepository.findUserByID(testDataLoader.userMember.getID());
+
+        assertTrue(user.isPresent());
+        assertEquals(testDataLoader.userMember.getID(), user.get().getID());
+        assertEquals(testDataLoader.userMember.getName(), user.get().getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.get().getLastName());
+    }
+
+    @Test
+    void shouldReturnEmptyUserIdentityForNonExistingID(){
+        Optional<UserIdentity> user = userRepository.findUserByID(999L);
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserIdentityForInvalidID(){
+        Optional<UserIdentity> user = userRepository.findUserByID(-1);
+
+        assertFalse(user.isPresent());
+    }
+
+    /// findUserWithCredentialsByLogin
+
+    @Test
+    void shouldFindUserWithCredentialsByLogin(){
+        Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin(testDataLoader.userMember.getLogin());
+
+        assertTrue(user.isPresent());
+        assertEquals(testDataLoader.userMember.getID(), user.get().getID());
+        assertEquals(testDataLoader.userMember.getName(), user.get().getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.get().getLastName());
+        assertEquals(testDataLoader.userMember.getLogin(), user.get().getLogin());
+        assertEquals(testDataLoader.userMember.getPassword(), user.get().getPassword());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithCredentialsForNonExistingLogin(){
+        Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin("TEST");
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithCredentialsForEmptyLogin(){
+        Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin("");
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithCredentialsForNullLogin(){
+        Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin(null);
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithCredentialsForCaseSensitivity(){
+        Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin(testDataLoader.userMember.getLogin().toLowerCase());
+
+        assertFalse(user.isPresent());
+    }
+
+    /// findUserWithTeamRolesByID
+
+    @Test
+    void shouldReturnUserWithTeamRolesByID(){
+        Optional<UserWithTeamRoles> user = userRepository.findUserWithTeamRolesAndTeamsByID(testDataLoader.userMember.getID());
+
+        assertTrue(user.isPresent());
+        assertEquals(testDataLoader.userMember.getID(), user.get().getID());
+        assertEquals(testDataLoader.userMember.getName(), user.get().getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.get().getLastName());
+        assertEquals(testDataLoader.userMember.getTeamRoles(), user.get().getTeamRoles());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithTeamRolesForNonExistingID(){
+        Optional<UserWithTeamRoles> user = userRepository.findUserWithTeamRolesAndTeamsByID(999L);
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithTeamRolesForInvalidID(){
+        Optional<UserWithTeamRoles> user = userRepository.findUserWithTeamRolesAndTeamsByID(-1);
+
+        assertFalse(user.isPresent());
+    }
+
+    /// findUserWithTasksByID
+
+    @Test
+    void shouldReturnUserWithTasksByID(){
+        Optional<UserWithUserTasks> user = userRepository.findUserWithUserTasksByID(testDataLoader.userMember.getID());
+
+        assertTrue(user.isPresent());
+        assertEquals(testDataLoader.userMember.getID(), user.get().getID());
+        assertEquals(testDataLoader.userMember.getName(), user.get().getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.get().getLastName());
+        assertEquals(testDataLoader.userMember.getUserTasks(), user.get().getUserTasks());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithTasksForNonExistingID(){
+        Optional<UserWithUserTasks> user = userRepository.findUserWithUserTasksByID(999L);
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserWithTasksForInvalidID(){
+        Optional<UserWithUserTasks> user = userRepository.findUserWithUserTasksByID(-1);
+
+        assertFalse(user.isPresent());
+    }
+
+    /// findUserFullByID
+
+    @Test
+    void shouldReturnUserFullByID(){
+        Optional<UserFull> user = userRepository.findUserFullByID(testDataLoader.userMember.getID());
+
+        assertTrue(user.isPresent());
+        assertEquals(testDataLoader.userMember.getID(), user.get().getID());
+        assertEquals(testDataLoader.userMember.getName(), user.get().getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.get().getLastName());
+        assertEquals(testDataLoader.userMember.getLogin(), user.get().getLogin());
+        assertEquals(testDataLoader.userMember.getPassword(), user.get().getPassword());
+        assertEquals(testDataLoader.userMember.getTeamRoles(), user.get().getTeamRoles());
+        assertEquals(testDataLoader.userMember.getUserTasks(), user.get().getUserTasks());
+    }
+
+    @Test
+    void shouldReturnEmptyUserFullForNonExistingID(){
+        Optional<UserFull> user = userRepository.findUserFullByID(999L);
+
+        assertFalse(user.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserFullForInvalidID(){
+        Optional<UserFull> user = userRepository.findUserFullByID(-1);
+
+        assertFalse(user.isPresent());
     }
 }
