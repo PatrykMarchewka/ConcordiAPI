@@ -1,109 +1,204 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
-import org.junit.jupiter.api.AfterEach;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class TeamRepositoryTest implements TeamTestHelper{
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class TeamRepositoryTest {
 
     private final TeamRepository teamRepository;
+    private final TestDataLoader testDataLoader;
 
     @Autowired
-    public TeamRepositoryTest(TeamRepository teamRepository) {
+    public TeamRepositoryTest(TeamRepository teamRepository, TestDataLoader testDataLoader) {
         this.teamRepository = teamRepository;
+        this.testDataLoader = testDataLoader;
     }
 
-    @AfterEach
+    @BeforeAll
+    void initialize(){
+        testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
     void cleanUp(){
-        teamRepository.deleteAll();
-        teamRepository.flush();
+        testDataLoader.clearDB();
+    }
+
+
+    /// findTeamByID
+
+    @Test
+    void shouldFindTeamByID(){
+        Optional<TeamIdentity> team = teamRepository.findTeamByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
     }
 
     @Test
-    void shouldSaveAndRetrieveTeamCorrectlyBasic(){
-        long id = createTeam(teamRepository).getID();
+    void shouldReturnEmptyTeamForNonExistentID(){
+        Optional<TeamIdentity> team = teamRepository.findTeamByID(999L);
 
-        Team found = teamRepository.findTeamById(id).orElse(null);
-
-        assertNotNull(found);
-        assertEquals(id, found.getID());
-        assertEquals("Testing", found.getName());
+        assertFalse(team.isPresent());
     }
 
     @Test
-    void shouldReturnTeamWithTeamTasks(){
-        long id = createTeam(teamRepository).getID();
+    void shouldReturnEmptyForInvalidID(){
+        Optional<TeamIdentity> team = teamRepository.findTeamByID(-1);
 
-        TeamWithTasks found = teamRepository.findTeamWithTeamTasksByID(id).orElse(null);
+        assertFalse(team.isPresent());
+    }
 
-        assertNotNull(found);
-        assertTrue(found.getTeamTasks().isEmpty());
+    /// findTeamWithUserRolesByID
+
+    @Test
+    void shouldFindTeamWithUserRolesByID(){
+        Optional<TeamWithUserRoles> team = teamRepository.findTeamWithUserRolesByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.get().getUserRoles());
     }
 
     @Test
-    void shouldReturnTrueForNonExistingTeamWithNoTasks(){
-        Optional<TeamWithTasks> found = teamRepository.findTeamWithTeamTasksByID(0);
-        assertTrue(found.isEmpty());
+    void shouldReturnEmptyTeamWithUserRolesForNonExistentID(){
+        Optional<TeamWithUserRoles> team = teamRepository.findTeamWithUserRolesByID(999L);
+
+        assertFalse(team.isPresent());
     }
 
     @Test
-    void shouldReturnTeamWithUserRolesAndUsers(){
-        long id = createTeam(teamRepository).getID();
+    void shouldReturnEmptyTeamWithUserRolesForInvalidID(){
+        Optional<TeamWithUserRoles> team = teamRepository.findTeamWithUserRolesByID(-1);
 
-        Team found = teamRepository.findTeamWithUserRolesAndUsersByID(id).orElse(null);
+        assertFalse(team.isPresent());
+    }
 
-        assertNotNull(found);
-        assertTrue(found.getUserRoles().isEmpty());
-        assertTrue(found.getTeammates().isEmpty());
+    /// findTeamWithTasksByID
+
+    @Test
+    void shouldFindTeamWithTasksByID(){
+        Optional<TeamWithTasks> team = teamRepository.findTeamWithTasksByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.get().getTeamTasks());
     }
 
     @Test
-    void shouldReturnTrueForNonExistingTeamWithNoRoles(){
-        Optional<Team> found = teamRepository.findTeamWithUserRolesAndUsersByID(0);
-        assertTrue(found.isEmpty());
+    void shouldReturnEmptyTeamWithTasksForNonExistentID(){
+        Optional<TeamWithTasks> team = teamRepository.findTeamWithTasksByID(999L);
+
+        assertFalse(team.isPresent());
     }
 
     @Test
-    void shouldReturnTeamWithInvitations(){
-        long id = createTeam(teamRepository).getID();
+    void shouldReturnEmptyTeamWithTasksForInvalidID(){
+        Optional<TeamWithTasks> team = teamRepository.findTeamWithTasksByID(-1);
 
-        TeamWithInvitations found = teamRepository.findTeamWithInvitationsByID(id).orElse(null);
+        assertFalse(team.isPresent());
+    }
 
-        assertNotNull(found);
-        assertTrue(found.getInvitations().isEmpty());
+    /// findTeamWithInvitationsByID
+
+    @Test
+    void shouldFindTeamWithInvitationsByID(){
+        Optional<TeamWithInvitations> team = teamRepository.findTeamWithInvitationsByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
+        assertEquals(testDataLoader.teamRead.getInvitations(), team.get().getInvitations());
     }
 
     @Test
-    void shouldReturnTrueForNonExistingTeamWithNoInvitations(){
-        Optional<TeamWithInvitations> found = teamRepository.findTeamWithInvitationsByID(0);
-        assertTrue(found.isEmpty());
+    void shouldReturnEmptyTeamWithInvitationsForNonExistentID(){
+        Optional<TeamWithInvitations> team = teamRepository.findTeamWithInvitationsByID(999L);
+
+        assertFalse(team.isPresent());
     }
 
     @Test
-    void shouldSaveAndRetrieveTeamCorrectlyFull(){
-        long id = createTeam(teamRepository).getID();
+    void shouldReturnEmptyTeamWithInvitationsForInvalidID(){
+        Optional<TeamWithInvitations> team = teamRepository.findTeamWithInvitationsByID(-1);
 
-        Team found = teamRepository.findTeamEntityFullByID(id).orElse(null);
+        assertFalse(team.isPresent());
+    }
 
-        assertNotNull(found);
-        assertEquals(id, found.getID());
-        assertEquals("Testing", found.getName());
-        assertTrue(found.getTeamTasks().isEmpty());
-        assertTrue(found.getTeammates().isEmpty());
-        assertTrue(found.getInvitations().isEmpty());
-        assertTrue(found.getUserRoles().isEmpty());
+    /// findTeamWithUserRolesAndTasksByID
+
+    @Test
+    void shouldFindTeamWithUserRolesAndTasksByID(){
+        Optional<TeamWithUserRolesAndTasks> team = teamRepository.findTeamWithUserRolesAndTasksByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.get().getUserRoles());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.get().getTeamTasks());
+    }
+
+    @Test
+    void shouldReturnEmptyTeamWithUserRolesAndTasksForNonExistentID(){
+        Optional<TeamWithUserRolesAndTasks> team = teamRepository.findTeamWithUserRolesAndTasksByID(999L);
+
+        assertFalse(team.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyTeamWithUserRolesAndTasksForInvalidID(){
+        Optional<TeamWithUserRolesAndTasks> team = teamRepository.findTeamWithUserRolesAndTasksByID(-1);
+
+        assertFalse(team.isPresent());
+    }
+
+    /// findTeamFullByID
+
+    @Test
+    void shouldFindTeamFullByID(){
+        Optional<TeamFull> team = teamRepository.findTeamFullByID(testDataLoader.teamRead.getID());
+
+        assertTrue(team.isPresent());
+        assertEquals(testDataLoader.teamRead.getID(), team.get().getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.get().getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.get().getUserRoles());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.get().getTeamTasks());
+        assertEquals(testDataLoader.teamRead.getInvitations(), team.get().getInvitations());
+    }
+
+    @Test
+    void shouldReturnEmptyTeamFullForNonExistentID(){
+        Optional<TeamFull> team = teamRepository.findTeamFullByID(999L);
+
+        assertFalse(team.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyTeamFullForInvalidID(){
+        Optional<TeamFull> team = teamRepository.findTeamFullByID(-1);
+
+        assertFalse(team.isPresent());
     }
 }

@@ -167,7 +167,7 @@ public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHe
 
     @Test
     void shouldReturnTeamWithTeamTasks(){
-        TeamWithTasks found = teamService.getTeamWithTeamTasks(team.getID());
+        TeamWithTasks found = teamService.getTeamWithTasks(team.getID());
 
         assertTrue(found.getTeamTasks().isEmpty());
     }

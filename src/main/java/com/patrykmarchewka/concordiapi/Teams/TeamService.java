@@ -172,8 +172,8 @@ public class TeamService {
         return teamRepository.findTeamWithUserRolesByID(teamID).orElseThrow(NotFoundException::new);
     }
 
-    public TeamWithTasks getTeamWithTeamTasks(long teamID){
-        return teamRepository.findTeamWithTeamTasksByID(teamID).orElseThrow(NotFoundException::new);
+    public TeamWithTasks getTeamWithTasks(long teamID){
+        return teamRepository.findTeamWithTasksByID(teamID).orElseThrow(NotFoundException::new);
     }
 
     public TeamWithUserRolesAndTasks getTeamWithUserRolesAndTasksByID(long teamID){
