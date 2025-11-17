@@ -1,55 +1,80 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
-import org.junit.jupiter.api.AfterEach;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class UserTaskRepositoryTest implements UserTaskTestHelper, UserTestHelper, TaskTestHelper, TeamTestHelper{
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class UserTaskRepositoryTest {
 
     private final UserTaskRepository userTaskRepository;
-    private final UserRepository userRepository;
-    private final TaskRepository taskRepository;
-    private final TeamRepository teamRepository;
+    private final TestDataLoader testDataLoader;
 
 
-    public UserTaskRepositoryTest(UserTaskRepository userTaskRepository, UserRepository userRepository, TaskRepository taskRepository, TeamRepository teamRepository) {
+    @Autowired
+    public UserTaskRepositoryTest(UserTaskRepository userTaskRepository, TestDataLoader testDataLoader) {
         this.userTaskRepository = userTaskRepository;
-        this.userRepository = userRepository;
-        this.taskRepository = taskRepository;
-        this.teamRepository = teamRepository;
+        this.testDataLoader = testDataLoader;
     }
 
-    @AfterEach
+    @BeforeAll
+    void initialize(){
+        testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
     void cleanUp(){
-        userTaskRepository.deleteAll();
-        userTaskRepository.flush();
-        taskRepository.deleteAll();
-        taskRepository.flush();
-        teamRepository.deleteAll();
-        teamRepository.flush();
-        userRepository.deleteAll();
-        userRepository.flush();
+        testDataLoader.clearDB();
+    }
+
+
+    /// findUserTaskByAssignedUserIDAndAssignedTaskID
+
+    @Test
+    void shouldFindUserTaskByAssignedUserIDAndAssignedTaskID(){
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), testDataLoader.taskRead.getID());
+
+        assertTrue(userTask.isPresent());
+        assertEquals(testDataLoader.userMember, userTask.get().getAssignedUser());
+        assertEquals(testDataLoader.taskRead, userTask.get().getAssignedTask());
+        assertTrue(testDataLoader.userMember.getUserTasks().contains(userTask.get()));
+        assertTrue(testDataLoader.taskRead.getUserTasks().contains(userTask.get()));
     }
 
     @Test
-    void shouldSaveAndRetrieveUserTaskCorrectly(){
-        User user = createUser("TEST",userRepository);
-        Team team = createTeam(teamRepository);
-        Task task = createTask(team,taskRepository);
-        long id = createUserTask(user,task,userTaskRepository).getID();
+    void shouldReturnEmptyUserTaskForNonExistentUserIDAndAssignedTaskID(){
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(999L, testDataLoader.taskRead.getID());
 
-        UserTask found = userTaskRepository.findByAssignedUserIDAndAssignedTaskID(user.getID(),task.getID()).orElse(null);
+        assertFalse(userTask.isPresent());
+    }
 
-        assertNotNull(found);
-        assertEquals(id, found.getID());
-        assertEquals(user, found.getAssignedUser());
-        assertEquals(task, found.getAssignedTask());
+    @Test
+    void shouldReturnEmptyUserTaskForAssignedUserIDAndNonExistentTaskID(){
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), 999L);
+
+        assertFalse(userTask.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserTaskForInvalidUserIDAndAssignedTaskID(){
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(-1, testDataLoader.taskRead.getID());
+
+        assertFalse(userTask.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptyUserTaskForAssignedUserIDAndInvalidTaskID(){
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), -1);
+
+        assertFalse(userTask.isPresent());
     }
 }

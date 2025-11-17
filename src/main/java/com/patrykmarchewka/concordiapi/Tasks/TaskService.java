@@ -265,7 +265,7 @@ public class TaskService {
     @Transactional
     public void removeUserFromTask(long taskID, long teamID, long userID){
         Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
-        UserTask userTask = userTaskRepository.findByAssignedUserIDAndAssignedTaskID(userID, taskID).orElseThrow(NotFoundException::new);
+        UserTask userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(userID, taskID).orElseThrow(NotFoundException::new);
         task.removeUserTask(userTask);
         saveTask(task);
     }
