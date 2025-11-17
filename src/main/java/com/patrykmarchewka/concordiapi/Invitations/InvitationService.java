@@ -60,7 +60,7 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation putInvitation(String invitationID, InvitationRequestBody body){
+    public InvitationFull putInvitation(String invitationID, InvitationRequestBody body){
         Invitation invitation = (Invitation) getInvitationFullByUUID(invitationID);
         invitationUpdatersService.putUpdate(invitation, body);
         return saveInvitation(invitation);
@@ -73,7 +73,7 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public Invitation patchInvitation(String invitationID, InvitationRequestBody body){
+    public InvitationFull patchInvitation(String invitationID, InvitationRequestBody body){
         Invitation invitation = (Invitation) getInvitationFullByUUID(invitationID);
         invitationUpdatersService.patchUpdate(invitation, body);
         return saveInvitation(invitation);
@@ -87,7 +87,7 @@ public class InvitationService {
      * @throws BadRequestException Thrown when user can't join the specified team due to invitation being no longer usable
      */
     @Transactional
-    public Invitation useInvitation(String invitationID, UserWithTeamRoles user){
+    public InvitationWithTeam useInvitation(String invitationID, UserWithTeamRoles user){
         Invitation invitation = (Invitation) getInvitationWithTeamByUUID(invitationID);
         Team team = (Team) teamService.getTeamWithUserRoles(invitation.getInvitingTeam().getID());
         if (team.checkUser(user.getID())){

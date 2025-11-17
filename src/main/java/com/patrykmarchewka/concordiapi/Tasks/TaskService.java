@@ -17,9 +17,8 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
-import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
-import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.Tasks.Updaters.TaskUpdatersService;
@@ -122,7 +121,7 @@ public class TaskService {
      * @return Created task
      */
     @Transactional
-    public Task createTask(TaskRequestBody body, Team team){
+    public Task createTask(TaskRequestBody body, TeamWithUserRolesAndTasks team){
         validateUsersForTasksByID(body.getUsers(),team);
         Task task = new Task();
         taskUpdatersService.createUpdate(task, body, () -> (Team) team);
@@ -138,7 +137,7 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public Task putTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID) {
+    public TaskFull putTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID) {
         Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
         verifyTaskEditPrivilege(userID, team.getID(), taskID);
         validateUsersForTasksByID(body.getUsers(),team);
@@ -155,7 +154,7 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public Task patchTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID){
+    public TaskFull patchTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID){
         Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
         verifyTaskEditPrivilege(userID, team.getID(), task.getID());
         validateUsersForTasksByID(body.getUsers(),team);
@@ -183,18 +182,6 @@ public class TaskService {
     public void deleteTask(long taskID, long teamID){
         Task task = (Task) getTaskByIDAndTeamID(taskID, teamID);
         taskRepository.delete(task);
-    }
-
-    /**
-     * Saves all tasks
-     * @param tasks Set of tasks to save
-     */
-    @Transactional
-    public void saveAllTasks(Set<Task> tasks){
-        for (Task task : tasks){
-            task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
-        }
-        taskRepository.saveAll(tasks);
     }
 
     /**

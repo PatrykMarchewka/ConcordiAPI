@@ -74,7 +74,7 @@ public class TeamService {
      * @return Team after changes
      */
     @Transactional
-    public Team putTeam(long teamID, TeamRequestBody body){
+    public TeamFull putTeam(long teamID, TeamRequestBody body){
         Team team = (Team) getTeamFull(teamID);
         teamUpdatersService.putUpdate(team, body);
         return saveTeam(team);
@@ -87,7 +87,7 @@ public class TeamService {
      * @return Team after changes
      */
     @Transactional
-    public Team patchTeam(long teamID,TeamRequestBody body){
+    public TeamFull patchTeam(long teamID,TeamRequestBody body){
         Team team = (Team) getTeamFull(teamID);
         teamUpdatersService.patchUpdate(team, body);
         return saveTeam(team);
@@ -109,7 +109,7 @@ public class TeamService {
     }
 
     @Transactional
-    public Team addUser(long teamID, UserWithTeamRoles user, UserRole role){
+    public TeamWithUserRoles addUser(long teamID, UserWithTeamRoles user, UserRole role){
         Team team = (Team) getTeamWithUserRoles(teamID);
         team.addUserRole((User) user, role);
         return saveTeam(team);
@@ -122,7 +122,7 @@ public class TeamService {
      * @param userID ID of User to be removed
      */
     @Transactional
-    public Team removeUser(long teamID, long userID){
+    public TeamWithUserRolesAndTasks removeUser(long teamID, long userID){
         Team team = (Team) getTeamWithUserRolesAndTasksByID(teamID);
         team.removeUserRole(teamUserRoleService.getByUserAndTeam(userID, teamID));
         if (team.getUserRoles().isEmpty()){

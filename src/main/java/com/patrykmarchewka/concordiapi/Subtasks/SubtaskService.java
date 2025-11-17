@@ -68,7 +68,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask putUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+    public SubtaskIdentity putUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
         Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.putUpdate(subtask, body);
         return saveSubtask(subtask);
@@ -82,7 +82,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public Subtask patchUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+    public SubtaskIdentity patchUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
         Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.patchUpdate(subtask, body);
         return saveSubtask(subtask);

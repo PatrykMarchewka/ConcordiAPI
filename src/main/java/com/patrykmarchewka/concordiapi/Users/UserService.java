@@ -6,7 +6,6 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.DatabaseModel.UserRepository;
-import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
@@ -91,9 +90,9 @@ public class UserService {
      * @return Modified User
      */
     @Transactional
-    public User putUser(User user, UserRequestBody body){
-        userUpdatersService.putUpdate(user, body);
-        return saveUser(user);
+    public UserWithCredentials putUser(UserWithCredentials user, UserRequestBody body){
+        userUpdatersService.putUpdate((User) user, body);
+        return saveUser((User) user);
     }
 
     /**
@@ -103,9 +102,9 @@ public class UserService {
      * @return Modified User
      */
     @Transactional
-    public User patchUser(User user,UserRequestBody body){
-        userUpdatersService.patchUpdate(user, body);
-        return saveUser(user);
+    public UserWithCredentials patchUser(UserWithCredentials user,UserRequestBody body){
+        userUpdatersService.patchUpdate((User) user, body);
+        return saveUser((User) user);
     }
 
     /**
