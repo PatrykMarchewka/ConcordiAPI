@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SubtaskRepositoryTest implements SubtaskTestHelper, TaskTestHelper, TeamTestHelper{
+public class SubtaskRepositoryTest {
 
     private final SubtaskRepository subtaskRepository;
     private final TestDataLoader testDataLoader;

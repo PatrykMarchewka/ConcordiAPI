@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TaskRepositoryTest implements TaskTestHelper, TeamTestHelper{
+public class TaskRepositoryTest {
 
     private final TaskRepository taskRepository;
     private final TestDataLoader testDataLoader;
