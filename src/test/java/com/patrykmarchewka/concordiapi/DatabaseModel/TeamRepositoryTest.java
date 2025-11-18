@@ -201,4 +201,15 @@ public class TeamRepositoryTest {
 
         assertFalse(team.isPresent());
     }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNullName(){
+        Team team = new Team();
+        team.setName(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> teamRepository.save(team));
+    }
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
@@ -76,5 +77,29 @@ public class UserTaskRepositoryTest {
         Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), -1);
 
         assertFalse(userTask.isPresent());
+    }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNonUniqueUserTask(){
+        UserTask userTask = new UserTask(testDataLoader.userMember, testDataLoader.taskMultiUserRead);
+
+        assertThrows(DataIntegrityViolationException.class, () -> userTaskRepository.save(userTask));
+    }
+
+    @Test
+    void shouldThrowForNullUser(){
+        UserTask userTask = new UserTask(null, testDataLoader.taskMultiUserRead);
+
+        assertThrows(DataIntegrityViolationException.class, () -> userTaskRepository.save(userTask));
+    }
+
+    @Test
+    void shouldThrowForNullTask(){
+        UserTask userTask = new UserTask(testDataLoader.userMember, null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> userTaskRepository.save(userTask));
     }
 }

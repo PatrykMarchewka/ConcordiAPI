@@ -114,4 +114,36 @@ public class TeamUserRoleRepositoryTest {
     }
 
 
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNonUniqueTeamUserRole(){
+        TeamUserRole teamUserRole = new TeamUserRole(testDataLoader.userMember, testDataLoader.teamRead, UserRole.MEMBER);
+
+        assertThrows(DataIntegrityViolationException.class, () -> teamUserRoleRepository.save(teamUserRole));
+    }
+
+    @Test
+    void shouldThrowForNullUser(){
+        TeamUserRole teamUserRole = new TeamUserRole(null, testDataLoader.teamRead, UserRole.MEMBER);
+
+        assertThrows(DataIntegrityViolationException.class, () -> teamUserRoleRepository.save(teamUserRole));
+    }
+
+    @Test
+    void shouldThrowForNullTeam(){
+        TeamUserRole teamUserRole = new TeamUserRole(testDataLoader.userMember, null, UserRole.MEMBER);
+
+        assertThrows(DataIntegrityViolationException.class, () -> teamUserRoleRepository.save(teamUserRole));
+    }
+
+    @Test
+    void shouldThrowForNullUserRole(){
+        TeamUserRole teamUserRole = new TeamUserRole(testDataLoader.userNoTeam, testDataLoader.teamRead, null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> teamUserRoleRepository.save(teamUserRole));
+    }
+
+
+
 }

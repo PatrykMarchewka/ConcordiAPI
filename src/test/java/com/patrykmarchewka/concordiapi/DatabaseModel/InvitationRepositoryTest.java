@@ -184,4 +184,27 @@ public class InvitationRepositoryTest {
 
         assertFalse(invitation.isPresent());
     }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNullTeam(){
+        Invitation invitation = new Invitation();
+        invitation.setInvitingTeam(null);
+        invitation.setUses((short) 1);
+        invitation.setRole(UserRole.MEMBER);
+
+        assertThrows(DataIntegrityViolationException.class, () -> invitationRepository.save(invitation));
+    }
+
+    @Test
+    void shouldThrowForNullUserRole(){
+        Invitation invitation = new Invitation();
+        invitation.setInvitingTeam(testDataLoader.teamWrite);
+        invitation.setUses((short) 1);
+        invitation.setRole(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> invitationRepository.save(invitation));
+    }
 }

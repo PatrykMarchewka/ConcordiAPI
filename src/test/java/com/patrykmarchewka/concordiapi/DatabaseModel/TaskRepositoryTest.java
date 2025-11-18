@@ -302,4 +302,67 @@ public class TaskRepositoryTest {
 
         assertTrue(taskSet.isEmpty());
     }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNullName(){
+        Task task = new Task();
+        task.setName(null);
+        task.setDescription("desc");
+        task.setTaskStatus(TaskStatus.NEW);
+        task.setCreationDate(OffsetDateTime.now());
+        task.setAssignedTeam(testDataLoader.teamWrite);
+
+        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
+
+    @Test
+    void shouldThrowForNullDescription(){
+        Task task = new Task();
+        task.setName("name");
+        task.setDescription(null);
+        task.setTaskStatus(TaskStatus.NEW);
+        task.setCreationDate(OffsetDateTime.now());
+        task.setAssignedTeam(testDataLoader.teamWrite);
+
+        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
+
+    @Test
+    void shouldThrowForNullTaskStatus(){
+        Task task = new Task();
+        task.setName("name");
+        task.setDescription("desc");
+        task.setTaskStatus(null);
+        task.setCreationDate(OffsetDateTime.now());
+        task.setAssignedTeam(testDataLoader.teamWrite);
+
+        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
+
+    @Test
+    void shouldThrowForNullCreationDate(){
+        Task task = new Task();
+        task.setName("name");
+        task.setDescription("desc");
+        task.setTaskStatus(TaskStatus.NEW);
+        task.setCreationDate(null);
+        task.setAssignedTeam(testDataLoader.teamWrite);
+
+        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
+
+    @Test
+    void shouldThrowForNullTeam(){
+        Task task = new Task();
+        task.setName("name");
+        task.setDescription("desc");
+        task.setTaskStatus(TaskStatus.NEW);
+        task.setCreationDate(OffsetDateTime.now());
+        task.setAssignedTeam(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
+    }
 }

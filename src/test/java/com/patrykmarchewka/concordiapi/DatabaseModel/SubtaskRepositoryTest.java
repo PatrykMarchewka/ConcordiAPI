@@ -78,4 +78,40 @@ public class SubtaskRepositoryTest {
 
         assertFalse(subtask.isPresent());
     }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNullName(){
+        Subtask subtask = new Subtask();
+        subtask.setName(null);
+        subtask.setDescription("description");
+        subtask.setTask(testDataLoader.taskMultiUserWrite);
+        subtask.setTaskStatus(TaskStatus.NEW);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
+    }
+
+    @Test
+    void shouldThrowFroNullTask(){
+        Subtask subtask = new Subtask();
+        subtask.setName("name");
+        subtask.setDescription("description");
+        subtask.setTask(null);
+        subtask.setTaskStatus(TaskStatus.NEW);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
+    }
+
+    @Test
+    void shouldThrowForNullTaskStatus(){
+        Subtask subtask = new Subtask();
+        subtask.setName("name");
+        subtask.setDescription("description");
+        subtask.setTask(testDataLoader.taskMultiUserWrite);
+        subtask.setTaskStatus(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
+    }
 }

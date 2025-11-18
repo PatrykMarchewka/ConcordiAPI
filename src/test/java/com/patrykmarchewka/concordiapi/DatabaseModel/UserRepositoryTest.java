@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 
@@ -204,5 +205,63 @@ public class UserRepositoryTest{
         Optional<UserFull> user = userRepository.findUserFullByID(-1);
 
         assertFalse(user.isPresent());
+    }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNonUniqueLogin(){
+        User user = new User();
+        user.setLogin(testDataLoader.userMember.getLogin());
+        user.setPassword("Password");
+        user.setName("Name");
+        user.setLastName("LastName");
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(user));
+    }
+
+    @Test
+    void shouldThrowForNullLogin(){
+        User user = new User();
+        user.setLogin(null);
+        user.setPassword("Password");
+        user.setName("Name");
+        user.setLastName("LastName");
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(user));
+    }
+
+    @Test
+    void shouldThrowForNullPassword(){
+        User user = new User();
+        user.setLogin("Login");
+        user.setPassword(null);
+        user.setName("Name");
+        user.setLastName("LastName");
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(user));
+    }
+
+    @Test
+    void shouldThrowForNullName(){
+        User user = new User();
+        user.setLogin("Login");
+        user.setPassword("Password");
+        user.setName(null);
+        user.setLastName("LastName");
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(user));
+    }
+
+    @Test
+    void shouldThrowForNullLastName(){
+        User user = new User();
+        user.setLogin("Login");
+        user.setPassword("Password");
+        user.setName("Name");
+        user.setLastName(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> userRepository.save(user));
     }
 }
