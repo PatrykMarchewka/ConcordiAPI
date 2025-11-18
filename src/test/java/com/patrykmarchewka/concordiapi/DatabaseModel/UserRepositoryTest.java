@@ -68,7 +68,7 @@ public class UserRepositoryTest{
     }
 
     @Test
-    void shouldReturnEmptyUserIdentityForNonExistingID(){
+    void shouldReturnEmptyUserIdentityForNonExistentID(){
         Optional<UserIdentity> user = userRepository.findUserByID(999L);
 
         assertFalse(user.isPresent());
@@ -96,7 +96,7 @@ public class UserRepositoryTest{
     }
 
     @Test
-    void shouldReturnEmptyUserWithCredentialsForNonExistingLogin(){
+    void shouldReturnEmptyUserWithCredentialsForNonExistentLogin(){
         Optional<UserWithCredentials> user = userRepository.findUserWithCredentialsByLogin("TEST");
 
         assertFalse(user.isPresent());
@@ -137,7 +137,7 @@ public class UserRepositoryTest{
     }
 
     @Test
-    void shouldReturnEmptyUserWithTeamRolesForNonExistingID(){
+    void shouldReturnEmptyUserWithTeamRolesForNonExistentID(){
         Optional<UserWithTeamRoles> user = userRepository.findUserWithTeamRolesAndTeamsByID(999L);
 
         assertFalse(user.isPresent());
@@ -164,7 +164,7 @@ public class UserRepositoryTest{
     }
 
     @Test
-    void shouldReturnEmptyUserWithTasksForNonExistingID(){
+    void shouldReturnEmptyUserWithTasksForNonExistentID(){
         Optional<UserWithUserTasks> user = userRepository.findUserWithUserTasksByID(999L);
 
         assertFalse(user.isPresent());
@@ -194,7 +194,7 @@ public class UserRepositoryTest{
     }
 
     @Test
-    void shouldReturnEmptyUserFullForNonExistingID(){
+    void shouldReturnEmptyUserFullForNonExistentID(){
         Optional<UserFull> user = userRepository.findUserFullByID(999L);
 
         assertFalse(user.isPresent());
