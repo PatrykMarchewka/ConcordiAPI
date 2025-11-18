@@ -13,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -84,23 +85,18 @@ public class TeamUserRoleRepositoryTest {
 
     @Test
     void shouldFindSingleTeamUserRolesForTeamIDAndUserRole(){
-        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamRead.getID());
         Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamRead.getID(), UserRole.MEMBER);
 
         assertFalse(teamUserRoleSet.isEmpty());
-        assertEquals(1, teamUserRoleSet.size());
-        assertEquals(Set.of(teamUserRole.get()), teamUserRoleSet);
+        assertEquals(testDataLoader.teamRead.getUserRoles().stream().filter(teamUserRole -> teamUserRole.getUserRole().isMember()).collect(Collectors.toUnmodifiableSet()), teamUserRoleSet);
     }
 
     @Test
     void shouldFindMultipleTeamUserRolesForTeamIDAndUserRole(){
-        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
-        Optional<TeamUserRole> teamUserRole1 = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userSecondOwner.getID(), testDataLoader.teamRead.getID());
         Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamWrite.getID(), UserRole.OWNER);
 
         assertFalse(teamUserRoleSet.isEmpty());
-        assertEquals(2, teamUserRoleSet.size());
-        assertEquals(Set.of(teamUserRole.get(), teamUserRole1.get()), teamUserRoleSet);
+        assertEquals(testDataLoader.teamWrite.getUserRoles().stream().filter(teamUserRole -> teamUserRole.getUserRole().isOwner()).collect(Collectors.toUnmodifiableSet()), teamUserRoleSet);
     }
 
     @Test

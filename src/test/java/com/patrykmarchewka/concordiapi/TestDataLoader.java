@@ -198,12 +198,12 @@ public class TestDataLoader {
         this.teamDelete = (Team) teamService.getTeamFull(teamDelete.getID());
 
         this.taskMultiUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserRead.getID(), teamRead.getID());
-        this.taskOwnerUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskOwnerUserRead.getID(), teamWrite.getID());
-        this.taskBannedUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserRead.getID(), teamDelete.getID());
-        this.taskMultiUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserWrite.getID(), teamRead.getID());
+        this.taskOwnerUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskOwnerUserRead.getID(), teamRead.getID());
+        this.taskBannedUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserRead.getID(), teamRead.getID());
+        this.taskMultiUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserWrite.getID(), teamWrite.getID());
         this.taskOwnerUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskOwnerUserWrite.getID(), teamWrite.getID());
-        this.taskBannedUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserWrite.getID(), teamDelete.getID());
-        this.taskMultiUserDelete = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserDelete.getID(), teamRead.getID());
+        this.taskBannedUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserWrite.getID(), teamWrite.getID());
+        this.taskMultiUserDelete = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserDelete.getID(), teamDelete.getID());
     }
 
     public User refreshUser(User user){ return (User) userService.getUserFull(user.getID()); }

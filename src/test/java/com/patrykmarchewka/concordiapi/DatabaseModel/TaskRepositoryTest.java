@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -263,7 +264,7 @@ public class TaskRepositoryTest implements TaskTestHelper, TeamTestHelper{
         Set<TaskFull> taskSet = taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(testDataLoader.teamRead.getID(), testDataLoader.userMember.getID());
 
         assertFalse(taskSet.isEmpty());
-        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userMember.getID())), taskSet);
+        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userMember.getID())).collect(Collectors.toUnmodifiableSet()), taskSet);
     }
 
     @Test
@@ -271,7 +272,7 @@ public class TaskRepositoryTest implements TaskTestHelper, TeamTestHelper{
         Set<TaskFull> taskSet = taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(testDataLoader.teamRead.getID(), testDataLoader.userReadOwner.getID());
 
         assertFalse(taskSet.isEmpty());
-        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userReadOwner.getID())), taskSet);
+        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userReadOwner.getID())).collect(Collectors.toUnmodifiableSet()), taskSet);
     }
 
     @Test
