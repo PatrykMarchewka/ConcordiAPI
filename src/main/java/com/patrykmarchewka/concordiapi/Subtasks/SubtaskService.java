@@ -42,7 +42,7 @@ public class SubtaskService {
      * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
      */
     public SubtaskIdentity getSubtaskByID(final long taskID, final long subtaskID){
-        return subtaskRepository.findSubtaskIdentityByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
+        return subtaskRepository.findSubtaskByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
     }
 
     /**

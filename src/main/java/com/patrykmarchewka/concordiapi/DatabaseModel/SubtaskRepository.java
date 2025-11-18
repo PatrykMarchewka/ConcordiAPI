@@ -8,13 +8,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface SubtaskRepository extends JpaRepository<Subtask,Long> {
-
-    Optional<Subtask> findSubtaskEntityByIDAndTaskID(long subtaskID,long taskID);
-
     @Query("""
     SELECT s FROM Subtask s
     LEFT JOIN FETCH s.task
     WHERE s.id = :id AND s.task.id = :taskID
 """)
-    Optional<SubtaskIdentity> findSubtaskIdentityByIDAndTaskID(@Param("id") long subtaskID,@Param("taskID") long taskID);
+    Optional<SubtaskIdentity> findSubtaskByIDAndTaskID(@Param("id") long subtaskID,@Param("taskID") long taskID);
 }
