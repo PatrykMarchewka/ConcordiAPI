@@ -41,18 +41,18 @@ public class UserTaskRepositoryTest {
 
     @Test
     void shouldFindUserTaskByAssignedUserIDAndAssignedTaskID(){
-        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), testDataLoader.taskRead.getID());
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(testDataLoader.userMember.getID(), testDataLoader.taskMultiUserRead.getID());
 
         assertTrue(userTask.isPresent());
         assertEquals(testDataLoader.userMember, userTask.get().getAssignedUser());
-        assertEquals(testDataLoader.taskRead, userTask.get().getAssignedTask());
+        assertEquals(testDataLoader.taskMultiUserRead, userTask.get().getAssignedTask());
         assertTrue(testDataLoader.userMember.getUserTasks().contains(userTask.get()));
-        assertTrue(testDataLoader.taskRead.getUserTasks().contains(userTask.get()));
+        assertTrue(testDataLoader.taskMultiUserRead.getUserTasks().contains(userTask.get()));
     }
 
     @Test
     void shouldReturnEmptyUserTaskForNonExistentUserIDAndAssignedTaskID(){
-        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(999L, testDataLoader.taskRead.getID());
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(999L, testDataLoader.taskMultiUserRead.getID());
 
         assertFalse(userTask.isPresent());
     }
@@ -66,7 +66,7 @@ public class UserTaskRepositoryTest {
 
     @Test
     void shouldReturnEmptyUserTaskForInvalidUserIDAndAssignedTaskID(){
-        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(-1, testDataLoader.taskRead.getID());
+        Optional<UserTask> userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(-1, testDataLoader.taskMultiUserRead.getID());
 
         assertFalse(userTask.isPresent());
     }

@@ -83,7 +83,7 @@ public class TeamUserRoleRepositoryTest {
     /// findAllTeamUserRolesByTeamIDAndUserRole
 
     @Test
-    void shouldFindSingleTeamUserRolesByTeamIDAndUserRole(){
+    void shouldFindSingleTeamUserRolesForTeamIDAndUserRole(){
         Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamRead.getID());
         Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamRead.getID(), UserRole.MEMBER);
 
@@ -93,18 +93,29 @@ public class TeamUserRoleRepositoryTest {
     }
 
     @Test
-    void shouldFindMultipleTeamUserRolesByTeamIDAndUserRole(){
-        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userMember.getID(), testDataLoader.teamWrite.getID());
-        Optional<TeamUserRole> teamUserRole1 = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userManager.getID(), testDataLoader.teamWrite.getID());
-        teamUserRole1.get().setUserRole(UserRole.MEMBER);
-        teamUserRoleRepository.save(teamUserRole1.get());
+    void shouldFindMultipleTeamUserRolesForTeamIDAndUserRole(){
+        Optional<TeamUserRole> teamUserRole = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
+        Optional<TeamUserRole> teamUserRole1 = teamUserRoleRepository.findTeamUserRoleByUserIDAndTeamID(testDataLoader.userSecondOwner.getID(), testDataLoader.teamRead.getID());
+        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamWrite.getID(), UserRole.OWNER);
 
-        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(testDataLoader.teamWrite.getID(), UserRole.MEMBER);
         assertFalse(teamUserRoleSet.isEmpty());
         assertEquals(2, teamUserRoleSet.size());
         assertEquals(Set.of(teamUserRole.get(), teamUserRole1.get()), teamUserRoleSet);
     }
 
+    @Test
+    void shouldFindNoneTeamUserRolesForNonExistentTeamIDAndUserRole(){
+        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(999L, UserRole.MEMBER);
+
+        assertTrue(teamUserRoleSet.isEmpty());
+    }
+
+    @Test
+    void shouldFindNoneTeamUserRolesForInvalidTeamIDAndUserRole(){
+        Set<TeamUserRole> teamUserRoleSet = teamUserRoleRepository.findAllTeamUserRolesByTeamIDAndUserRole(-1, UserRole.MEMBER);
+
+        assertTrue(teamUserRoleSet.isEmpty());
+    }
 
 
 }
