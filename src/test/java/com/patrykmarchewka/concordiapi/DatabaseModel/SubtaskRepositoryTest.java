@@ -43,7 +43,7 @@ public class SubtaskRepositoryTest {
 
     @Test
     void shouldFindSubtaskByIDAndTaskID(){
-        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(testDataLoader.subtaskRead.getID(), testDataLoader.teamRead.getID());
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(testDataLoader.subtaskRead.getID(), testDataLoader.taskMultiUserRead.getID());
 
         assertTrue(subtask.isPresent());
         assertEquals(testDataLoader.subtaskRead.getID(), subtask.get().getID());

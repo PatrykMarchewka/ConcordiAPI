@@ -262,17 +262,25 @@ public class TaskRepositoryTest {
     @Test
     void shouldFindSingleTaskFullByAssignedTeamIDAndAssignedUserID(){
         Set<TaskFull> taskSet = taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(testDataLoader.teamRead.getID(), testDataLoader.userMember.getID());
+        Set<TaskFull> expected = testDataLoader.allTasks.stream()
+                .filter(task -> task.getAssignedTeam().equals(testDataLoader.teamRead))
+                .filter(task -> task.hasUser(testDataLoader.userMember.getID()))
+                .collect(Collectors.toUnmodifiableSet());
 
         assertFalse(taskSet.isEmpty());
-        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userMember.getID())).collect(Collectors.toUnmodifiableSet()), taskSet);
+        assertEquals(expected, taskSet);
     }
 
     @Test
     void shouldFindMultipleTaskFullByAssignedTeamIDAndAssignedUserID(){
         Set<TaskFull> taskSet = taskRepository.findAllTaskFullByAssignedTeamIDAndAssignedUserID(testDataLoader.teamRead.getID(), testDataLoader.userReadOwner.getID());
+        Set<TaskFull> expected = testDataLoader.allTasks.stream()
+                .filter(task -> task.getAssignedTeam().equals(testDataLoader.teamRead))
+                .filter(task -> task.hasUser(testDataLoader.userReadOwner.getID()))
+                .collect(Collectors.toUnmodifiableSet());
 
         assertFalse(taskSet.isEmpty());
-        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().filter(task -> task.hasUser(testDataLoader.userReadOwner.getID())).collect(Collectors.toUnmodifiableSet()), taskSet);
+        assertEquals(expected, taskSet);
     }
 
     @Test

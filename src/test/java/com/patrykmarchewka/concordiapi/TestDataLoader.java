@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.Set;
 
 @Component
@@ -72,6 +73,8 @@ public class TestDataLoader {
     public String jwtMember;
     public String jwtBanned;
     public String jwtNoTeam;
+
+    public Set<Task> allTasks = new HashSet<>(8,1f);
 
 
     public TestDataLoader(UserService userService, TeamService teamService, TaskService taskService, SubtaskService subtaskService, InvitationService invitationService) {
@@ -155,6 +158,8 @@ public class TestDataLoader {
 
         //TeamDelete has only one task on purpose to test single task Team
         this.taskMultiUserDelete = taskService.createTask(new TaskRequestBody("MultiUser", "MultiUserDesc", Set.of((int) userDeleteOwner.getID(), (int)userMember.getID()), TaskStatus.NEW), teamDelete);
+
+        this.allTasks.addAll(Set.of(taskMultiUserRead, taskMultiUserWrite, taskMultiUserDelete, taskOwnerUserRead, taskOwnerUserWrite, taskBannedUserRead, taskBannedUserWrite));
     }
 
     private void createSubtasks(){
