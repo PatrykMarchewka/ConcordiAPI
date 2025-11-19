@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -21,6 +22,7 @@ public class SubtaskRepositoryTest {
     private final SubtaskRepository subtaskRepository;
     private final TestDataLoader testDataLoader;
 
+    @Autowired
     public SubtaskRepositoryTest(SubtaskRepository subtaskRepository, TestDataLoader testDataLoader) {
         this.subtaskRepository = subtaskRepository;
         this.testDataLoader = testDataLoader;
