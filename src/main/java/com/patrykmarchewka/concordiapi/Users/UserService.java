@@ -20,6 +20,7 @@ import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.Updaters.UserUpdatersService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,30 +45,11 @@ public class UserService {
     }
 
     /**
-     * Returns user given UserRequestLogin or throws
-     * @param body UserRequestLogin with the credentials
-     * @return User with the given credentials
-     * @throws WrongCredentialsException Thrown when credentials don't match
-     */
-    public UserWithCredentials getUserWithCredentialsByLoginAndPassword(final UserRequestLogin body){
-        UserWithCredentials user = userRepository.findUserWithCredentialsByLogin(body.getLogin()).orElse(null);
-
-        //If user doesnt exist, we still run hash check
-        //This is done to prevent timing attacks that could reveal valid usernames
-        String hash = (user != null) ? user.getPassword() : "$2a$13$abcdefghijklmnopqrstuvwxyz";
-
-        if (!Passwords.CheckPasswordBCrypt(body.getPassword(),hash)){
-            throw new WrongCredentialsException();
-        }
-        return user;
-    }
-
-    /**
      * Returns whether there is User with provided login
      * @param login Login to check for
      * @return True if user with given login exists, otherwise false
      */
-    public boolean checkIfUserExistsByLogin(String login){
+    public boolean checkIfUserExistsByLogin(@NonNull final String login){
         return userRepository.existsByLogin(login);
     }
 
@@ -77,7 +59,7 @@ public class UserService {
      * @return New created user
      */
     @Transactional
-    public User createUser(UserRequestBody body){
+    public User createUser(@NonNull final UserRequestBody body){
         User user = new User();
         userUpdatersService.createUpdate(user, body);
         return saveUser(user);
@@ -90,7 +72,7 @@ public class UserService {
      * @return Modified User
      */
     @Transactional
-    public UserWithCredentials putUser(UserWithCredentials user, UserRequestBody body){
+    public UserWithCredentials putUser(@NonNull final UserWithCredentials user, @NonNull final UserRequestBody body){
         userUpdatersService.putUpdate((User) user, body);
         return saveUser((User) user);
     }
@@ -102,7 +84,7 @@ public class UserService {
      * @return Modified User
      */
     @Transactional
-    public UserWithCredentials patchUser(UserWithCredentials user,UserRequestBody body){
+    public UserWithCredentials patchUser(@NonNull final UserWithCredentials user, @NonNull final UserRequestBody body){
         userUpdatersService.patchUpdate((User) user, body);
         return saveUser((User) user);
     }
@@ -111,7 +93,8 @@ public class UserService {
      * Unused, Deletes specified User
      * @param user User to delete
      */
-    public void deleteUser(User user){
+    @Transactional
+    public void deleteUser(@NonNull final User user){
         userRepository.delete(user);
     }
 
@@ -120,7 +103,8 @@ public class UserService {
      * @param user User to save
      * @return User after changes
      */
-    public User saveUser(User user){
+    @Transactional
+    public User saveUser(@NonNull final User user){
         return userRepository.save(user);
     }
 
@@ -129,9 +113,9 @@ public class UserService {
      * @param users Set of Users to get DTO of
      * @return UserMemberDTO of each User in the set
      */
-    public Set<UserMemberDTO> userMemberDTOSetProcess(Set<User> users){
+    public Set<UserMemberDTO> userMemberDTOSetProcess(@NonNull final Set<UserIdentity> users){
         Set<UserMemberDTO> ret = new HashSet<>();
-        for (User user : users){
+        for (UserIdentity user : users){
             ret.add(new UserMemberDTO(user));
         }
         return ret;
@@ -145,7 +129,7 @@ public class UserService {
      * @return UserMemberDTO of each user with provided role
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetParam(UserRole myRole, UserRole param, long teamID){
+    public Set<UserMemberDTO> userMemberDTOSetParam(@NonNull final UserRole myRole, @NonNull final UserRole param, final long teamID){
         if (!myRole.isAdminGroup()){
             throw new NoPrivilegesException();
         }
@@ -159,11 +143,12 @@ public class UserService {
      * @return UserMemberDTO of each user in the team
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetNoParam(UserRole myRole, TeamWithUserRoles team){
+    public Set<UserMemberDTO> userMemberDTOSetNoParam(@NonNull final UserRole myRole, @NonNull final TeamWithUserRoles team){
         if (!myRole.isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return userMemberDTOSetProcess(team.getTeammates());
+        Set<UserIdentity> identities = new HashSet<>(team.getTeammates());
+        return userMemberDTOSetProcess(identities);
     }
 
     /**
@@ -172,23 +157,42 @@ public class UserService {
      * @return User with the given ID
      * @throws NotFoundException Thrown when can't find User with provided ID
      */
-    public User getUserEntityByID(long id){
-        return userRepository.findUserEntityByID(id).orElseThrow(NotFoundException::new);
-    }
-
-    public UserIdentity getUserByID(long id){
+    public UserIdentity getUserByID(final long id){
         return userRepository.findUserByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public UserWithTeamRoles getUserWithTeamRolesAndTeams(long id){
+        public UserWithCredentials getUserWithCredentialsByLogin(@NonNull final String login){
+        return userRepository.findUserWithCredentialsByLogin(login).orElseThrow(NotFoundException::new);
+    }
+
+    /**
+     * Returns user given UserRequestLogin or throws
+     * @param body UserRequestLogin with the credentials
+     * @return User with the given credentials
+     * @throws WrongCredentialsException Thrown when credentials don't match
+     */
+    public UserWithCredentials getUserWithCredentialsByLoginAndPassword(@NonNull final UserRequestLogin body){
+        UserWithCredentials user = userRepository.findUserWithCredentialsByLogin(body.getLogin()).orElse(null);
+
+        //If user doesnt exist, we still run hash check
+        //This is done to prevent timing attacks that could reveal valid usernames
+        String hash = (user != null) ? user.getPassword() : "$2a$13$abcdefghijklmnopqrstuvwxyz";
+
+        if (!Passwords.CheckPasswordBCrypt(body.getPassword(),hash)){
+            throw new WrongCredentialsException();
+        }
+        return user;
+    }
+
+    public UserWithTeamRoles getUserWithTeamRolesAndTeams(final long id){
         return userRepository.findUserWithTeamRolesAndTeamsByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public UserWithUserTasks getUserWithUserTasks(long id){
+    public UserWithUserTasks getUserWithUserTasks(final long id){
         return userRepository.findUserWithUserTasksByID(id).orElseThrow(NotFoundException::new);
     }
 
-    public UserFull getUserFull(long id){
+    public UserFull getUserFull(final long id){
         return userRepository.findUserFullByID(id).orElseThrow(NotFoundException::new);
     }
 
