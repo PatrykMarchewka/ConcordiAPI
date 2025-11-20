@@ -61,7 +61,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     /// checkIfUserExistsByLogin
 
     @Test
-    void shouldFalseIfUserExistsByLogin(){
+    void shouldReturnTrueIfUserExistsByLogin(){
         assertTrue(userService.checkIfUserExistsByLogin(testDataLoader.userMember.getLogin()));
     }
 
