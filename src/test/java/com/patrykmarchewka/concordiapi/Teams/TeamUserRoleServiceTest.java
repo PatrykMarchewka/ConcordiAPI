@@ -1,121 +1,198 @@
 package com.patrykmarchewka.concordiapi.Teams;
 
-import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
-import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
+import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
-import com.patrykmarchewka.concordiapi.Users.UserService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
 
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserRequestBodyHelper {
 
     private final TeamUserRoleService teamUserRoleService;
-    private final TeamService teamService;
-    private final UserService userService;
+    private final TestDataLoader testDataLoader;
 
-    private User user;
-    private Team team;
-
-    public TeamUserRoleServiceTest(TeamUserRoleService teamUserRoleService, TeamService teamService, UserService userService) {
+    @Autowired
+    public TeamUserRoleServiceTest(TeamUserRoleService teamUserRoleService, TestDataLoader testDataLoader) {
         this.teamUserRoleService = teamUserRoleService;
-        this.teamService = teamService;
-        this.userService = userService;
+        this.testDataLoader = testDataLoader;
     }
 
-    @BeforeEach
+    @BeforeAll
     void initialize(){
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        user = userService.createUser(userRequestBody);
-        team = teamService.createTeam(body, user);
+        testDataLoader.loadDataForTests();
     }
 
-    @AfterEach
+    @AfterAll
     void cleanUp(){
-        teamUserRoleService.deleteAll();
-        teamService.deleteAll();
-        userService.deleteAll();
+        testDataLoader.clearDB();
     }
 
-    @Test
-    void shouldSaveAndRetrieveTeamUserRoleCorrectly(){
-        TeamUserRole found = teamUserRoleService.getByUserAndTeam(user.getID(), team.getID());
 
-        assertNotNull(found.getID());
-        assertEquals(UserRole.OWNER, found.getUserRole());
-        assertEquals(user, found.getUser());
-        assertEquals(team, found.getTeam());
+    /// getByUserAndTeam
+
+    @Test
+    void shouldGetByUserAndTeam(){
+        TeamUserRole teamUserRole = teamUserRoleService.getByUserAndTeam(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead, teamUserRole.getTeam());
+        assertEquals(testDataLoader.userReadOwner, teamUserRole.getUser());
+        assertEquals(UserRole.OWNER, teamUserRole.getUserRole());
     }
 
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidGetByUserAndTeam(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getByUserAndTeam(ID, ID));
+    }
+
+    /// getRole
+
     @Test
-    void shouldGetRoleFromUser(){
-        UserRole role = teamUserRoleService.getRole(user.getID(), team.getID());
+    void shouldGetRole(){
+        UserRole role = teamUserRoleService.getRole(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
 
         assertEquals(UserRole.OWNER, role);
     }
 
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidGetRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getRole(ID, ID));
+    }
+
+    /// setRole
+
     @Test
-    void shouldSetRoleToUser(){
-        //Currently unavailable, set to fail until finished
-        assertTrue(false);
+    void shouldSetRole(){
+        teamUserRoleService.setRole(testDataLoader.userSecondOwner.getID(), testDataLoader.teamWrite.getID(), UserRole.ADMIN);
+        UserRole role = teamUserRoleService.getRole(testDataLoader.userSecondOwner.getID(), testDataLoader.teamWrite.getID());
+
+        assertEquals(UserRole.ADMIN, role);
     }
 
     @Test
-    void shouldThrowForDemotingOnlyOwner(){
-        assertThrows(NoPrivilegesException.class, () -> teamUserRoleService.setRole(user.getID(), team.getID(), UserRole.ADMIN));
+    void shouldThrowForOnlyOwnerSetRole(){
+        assertThrows(NoPrivilegesException.class, () -> teamUserRoleService.setRole(testDataLoader.userDeleteOwner.getID(), testDataLoader.teamDelete.getID(), UserRole.ADMIN));
     }
 
-   @Test
-   void shouldGetAllUsersByRoleAndTeam(){
-       UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-       User user1 = userService.createUser(userRequestBody1);
-       teamService.addUser(team.getID(), user1, UserRole.OWNER);
+    /// getAllByTeamAndUserRole
 
-       Set<TeamUserRole> found = teamUserRoleService.getAllByTeamAndUserRole(team.getID(), UserRole.OWNER);
+    @Test
+    void shouldReturnSingleGetAllByTeamAndUserRole(){
+        Set<TeamUserRole> set = teamUserRoleService.getAllByTeamAndUserRole(testDataLoader.teamRead.getID(), UserRole.ADMIN);
+        TeamUserRole expected = teamUserRoleService.getByUserAndTeam(testDataLoader.userAdmin.getID(), testDataLoader.teamRead.getID());
 
-       assertNotNull(found);
-       assertFalse(found.isEmpty());
-       assertEquals(2, found.size());
-       assertTrue(found.stream().anyMatch(teamUserRole -> teamUserRole.getUser().equals(user)));
-       assertTrue(found.stream().anyMatch(teamUserRole -> teamUserRole.getUser().equals(user1)));
-   }
+        assertEquals(1, set.size());
+        assertTrue(set.contains(expected));
+    }
 
-   @Test
-    void shouldCheckRolesInTeam(){
-       assertTrue(teamUserRoleService.checkRoles(UserRole.OWNER, UserRole.OWNER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.OWNER, UserRole.ADMIN));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.OWNER, UserRole.MANAGER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.OWNER, UserRole.MEMBER));
+    @Test
+    void shouldReturnMultipleGetAllByTeamAndUserRole(){
+        Set<TeamUserRole> set = teamUserRoleService.getAllByTeamAndUserRole(testDataLoader.teamRead.getID(), UserRole.OWNER);
+        TeamUserRole expected = teamUserRoleService.getByUserAndTeam(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
+        TeamUserRole expected1 = teamUserRoleService.getByUserAndTeam(testDataLoader.userSecondOwner.getID(), testDataLoader.teamRead.getID());
 
-       assertFalse(teamUserRoleService.checkRoles(UserRole.ADMIN, UserRole.OWNER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.ADMIN, UserRole.ADMIN));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.ADMIN, UserRole.MANAGER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.ADMIN, UserRole.MEMBER));
+        assertEquals(2, set.size());
+        assertTrue(set.contains(expected));
+        assertTrue(set.contains(expected1));
+    }
 
-       assertFalse(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.OWNER));
-       assertFalse(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.ADMIN));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.MANAGER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.MEMBER));
+    @Test
+    void shouldThrowForNoResultsGetAllByTeamAndUserRole(){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getAllByTeamAndUserRole(testDataLoader.teamDelete.getID(), UserRole.BANNED));
+    }
 
-       assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.OWNER));
-       assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.ADMIN));
-       assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.MANAGER));
-       assertTrue(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.MEMBER));
-   }
+    /// saveTMR
+
+    @Test
+    void shouldSaveTMR(){
+        TeamUserRole teamUserRole = teamUserRoleService.getByUserAndTeam(testDataLoader.userManager.getID(), testDataLoader.teamWrite.getID());
+        teamUserRole.setUserRole(UserRole.MEMBER);
+
+        teamUserRoleService.saveTMR(teamUserRole);
+
+        assertEquals(UserRole.MEMBER, teamUserRoleService.getByUserAndTeam(testDataLoader.userManager.getID(), testDataLoader.teamWrite.getID()).getUserRole());
+    }
+
+    /// checkRoles
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class)
+    void shouldCheckRolesOwner(UserRole role){
+        assertTrue(teamUserRoleService.checkRoles(UserRole.OWNER, role));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER"})
+    void shouldCheckRolesAdmin(UserRole role){
+        assertFalse(teamUserRoleService.checkRoles(UserRole.ADMIN, UserRole.OWNER));
+        assertTrue(teamUserRoleService.checkRoles(UserRole.ADMIN, role));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN"})
+    void shouldCheckRolesManager(UserRole role){
+        assertFalse(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.OWNER));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.MANAGER, UserRole.ADMIN));
+        assertTrue(teamUserRoleService.checkRoles(UserRole.MANAGER, role));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
+    void shouldCheckRolesMember(UserRole role){
+        assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.OWNER));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.ADMIN));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.MEMBER, UserRole.MANAGER));
+        assertTrue(teamUserRoleService.checkRoles(UserRole.MEMBER, role));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER", "MEMBER"})
+    void shouldCheckRolesBanned(UserRole role){
+        assertFalse(teamUserRoleService.checkRoles(UserRole.BANNED, UserRole.OWNER));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.BANNED, UserRole.ADMIN));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.BANNED, UserRole.MANAGER));
+        assertFalse(teamUserRoleService.checkRoles(UserRole.BANNED, UserRole.MEMBER));
+        assertTrue(teamUserRoleService.checkRoles(UserRole.BANNED, role));
+    }
+
+    /// forceCheckRoles
+
+    @Test
+    void shouldForceCheckRoles(){
+        assertDoesNotThrow(() -> teamUserRoleService.forceCheckRoles(UserRole.OWNER, UserRole.BANNED));
+    }
+
+    @Test
+    void shouldThrowForNoPrivilegesForceCheckRoles(){
+        assertThrows(NoPrivilegesException.class, () -> teamUserRoleService.forceCheckRoles(UserRole.BANNED, UserRole.OWNER));
+    }
+
+    /// canOwnerLeave
+
+    @Test
+    void shouldReturnTrueIfCanOwnerLeave(){
+        assertTrue(teamUserRoleService.canOwnerLeave(testDataLoader.teamRead.getID()));
+    }
+
+    @Test
+    void shouldReturnFalseForSingleOwnerOwnerCanLeave(){
+        assertFalse(teamUserRoleService.canOwnerLeave(testDataLoader.teamDelete.getID()));
+    }
 }

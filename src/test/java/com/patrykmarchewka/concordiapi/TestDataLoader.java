@@ -135,11 +135,9 @@ public class TestDataLoader {
         teamService.addUser(teamWrite.getID(), userMember, UserRole.MEMBER);
         teamService.addUser(teamWrite.getID(), userBanned, UserRole.BANNED);
 
-        teamService.addUser(teamDelete.getID(), userSecondOwner, UserRole.OWNER);
         teamService.addUser(teamDelete.getID(), userAdmin, UserRole.ADMIN);
         teamService.addUser(teamDelete.getID(), userManager, UserRole.MANAGER);
         teamService.addUser(teamDelete.getID(), userMember, UserRole.MEMBER);
-        teamService.addUser(teamDelete.getID(), userBanned, UserRole.BANNED);
 
         //Refreshing teams because addUser returns TeamWithUserRoles
         this.teamRead = refreshTeam(teamRead);
