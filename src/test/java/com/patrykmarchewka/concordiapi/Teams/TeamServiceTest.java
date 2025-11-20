@@ -2,192 +2,393 @@ package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamManagerDTO;
+import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
-import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
-import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
-import com.patrykmarchewka.concordiapi.DatabaseModel.User;
+import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithInvitations;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithTasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
+import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRolesAndTasks;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
-import com.patrykmarchewka.concordiapi.Users.UserService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeamServiceTest implements TeamRequestBodyHelper, UserRequestBodyHelper {
 
     private final TeamService teamService;
-    private final UserService userService;
+    private final TestDataLoader testDataLoader;
 
-    private User user;
-    private Team team;
-
-    public TeamServiceTest(TeamService teamService, UserService userService) {
+    @Autowired
+    public TeamServiceTest(TeamService teamService, TestDataLoader testDataLoader) {
         this.teamService = teamService;
-        this.userService = userService;
+        this.testDataLoader = testDataLoader;
     }
 
-    @BeforeEach
+    @BeforeAll
     void initialize() {
-        TeamRequestBody body = createTeamRequestBody("TEST");
-        UserRequestBody userRequestBody = createUserRequestBody("JaneD");
-        user = userService.createUser(userRequestBody);
-        team = teamService.createTeam(body, user);
+        testDataLoader.loadDataForTests();
     }
 
-    @AfterEach
+    @AfterAll
     void cleanUp(){
-        teamService.deleteAll();
-        userService.deleteAll();
+        testDataLoader.clearDB();
+    }
+
+    /**
+     * Refresh teamWrite to prevent comparing against stale data
+     */
+    private void refreshTeam(){
+        testDataLoader.teamWrite = testDataLoader.refreshTeam(testDataLoader.teamWrite);
+    }
+
+
+    /// createTeam
+
+    @Test
+    void shouldCreateTeam(){
+        TeamRequestBody body = new TeamRequestBody("NEWTeam");
+        Team team = teamService.createTeam(body, testDataLoader.userWriteOwner);
+
+        assertDoesNotThrow(team::getID);
+        assertEquals(body.getName(), team.getName());
     }
 
     @Test
-    void shouldSaveAndRetrieveTeamCorrectly(){
-        TeamIdentity found = teamService.getTeamByID(team.getID());
+    void shouldCreateTeamDBCheck(){
+        TeamRequestBody body = new TeamRequestBody("DBNewTeam");
+        Team team = teamService.createTeam(body, testDataLoader.userWriteOwner);
 
-        assertEquals(team.getID(), found.getID());
-        assertEquals("TEST", found.getName());
+        TeamIdentity actual = teamService.getTeamByID(team.getID());
+
+        assertEquals(team.getID(), actual.getID());
+        assertEquals(team.getName(), actual.getName());
     }
 
-    @Test
-    void shouldThrowForNonExistingTeamID(){
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(0));
-    }
+    /// putTeam
 
     @Test
     void shouldPutTeam(){
-        TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
+        refreshTeam();
+        TeamRequestBody body = new TeamRequestBody("PUTTeam");
+        TeamFull team = teamService.putTeam(testDataLoader.teamWrite.getID(), body);
 
-        teamService.putTeam(team.getID(), newBody);
-        TeamIdentity found = teamService.getTeamByID(team.getID());
-
-        assertEquals(team.getID(), found.getID());
-        assertEquals("NEWTEST", found.getName());
+        assertEquals(testDataLoader.teamWrite.getID(), team.getID());
+        assertEquals(body.getName(), team.getName());
+        assertEquals(testDataLoader.teamWrite.getUserRoles(), team.getUserRoles());
+        assertEquals(testDataLoader.teamWrite.getTeamTasks(), team.getTeamTasks());
+        assertEquals(testDataLoader.teamWrite.getInvitations(), team.getInvitations());
     }
+
+    @Test
+    void shouldPutTeamDBCheck(){
+        TeamRequestBody body = new TeamRequestBody("DBPUTTeam");
+        TeamFull team = teamService.putTeam(testDataLoader.teamWrite.getID(), body);
+
+        TeamFull actual = teamService.getTeamFull(team.getID());
+
+        assertEquals(team.getID(), actual.getID());
+        assertEquals(body.getName(), actual.getName());
+        assertEquals(team.getUserRoles(), actual.getUserRoles());
+        assertEquals(team.getTeamTasks(), actual.getTeamTasks());
+        assertEquals(team.getInvitations(), actual.getInvitations());
+    }
+
+    /// patchTeam
 
     @Test
     void shouldPatchTeam(){
-        TeamRequestBody newBody = createTeamRequestBody("NEWTEST");
+        TeamRequestBody body = new TeamRequestBody("PATCHTeam");
+        TeamFull team = teamService.patchTeam(testDataLoader.teamWrite.getID(), body);
 
-        teamService.patchTeam(team.getID(), newBody);
-        TeamIdentity found = teamService.getTeamByID(team.getID());
-
-        assertEquals(team.getID(), found.getID());
-        assertEquals("NEWTEST", found.getName());
+        assertEquals(testDataLoader.teamWrite.getID(), team.getID());
+        assertEquals(body.getName(), team.getName());
+        assertEquals(testDataLoader.teamWrite.getUserRoles(), team.getUserRoles());
+        assertEquals(testDataLoader.teamWrite.getTeamTasks(), team.getTeamTasks());
+        assertEquals(testDataLoader.teamWrite.getInvitations(), team.getInvitations());
     }
+
+    @Test
+    void shouldPatchTeamDBCheck(){
+        TeamRequestBody body = new TeamRequestBody("DBPUTTeam");
+        TeamFull team = teamService.patchTeam(testDataLoader.teamWrite.getID(), body);
+
+        TeamFull actual = teamService.getTeamFull(team.getID());
+
+        assertEquals(team.getID(), actual.getID());
+        assertEquals(body.getName(), actual.getName());
+        assertEquals(team.getUserRoles(), actual.getUserRoles());
+        assertEquals(team.getTeamTasks(), actual.getTeamTasks());
+        assertEquals(team.getInvitations(), actual.getInvitations());
+    }
+
+    /// saveTeam
+
+    @Test
+    void shouldSaveTeam(){
+        refreshTeam();
+        testDataLoader.teamWrite.setName("newName");
+        teamService.saveTeam(testDataLoader.teamWrite);
+
+        assertEquals("newName", testDataLoader.refreshTeam(testDataLoader.teamWrite).getName());
+    }
+
+    /// deleteTeam
 
     @Test
     void shouldDeleteTeam(){
-        TeamIdentity found = teamService.getTeamByID(team.getID());
-        teamService.deleteTeam((Team) found);
+        Team team = teamService.createTeam(new TeamRequestBody("teamToDelete"), testDataLoader.userNoTeam);
+        teamService.deleteTeam(team);
 
         assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
     }
 
-    @Test
-    void shouldDeleteTeamByUserLeaving(){
-        teamService.removeUser(team.getID(), user.getID());
+    /// addUser
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(team.getID()));
+    @Test
+    void shouldAddUser(){
+        TeamWithUserRoles team = teamService.addUser(testDataLoader.teamWrite.getID(), testDataLoader.userNoTeam, UserRole.MEMBER);
+
+        assertTrue(team.checkUser(testDataLoader.userNoTeam.getID()));
     }
 
     @Test
-    void shouldRemoveUserFromTeam(){
-        UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-        User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
-        Map<User, UserRole> expected = new HashMap<>(Map.of(
-                user, UserRole.OWNER,
-                user1, UserRole.ADMIN
-        ));
-
-        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
-        Map<User, UserRole> actual = found.getUserRoles().stream().collect(Collectors.toMap(TeamUserRole::getUser, TeamUserRole::getUserRole));
-
-
-        assertEquals(2, found.getTeammates().size());
-        assertEquals(expected, actual);
-
-
-        found = teamService.removeUser(found.getID(),user1.getID());
-        expected.remove(user1);
-        actual = found.getUserRoles().stream().collect(Collectors.toMap(TeamUserRole::getUser, TeamUserRole::getUserRole));
-
-        assertEquals(1, found.getUserRoles().size());
-        assertEquals(expected, actual);
+    void shouldThrowForExistingUserWithSameRoleAddUser(){
+        assertThrows(ConflictException.class, () -> teamService.addUser(testDataLoader.teamWrite.getID(), testDataLoader.userWriteOwner, UserRole.OWNER));
     }
 
     @Test
-    void shouldDeleteTeamByEveryoneLeaving(){
-        UserRequestBody userRequestBody1 = createUserRequestBody("JohnD");
-        User user1 = userService.createUser(userRequestBody1);
-        teamService.addUser(team.getID(), user1, UserRole.ADMIN);
+    void shouldThrowForExistingUserDifferentRoleAddUser(){
+        assertThrows(ConflictException.class, () -> teamService.addUser(testDataLoader.teamWrite.getID(), testDataLoader.userWriteOwner, UserRole.ADMIN));
 
-        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
+    }
 
-        for (TeamUserRole role : found.getUserRoles()){
-            teamService.removeUser(team.getID(), role.getUser().getID());
-        }
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDAddUser(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.addUser(teamID, testDataLoader.userNoTeam, UserRole.MEMBER));
+    }
 
-        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(found.getID()));
+    /// removeUser
+
+    @Test
+    void shouldRemoveUser(){
+        TeamWithUserRoles team = teamService.removeUser(testDataLoader.teamWrite.getID(), testDataLoader.userMember.getID());
+
+        assertFalse(team.checkUser(testDataLoader.userMember.getID()));
     }
 
     @Test
-    void shouldReturnTeamWithUserRoles(){
-        TeamWithUserRoles found = teamService.getTeamWithUserRoles(team.getID());
+    void shouldRemoveUserAndDeleteTeam(){
+        long teamID = teamService.createTeam(new TeamRequestBody("newTeam"), testDataLoader.userNoTeam).getID();
+        teamService.removeUser(teamID, testDataLoader.userNoTeam.getID());
 
-        assertEquals(1, found.getUserRoles().size());
-        assertEquals(1, found.getTeammates().size());
+        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(teamID));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDRemoveUser(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.removeUser(teamID, testDataLoader.userNoTeam.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidUserIDRemoveUser(long userID){
+        assertThrows(NotFoundException.class, () -> teamService.removeUser(testDataLoader.teamRead.getID(), userID));
+    }
+
+    /// getTeamsDTO
+
+    @Test
+    void shouldGetTeamsDTOOwner(){
+        refreshTeam();
+        Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userReadOwner);
+
+        assertEquals(1, set.size());
+        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamRead)));
     }
 
     @Test
-    void shouldReturnTeamWithInvitations(){
-        TeamWithInvitations found = teamService.getTeamWithInvitations(team.getID());
+    void shouldGetTeamsDTOAdmin(){
+        refreshTeam();
+        Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userAdmin);
 
-        assertTrue(found.getInvitations().isEmpty());
+        assertEquals(3, set.size());
+        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamRead)));
+        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamWrite)));
+        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamDelete)));
     }
 
     @Test
-    void shouldReturnTeamWithTeamTasks(){
-        TeamWithTasks found = teamService.getTeamWithTasks(team.getID());
+    void shouldGetTeamsDTOManager(){
+        refreshTeam();
+        Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userManager);
 
-        assertTrue(found.getTeamTasks().isEmpty());
+        assertEquals(3, set.size());
+        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamRead)));
+        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamWrite)));
+        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamDelete)));
     }
 
     @Test
-    void shouldGetTeamsDTO(){
-        TeamRequestBody body1 = createTeamRequestBody("Nowy");
-        Team team1 = teamService.createTeam(body1, user);
+    void shouldGetTeamsDTOMember(){
+        Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userMember);
 
-        Set<TeamDTO> found = teamService.getTeamsDTO(user);
-
-        assertTrue(found.stream().anyMatch(t -> t.equalsTeam(team)));
-        assertTrue(found.stream().anyMatch(t -> t.equalsTeam(team1)));
+        assertEquals(3, set.size());
+        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamRead)));
+        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamWrite)));
+        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamDelete)));
     }
 
     @Test
-    void shouldCreateTeamDTO(){
-        TeamDTO teamDTO = teamService.getTeamDTOByRole(user.getID(), team.getID());
+    void shouldReturnNullForBannedGetTeamsDTO(){
+        Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userBanned);
 
-        assertInstanceOf(TeamAdminDTO.class, teamDTO);
-        assertTrue(teamDTO.equalsTeam(team));
+        assertTrue(set.isEmpty());
+    }
+
+    /// getTeamDTOByRole
+
+    @Test
+    void shouldGetTeamDTOByRole(){
+        refreshTeam();
+        TeamDTO teamDTO = teamService.getTeamDTOByRole(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
+
+        assertEquals(new TeamAdminDTO(testDataLoader.teamRead), teamDTO);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidUserIDGetTeamDTOByRole(long userID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamDTOByRole(userID, testDataLoader.teamRead.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDGetTeamDTOByRole(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamDTOByRole(testDataLoader.userReadOwner.getID(), teamID));
+    }
+
+    /// getTeamByID
+
+    @Test
+    void shouldGetTeamByID(){
+        TeamIdentity team = teamService.getTeamByID(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamByID(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamByID(teamID));
+    }
+
+    /// getTeamWithUserRoles
+
+    @Test
+    void shouldGetTeamWithUserRoles(){
+        TeamWithUserRoles team = teamService.getTeamWithUserRoles(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.getUserRoles());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamWithUserRoles(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamWithUserRoles(teamID));
+    }
+
+    /// getTeamWithTasks
+
+    @Test
+    void shouldGetTeamWithTasks(){
+        TeamWithTasks team = teamService.getTeamWithTasks(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.getTeamTasks());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamWithTasks(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamWithTasks(teamID));
+    }
+
+    /// getTeamWithUserRolesAndTasksByID
+
+    @Test
+    void shouldGetTeamWithUserRolesAndTasksByID(){
+        TeamWithUserRolesAndTasks team = teamService.getTeamWithUserRolesAndTasksByID(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.getUserRoles());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.getTeamTasks());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamWithUserRolesAndTasksByID(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamWithUserRolesAndTasksByID(teamID));
+    }
+
+    /// getTeamWithInvitations
+
+    @Test
+    void shouldGetTeamWithInvitations(){
+        TeamWithInvitations team = teamService.getTeamWithInvitations(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+        assertEquals(testDataLoader.teamRead.getInvitations(), team.getInvitations());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamWithInvitations(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamWithInvitations(teamID));
+    }
+
+    /// getTeamFull
+
+    @Test
+    void shouldGetTeamFull(){
+        TeamFull team = teamService.getTeamFull(testDataLoader.teamRead.getID());
+
+        assertEquals(testDataLoader.teamRead.getID(), team.getID());
+        assertEquals(testDataLoader.teamRead.getName(), team.getName());
+        assertEquals(testDataLoader.teamRead.getUserRoles(), team.getUserRoles());
+        assertEquals(testDataLoader.teamRead.getTeamTasks(), team.getTeamTasks());
+        assertEquals(testDataLoader.teamRead.getInvitations(), team.getInvitations());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidIDGetTeamFull(long teamID){
+        assertThrows(NotFoundException.class, () -> teamService.getTeamFull(teamID));
     }
 }
