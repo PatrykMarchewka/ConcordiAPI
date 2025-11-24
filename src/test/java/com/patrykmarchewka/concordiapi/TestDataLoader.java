@@ -48,9 +48,11 @@ public class TestDataLoader {
     public Task taskMultiUserRead;
     public Task taskOwnerUserRead;
     public Task taskBannedUserRead;
+    public Task taskNoUsersRead;
     public Task taskMultiUserWrite;
     public Task taskOwnerUserWrite;
     public Task taskBannedUserWrite;
+    public Task taskNoUsersWrite;
     public Task taskMultiUserDelete;
 
 
@@ -149,15 +151,17 @@ public class TestDataLoader {
         this.taskMultiUserRead = taskService.createTask(new TaskRequestBody("MultiUser", "MultiUserDesc", Set.of((int) userReadOwner.getID(), (int)userMember.getID()), TaskStatus.NEW), teamRead);
         this.taskOwnerUserRead = taskService.createTask(new TaskRequestBody("OwnerUser", "OwnerUserDesc", Set.of((int) userReadOwner.getID()), TaskStatus.INPROGRESS), teamRead);
         this.taskBannedUserRead = taskService.createTask(new TaskRequestBody("BannedUser", "BannedUserDesc", Set.of((int) userBanned.getID()), TaskStatus.CANCELLED), teamRead);
+        this.taskNoUsersRead = taskService.createTask(new TaskRequestBody("NoUsers", "NoUsersDesc", Set.of(), TaskStatus.NEW), teamRead);
 
         this.taskMultiUserWrite = taskService.createTask(new TaskRequestBody("MultiUser", "MultiUserDesc", Set.of((int) userWriteOwner.getID(), (int)userMember.getID()), TaskStatus.NEW), teamWrite);
         this.taskOwnerUserWrite = taskService.createTask(new TaskRequestBody("OwnerUser", "OwnerUserDesc", Set.of((int) userWriteOwner.getID()), TaskStatus.INPROGRESS), teamWrite);
         this.taskBannedUserWrite = taskService.createTask(new TaskRequestBody("BannedUser", "BannedUserDesc", Set.of((int) userBanned.getID()), TaskStatus.CANCELLED), teamWrite);
+        this.taskNoUsersWrite = taskService.createTask(new TaskRequestBody("NoUsers", "NoUsersDesc", Set.of(), TaskStatus.NEW), teamWrite);
 
         //TeamDelete has only one task on purpose to test single task Team
         this.taskMultiUserDelete = taskService.createTask(new TaskRequestBody("MultiUser", "MultiUserDesc", Set.of((int) userDeleteOwner.getID(), (int)userMember.getID()), TaskStatus.NEW), teamDelete);
 
-        this.allTasks.addAll(Set.of(taskMultiUserRead, taskMultiUserWrite, taskMultiUserDelete, taskOwnerUserRead, taskOwnerUserWrite, taskBannedUserRead, taskBannedUserWrite));
+        this.allTasks.addAll(Set.of(taskMultiUserRead, taskMultiUserWrite, taskMultiUserDelete, taskOwnerUserRead, taskOwnerUserWrite, taskBannedUserRead, taskBannedUserWrite, taskNoUsersRead, taskNoUsersWrite));
     }
 
     private void createSubtasks(){
@@ -203,9 +207,11 @@ public class TestDataLoader {
         this.taskMultiUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserRead.getID(), teamRead.getID());
         this.taskOwnerUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskOwnerUserRead.getID(), teamRead.getID());
         this.taskBannedUserRead = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserRead.getID(), teamRead.getID());
+        this.taskNoUsersRead = (Task) taskService.getTaskFullByIDAndTeamID(taskNoUsersRead.getID(), teamRead.getID());
         this.taskMultiUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserWrite.getID(), teamWrite.getID());
         this.taskOwnerUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskOwnerUserWrite.getID(), teamWrite.getID());
         this.taskBannedUserWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskBannedUserWrite.getID(), teamWrite.getID());
+        this.taskNoUsersWrite = (Task) taskService.getTaskFullByIDAndTeamID(taskNoUsersWrite.getID(), teamWrite.getID());
         this.taskMultiUserDelete = (Task) taskService.getTaskFullByIDAndTeamID(taskMultiUserDelete.getID(), teamDelete.getID());
     }
 
