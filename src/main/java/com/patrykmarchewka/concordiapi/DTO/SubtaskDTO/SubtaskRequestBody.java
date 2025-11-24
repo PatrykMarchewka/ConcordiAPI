@@ -17,13 +17,13 @@ public class SubtaskRequestBody {
     @Size(min = 1, max = 255, message = "{size.generic}")
     private String description;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
+    @NotNull(groups = {OnCreate.class, OnPut.class}, message = "{notnull.generic}")
     private TaskStatus taskStatus;
 
-    public SubtaskRequestBody(String name,@Nullable String description,@Nullable TaskStatus taskStatus){
+    public SubtaskRequestBody(String name, @Nullable String description, TaskStatus taskStatus){
         this.name = name;
         this.description = description;
-        this.taskStatus = (taskStatus != null) ? taskStatus : TaskStatus.NEW;
+        this.taskStatus = taskStatus;
     }
 
     public SubtaskRequestBody(){}
