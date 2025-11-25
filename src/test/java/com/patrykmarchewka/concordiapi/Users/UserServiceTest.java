@@ -14,7 +14,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentia
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
 import com.patrykmarchewka.concordiapi.Passwords;
-import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.junit.jupiter.api.AfterAll;
@@ -36,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginHelper, TeamRequestBodyHelper {
+public class UserServiceTest {
 
     private final UserService userService;
     private final TestDataLoader testDataLoader;

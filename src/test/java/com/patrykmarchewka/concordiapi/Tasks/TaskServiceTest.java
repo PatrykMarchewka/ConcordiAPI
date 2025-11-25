@@ -13,9 +13,7 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithUserTasks;
 import com.patrykmarchewka.concordiapi.TaskStatus;
-import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
-import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHelper, UserRequestBodyHelper {
+public class TaskServiceTest {
 
     private final TaskService taskService;
     private final TestDataLoader testDataLoader;

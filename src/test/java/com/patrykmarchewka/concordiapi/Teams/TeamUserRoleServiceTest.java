@@ -5,7 +5,6 @@ import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
-import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserRequestBodyHelper {
+public class TeamUserRoleServiceTest {
 
     private final TeamUserRoleService teamUserRoleService;
     private final TestDataLoader testDataLoader;

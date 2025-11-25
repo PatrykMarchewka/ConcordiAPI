@@ -6,10 +6,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
 import com.patrykmarchewka.concordiapi.TaskStatus;
-import com.patrykmarchewka.concordiapi.Tasks.TaskRequestBodyHelper;
-import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
-import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SubtaskServiceTest implements SubtaskRequestBodyHelper, TaskRequestBodyHelper, TeamRequestBodyHelper, UserRequestBodyHelper {
+public class SubtaskServiceTest {
 
     private final SubtaskService subtaskService;
     private final TestDataLoader testDataLoader;

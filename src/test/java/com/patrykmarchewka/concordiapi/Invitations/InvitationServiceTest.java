@@ -13,10 +13,8 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationF
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationWithTeam;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
-import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
-import com.patrykmarchewka.concordiapi.Users.UserRequestBodyHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamRequestBodyHelper, UserRequestBodyHelper {
+public class InvitationServiceTest {
 
     private final InvitationService invitationService;
     private final TestDataLoader testDataLoader;
