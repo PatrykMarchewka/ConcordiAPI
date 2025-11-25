@@ -57,8 +57,14 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @ParameterizedTest
     @ValueSource(longs = {999L, -1})
-    void shouldThrowForInvalidGetByUserAndTeam(long ID){
-        assertThrows(NotFoundException.class, () -> teamUserRoleService.getByUserAndTeam(ID, ID));
+    void shouldThrowForInvalidUserIDGetByUserAndTeam(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getByUserAndTeam(ID, testDataLoader.teamRead.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDGetByUserAndTeam(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getByUserAndTeam(testDataLoader.userReadOwner.getID(), ID));
     }
 
     /// getRole
@@ -72,8 +78,14 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
 
     @ParameterizedTest
     @ValueSource(longs = {999L, -1})
-    void shouldThrowForInvalidGetRole(long ID){
-        assertThrows(NotFoundException.class, () -> teamUserRoleService.getRole(ID, ID));
+    void shouldThrowForInvalidUserIDGetRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getRole(ID, testDataLoader.teamRead.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDGetRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getRole(testDataLoader.userReadOwner.getID(), ID));
     }
 
     /// setRole
@@ -89,6 +101,18 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
     @Test
     void shouldThrowForOnlyOwnerSetRole(){
         assertThrows(NoPrivilegesException.class, () -> teamUserRoleService.setRole(testDataLoader.userDeleteOwner.getID(), testDataLoader.teamDelete.getID(), UserRole.ADMIN));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidUserIDSetRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.setRole(ID, testDataLoader.teamRead.getID(), UserRole.ADMIN));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDSetRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.setRole(testDataLoader.userReadOwner.getID(), ID, UserRole.ADMIN));
     }
 
     /// getAllByTeamAndUserRole
@@ -116,6 +140,12 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
     @Test
     void shouldThrowForNoResultsGetAllByTeamAndUserRole(){
         assertThrows(NotFoundException.class, () -> teamUserRoleService.getAllByTeamAndUserRole(testDataLoader.teamDelete.getID(), UserRole.BANNED));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDGetAllByTeamAndUserRole(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.getAllByTeamAndUserRole(ID, UserRole.OWNER));
     }
 
     /// saveTMR
@@ -194,5 +224,11 @@ public class TeamUserRoleServiceTest implements TeamRequestBodyHelper, UserReque
     @Test
     void shouldReturnFalseForSingleOwnerOwnerCanLeave(){
         assertFalse(teamUserRoleService.canOwnerLeave(testDataLoader.teamDelete.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDCanOwnerLeave(long ID){
+        assertThrows(NotFoundException.class, () -> teamUserRoleService.canOwnerLeave(ID));
     }
 }

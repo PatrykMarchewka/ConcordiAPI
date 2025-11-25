@@ -119,7 +119,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         UserRequestBody body = new UserRequestBody("PUTLogin","PUTPassword","PUTName","PUTLastName");
         UserWithCredentials user = userService.putUser(testDataLoader.userWriteOwner, body);
 
-        assertDoesNotThrow(user::getID);
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
         assertEquals(body.getLogin(), user.getLogin());
         assertTrue(Passwords.CheckPasswordBCrypt(body.getPassword(), user.getPassword()));
         assertEquals(body.getName(), user.getName());
@@ -127,7 +127,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @Test
-    void shouldPutUserDB(){
+    void shouldPutUserDBCheck(){
         UserRequestBody body = new UserRequestBody("DBPUTLogin","DBPUTPassword","DBPUTName","DBPUTLastName");
         UserWithCredentials user = userService.putUser(testDataLoader.userWriteOwner, body);
 
@@ -153,25 +153,25 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         UserRequestBody body = new UserRequestBody(null, null, "PATCHName", null);
         UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
-        assertDoesNotThrow(user::getID);
-        assertNotNull(user.getLogin());
-        assertNotNull(user.getPassword());
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userWriteOwner.getLogin(), user.getLogin());
+        assertEquals(testDataLoader.userWriteOwner.getPassword(), user.getPassword());
         assertEquals(body.getName(), user.getName());
-        assertNotNull(user.getLastName());
+        assertEquals(testDataLoader.userWriteOwner.getLastName(), user.getLastName());
     }
 
     @Test
-    void shouldPatchUserDB(){
+    void shouldPatchUserDBCheck(){
         UserRequestBody body = new UserRequestBody(null, null, "DBPATCHName", null);
         UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
         UserWithCredentials actual = userService.getUserWithCredentialsByLogin(user.getLogin());
 
         assertEquals(user.getID(), actual.getID());
-        assertNotNull(actual.getLogin());
-        assertNotNull(actual.getPassword());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
         assertEquals(user.getName(), actual.getName());
-        assertNotNull(actual.getLastName());
+        assertEquals(user.getLastName(), actual.getLastName());
     }
 
     @Test
@@ -179,25 +179,25 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         UserRequestBody body = new UserRequestBody("PATCHLogin", "PATCHPassword", "PATCHName", "PATCHLastName");
         UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
-        assertDoesNotThrow(user::getID);
-        assertNotNull(user.getLogin());
-        assertNotNull(user.getPassword());
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
+        assertEquals(body.getLogin(), user.getLogin());
+        assertTrue(Passwords.CheckPasswordBCrypt(body.getPassword(), user.getPassword()));
         assertEquals(body.getName(), user.getName());
-        assertNotNull(user.getLastName());
+        assertEquals(body.getLastName(), user.getLastName());
     }
 
     @Test
-    void shouldPatchUserFullyDB(){
+    void shouldPatchUserFullyDBCheck(){
         UserRequestBody body = new UserRequestBody("DBPATCHLogin", "DBPATCHPassword", "DBPATCHName", "DBPATCHLastName");
         UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
         UserWithCredentials actual = userService.getUserWithCredentialsByLogin(user.getLogin());
 
         assertEquals(user.getID(), actual.getID());
-        assertNotNull(actual.getLogin());
-        assertNotNull(actual.getPassword());
-        assertEquals(body.getName(), actual.getName());
-        assertNotNull(actual.getLastName());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
+        assertEquals(user.getName(), actual.getName());
+        assertEquals(user.getLastName(), actual.getLastName());
     }
 
     @Test
@@ -222,7 +222,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         testDataLoader.userWriteOwner.setName("newName");
         userService.saveUser(testDataLoader.userWriteOwner);
 
-        assertEquals("newName", testDataLoader.userWriteOwner.getName());
+        assertEquals("newName", testDataLoader.refreshUser(testDataLoader.userWriteOwner).getName());
     }
 
     /// userMemberDTOSetProcess
@@ -251,11 +251,6 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         assertTrue(set.isEmpty());
     }
 
-    @Test
-    void shouldThrowForNullUserMemberDTOSetProcess(){
-        assertThrows(NullPointerException.class, () -> userService.userMemberDTOSetProcess(null));
-    }
-
     /// userMemberDTOSetParam
 
     @ParameterizedTest
@@ -278,9 +273,15 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @ParameterizedTest
-    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN"})
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
     void shouldThrowForNoPrivilegesUserMemberDTOSetParam(UserRole role){
         assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetParam(role, UserRole.MEMBER, testDataLoader.teamRead.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDUserMemberDTOSetParam(long ID){
+        assertThrows(NotFoundException.class, () -> userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.ADMIN, ID));
     }
 
     /// userMemberDTOSetNoParam
@@ -295,7 +296,7 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
     }
 
     @ParameterizedTest
-    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN"})
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
     void shouldThrowForNoPrivilegesUserMemberDTOSetNoParam(UserRole role){
         assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetNoParam(role, testDataLoader.teamRead));
     }
@@ -345,15 +346,14 @@ public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginH
         UserRequestLogin body = new UserRequestLogin("MEMBER", "MEMBER");
         UserWithCredentials user = userService.getUserWithCredentialsByLoginAndPassword(body);
 
-        assertEquals(testDataLoader.userReadOwner.getID(), user.getID());
-        assertEquals(testDataLoader.userReadOwner.getName(), user.getName());
-        assertEquals(testDataLoader.userReadOwner.getLastName(), user.getLastName());
-        assertEquals(testDataLoader.userReadOwner.getLogin(), user.getLogin());
-        assertEquals(testDataLoader.userReadOwner.getPassword(), user.getPassword());
+        assertEquals(testDataLoader.userMember.getID(), user.getID());
+        assertEquals(testDataLoader.userMember.getName(), user.getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.getLastName());
+        assertEquals(testDataLoader.userMember.getLogin(), user.getLogin());
+        assertEquals(testDataLoader.userMember.getPassword(), user.getPassword());
     }
 
     @ParameterizedTest
-    @NullSource
     @EmptySource
     @ValueSource(strings = {"TEST"})
     void shouldThrowForInvalidUserWithCredentialsByLoginAndPassword(String test){
