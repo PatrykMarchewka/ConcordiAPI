@@ -16,6 +16,7 @@ import com.patrykmarchewka.concordiapi.Teams.TeamService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public class InvitationService {
      * @return Created invitation
      */
     @Transactional
-    public Invitation createInvitation(UserRole userRole,InvitationRequestBody body, long teamID){
+    public Invitation createInvitation(@NonNull final UserRole userRole, @NonNull final InvitationRequestBody body, final long teamID){
         teamUserRoleService.forceCheckRoles(userRole, body.getRole());
         Invitation invitation = new Invitation();
         Supplier<Team> teamSupplier = () -> (Team)teamService.getTeamByID(teamID);
@@ -60,7 +61,7 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public InvitationFull putInvitation(String invitationID, InvitationRequestBody body){
+    public InvitationFull putInvitation(@NonNull final String invitationID, @NonNull final InvitationRequestBody body){
         Invitation invitation = (Invitation) getInvitationFullByUUID(invitationID);
         invitationUpdatersService.putUpdate(invitation, body);
         return saveInvitation(invitation);
@@ -73,7 +74,7 @@ public class InvitationService {
      * @return Invitation after changes
      */
     @Transactional
-    public InvitationFull patchInvitation(String invitationID, InvitationRequestBody body){
+    public InvitationFull patchInvitation(@NonNull final String invitationID, @NonNull final InvitationRequestBody body){
         Invitation invitation = (Invitation) getInvitationFullByUUID(invitationID);
         invitationUpdatersService.patchUpdate(invitation, body);
         return saveInvitation(invitation);
@@ -87,12 +88,9 @@ public class InvitationService {
      * @throws BadRequestException Thrown when user can't join the specified team due to invitation being no longer usable
      */
     @Transactional
-    public InvitationWithTeam useInvitation(String invitationID, UserWithTeamRoles user){
+    public InvitationWithTeam useInvitation(@NonNull final String invitationID, @NonNull final UserWithTeamRoles user){
         Invitation invitation = (Invitation) getInvitationWithTeamByUUID(invitationID);
         Team team = (Team) teamService.getTeamWithUserRoles(invitation.getInvitingTeam().getID());
-        if (team.checkUser(user.getID())){
-            throw new ConflictException("You are already part of that team!");
-        }
         invitation.useOne();
         teamService.addUser(team.getID(), user, invitation.getRole());
         return saveInvitation(invitation);
@@ -103,7 +101,7 @@ public class InvitationService {
      * @param invitation Invitation to save
      * @return Invitation after changes
      */
-    public Invitation saveInvitation(Invitation invitation){
+    public Invitation saveInvitation(@NonNull final Invitation invitation){
         return invitationRepository.save(invitation);
     }
 
@@ -111,7 +109,7 @@ public class InvitationService {
      * Deletes invitation completely
      * @param invID ID of Invitation to delete
      */
-    public void deleteInvitation(String invID){
+    public void deleteInvitation(@NonNull final String invID){
         Invitation invitation = (Invitation) getInvitationByUUID(invID);
         invitationRepository.delete(invitation);
     }
@@ -122,7 +120,7 @@ public class InvitationService {
      * @return Set of InvitationManagerDTO for all invitations in the team
      */
     @Transactional(readOnly = true)
-    public Set<InvitationManagerDTO> getInvitationsDTO(long teamID){
+    public Set<InvitationManagerDTO> getInvitationsDTO(final long teamID){
         Set<InvitationManagerDTO> invitations = new HashSet<>();
         for (InvitationWithTeam inv : getAllInvitationsWithTeamByInvitingTeamID(teamID)){
             invitations.add(new InvitationManagerDTO(inv));
@@ -136,15 +134,15 @@ public class InvitationService {
      * @return InvitationIdentity with specified UUID
      * @throws NotFoundException Thrown when no invitation can be found with given UUID
      */
-    public InvitationIdentity getInvitationByUUID(String UUID){
+    public InvitationIdentity getInvitationByUUID(@NonNull final String UUID){
         return invitationRepository.findInvitationByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 
-    public InvitationWithTeam getInvitationWithTeamByUUID(String UUID){
+    public InvitationWithTeam getInvitationWithTeamByUUID(@NonNull final String UUID){
         return invitationRepository.findInvitationWithTeamByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 
-    public Set<InvitationWithTeam> getAllInvitationsWithTeamByInvitingTeamID(long teamID){
+    public Set<InvitationWithTeam> getAllInvitationsWithTeamByInvitingTeamID(final long teamID){
         Set<InvitationWithTeam> result = invitationRepository.findAllInvitationsWithTeamByInvitingTeam(teamID);
         if (result.isEmpty()){
             throw new NotFoundException(String.format("Couldnt find invitations with inviting team if of %d", teamID));
@@ -152,7 +150,7 @@ public class InvitationService {
         return result;
     }
 
-    public InvitationFull getInvitationFullByUUID(String UUID){
+    public InvitationFull getInvitationFullByUUID(@NonNull final String UUID){
         return invitationRepository.findInvitationFullByUUID(UUID).orElseThrow(NotFoundException::new);
     }
 

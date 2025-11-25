@@ -8,6 +8,7 @@ import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.UserRole;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 public class InvitationManagerDTO implements InvitationDTO{
 
@@ -45,4 +46,20 @@ public class InvitationManagerDTO implements InvitationDTO{
 
     @JsonProperty("dueTime")
     public String getDueTimeString(){return OffsetDateTimeConverter.formatDate(this.dueTime);}
+
+
+    @Override
+    public boolean equals(Object o){
+        if (this == o) return true;
+        if (!(o instanceof InvitationManagerDTO invitationManagerDTO)) return false;
+        return Objects.equals(UUID, invitationManagerDTO.getUUID()) &&
+                Objects.equals(role, invitationManagerDTO.getRole()) &&
+                Objects.equals(uses, invitationManagerDTO.getUses()) &&
+                Objects.equals(dueTime, invitationManagerDTO.getDueTime());
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(UUID);
+    }
 }
