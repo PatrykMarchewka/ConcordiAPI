@@ -407,7 +407,7 @@ public class TaskServiceTest implements TaskRequestBodyHelper, TeamRequestBodyHe
 
     @Test
     void shouldGetAllTasksAssignedToMe(){
-        Set<TaskMemberDTO> set = taskService.getAllTasksAssignedToMe(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
+        Set<TaskMemberDTO> set = taskService.getAllTasksAssignedToMe(testDataLoader.teamRead.getID(), testDataLoader.userReadOwner.getID());
 
         assertEquals(testDataLoader.userReadOwner.getUserTasks().size(), set.size());
         assertTrue(set.containsAll(testDataLoader.userReadOwner.getUserTasks().stream().map(UserTask::getAssignedTask).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())));

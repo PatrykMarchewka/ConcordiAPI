@@ -84,7 +84,8 @@ public class InvitationServiceTest implements InvitationRequestBodyHelper, TeamR
     @ParameterizedTest
     @ValueSource(longs = {999L, -1})
     void shouldThrowForInvalidTeamID(long ID){
-        assertThrows(NotFoundException.class, () -> invitationService.createInvitation(UserRole.OWNER, new InvitationRequestBody(), ID));
+        InvitationRequestBody body = new InvitationRequestBody((short) 1, UserRole.ADMIN, null);
+        assertThrows(NotFoundException.class, () -> invitationService.createInvitation(UserRole.OWNER, body, ID));
     }
 
     /// putInvitation

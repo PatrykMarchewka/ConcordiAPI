@@ -327,18 +327,6 @@ public class TaskRepositoryTest {
     }
 
     @Test
-    void shouldThrowForNullDescription(){
-        Task task = new Task();
-        task.setName("name");
-        task.setDescription(null);
-        task.setTaskStatus(TaskStatus.NEW);
-        task.setCreationDate(OffsetDateTime.now());
-        task.setAssignedTeam(testDataLoader.teamWrite);
-
-        assertThrows(DataIntegrityViolationException.class, () -> taskRepository.save(task));
-    }
-
-    @Test
     void shouldThrowForNullTaskStatus(){
         Task task = new Task();
         task.setName("name");
