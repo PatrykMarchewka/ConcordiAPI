@@ -14,8 +14,10 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,15 +26,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeamControllerTest {
 
-    @Autowired
-    private RestClient.Builder builder;
-    @Autowired
-    private TestDataLoader testDataLoader;
-
-    private RestClient restClient;
-
     @LocalServerPort
     private int port;
+
+    private final RestClient.Builder builder;
+    private final TestDataLoader testDataLoader;
+    private RestClient restClient;
+
+    @Autowired
+    public TeamControllerTest(final RestClient.Builder builder, final TestDataLoader testDataLoader){
+        this.builder = builder;
+        this.testDataLoader = testDataLoader;
+    }
 
 
     @BeforeAll
@@ -47,9 +52,11 @@ public class TeamControllerTest {
     }
 
 
+    /// myTeams
 
+    /// 200
     @Test
-    void shouldGetTeams(){
+    void shouldMyTeams(){
         //JSON Deserialization sees APIResponse<Set> so it doesn't add "type" field to TeamDTO even when annotated to do it
         //because of that it has issues with deserializing Set<TeamDTO> into objects
         //In this test responses are TeamAdminDTO, but for mixed DTOs it would need to be Map<String, Object> or something better
@@ -58,10 +65,27 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Information about all joined teams", response.getBody().getMessage());
-        assertEquals(testDataLoader.userReadOwner.getTeams().size(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(teamDTO -> teamDTO.equalsTeam(testDataLoader.teamRead)));
+        assertEquals(1, response.getBody().getData().size());
+        assertEquals(Set.of(new TeamAdminDTO(testDataLoader.teamRead)), response.getBody().getData());
     }
 
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationMyTeams(){
+        var response = restClient.get()
+                .uri("/api/teams")
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// createTeam
+
+    /// 201
     @Test
     void shouldCreateTeam(){
         String json = """
@@ -70,18 +94,75 @@ public class TeamControllerTest {
                 }
                 """;
 
-        var response = restClient.post().uri("/api/teams").contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(APIResponse.class);
-        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userWriteOwner);
+        var response = restClient.post()
+                .uri("/api/teams")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .retrieve()
+                .toEntity(APIResponse.class);
 
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().getMessage().contains("Team created with ID of "));
-        assertEquals(testDataLoader.userWriteOwner.getTeams().size() + 1, refreshedUser.getTeams().size());
+        assertNull(response.getBody().getData());
     }
 
+    /// 400
     @Test
-    void shouldGetInformationAboutTeam(){
+    void shouldThrowForInvalidRequestBodyCreateTeam(){
+        String json = """
+                {
+                
+                }
+                """;
+
+        var response = restClient.post()
+                .uri("/api/teams")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be empty", errors.get("name"));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationCreateTeam(){
+        String json = """
+                {
+                "name":"NewestTeam"
+                }
+                """;
+
+        var response = restClient.post()
+                .uri("/api/teams")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// getTeam
+
+    /// 200
+    @Test
+    void shouldGetTeam(){
         var response = restClient.get().uri("/api/teams/{teamID}", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamAdminDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -90,6 +171,42 @@ public class TeamControllerTest {
         assertTrue(response.getBody().getData().equalsTeam(testDataLoader.teamRead));
     }
 
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationGetTeam(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}", testDataLoader.teamRead.getID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDGetTeam(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}", -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtRead)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+
+    /// putTeam
+
+    /// 200
     @Test
     void shouldPutTeam(){
         String json = """
@@ -104,10 +221,111 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals("newer", response.getBody().getData().getName());
-        assertTrue(response.getBody().getData().equalsTeam(refreshedTeam));
+        assertEquals(new TeamAdminDTO(refreshedTeam), response.getBody().getData());
     }
 
+    /// 400
+    @Test
+    void shouldThrowForInvalidRequestBodyPutTeam(){
+        String json = """
+                {
+                
+                }
+                """;
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be empty", errors.get("name"));
+    }
+
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationPutTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON).body(json)
+                .exchange((req, res) -> ResponseEntity
+                .status(res.getStatusCode())
+                .headers(res.getHeaders())
+                .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesPutTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON).body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDPutTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}", -1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+
+    /// patchTeam
+
+    /// 200
     @Test
     void shouldPatchTeam(){
         String json = """
@@ -122,10 +340,110 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals("newest", response.getBody().getData().getName());
-        assertTrue(response.getBody().getData().equalsTeam(refreshedTeam));
+        assertEquals(new TeamAdminDTO(refreshedTeam), response.getBody().getData());
     }
 
+    /// 400
+    @Test
+    void shouldThrowForInvalidRequestBodyPatchTeam(){
+        String json = """
+                {
+                    "name": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut facilisis blandit est. Nam vel ultricies erat. Sed odio eros, auctor nec ante ac, commodo gravida eros. Fusce nisi elit, commodo ut orci quis, rhoncus ultricies nisi. Sed fringilla tortor magna..."
+                }
+                """;
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Value must be between 1 and 255 characters", errors.get("name"));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationPatchTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON).body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesPatchTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON).body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDPatchTeam(){
+        String json = """
+                {
+                "name":"newer"
+                }
+                """;
+
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}", -1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+
+    /// disbandTeam
+
+    /// 200
     @Test
     void shouldDeleteTeam(){
         var response = restClient.delete().uri("/api/teams/{teamID}", testDataLoader.teamDelete.getID()).header("Authorization", "Bearer " + testDataLoader.jwtDelete).retrieve().toEntity(APIResponse.class);
@@ -134,5 +452,53 @@ public class TeamControllerTest {
         assertNotNull(response.getBody());
         assertEquals("The team has been disbanded", response.getBody().getMessage());
         assertThrows(NotFoundException.class, () -> testDataLoader.refreshTeam(testDataLoader.teamDelete));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationDisbandTeam(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}", testDataLoader.teamDelete.getID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesDisbandTeam(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}", testDataLoader.teamDelete.getID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                .status(res.getStatusCode())
+                .headers(res.getHeaders())
+                .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDDisbandTeam(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}", -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtDelete)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
     }
 }

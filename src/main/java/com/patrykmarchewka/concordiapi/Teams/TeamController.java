@@ -106,7 +106,6 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/teams/{ID}")
-    @Transactional
     public ResponseEntity<APIResponse<TeamAdminDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
 
@@ -131,7 +130,6 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/teams/{ID}")
-    @Transactional
     public ResponseEntity<APIResponse<TeamAdminDTO>> patchTeam(@PathVariable long ID, @RequestBody @ValidateGroup TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
 
@@ -154,7 +152,6 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/teams/{ID}")
-    @Transactional
     public ResponseEntity<APIResponse<String>> disbandTeam(@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(ID).withRole();
         if (!context.getUserRole().isOwner()){
