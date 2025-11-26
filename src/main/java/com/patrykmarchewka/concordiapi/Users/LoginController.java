@@ -73,7 +73,6 @@ public class LoginController {
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
-    @ApiResponse(responseCode = "409", ref = "409")
     @ApiResponse(responseCode = "500", ref = "500")
     @PostMapping("/login")
     public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateGroup(OnCreate.class) UserRequestLogin body){
@@ -124,7 +123,6 @@ public class LoginController {
      */
     @Operation(summary = "Edit information about me", description = "Edit information about currently logged in user")
     @ApiResponse(responseCode = "200",ref = "200")
-    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "409", ref = "409")
     @SecurityRequirement(name = "BearerAuth")
@@ -186,6 +184,7 @@ public class LoginController {
     @SecurityRequirement(name = "BearerAuth")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "404", ref = "404")
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<TeamMemberDTO>> joinTeam(@PathVariable String invID, Authentication authentication) {
