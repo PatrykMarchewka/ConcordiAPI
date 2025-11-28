@@ -251,12 +251,16 @@ public class TaskService {
      * @param team Team in which user and task is
      * @param taskID ID of Task to attach user to
      * @param userID ID of User to add to task
+     * @throws BadRequestException Thrown when trying to add user to task that is already part of that task
      */
     @Transactional
     public void addUserToTask(@NonNull final TeamWithUserRoles team, final long taskID, final long userID){
         validateUsersForTasksByID(Set.of((int)userID), team);
         Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, team.getID());
         User user = (User) userService.getUserWithUserTasks(userID);
+        if (task.hasUser(user.getID())){
+            throw new BadRequestException(String.format("User with ID - %d was already attached to the task", user.getID()));
+        }
         task.addUserTask(user);
         saveTask(task);
     }

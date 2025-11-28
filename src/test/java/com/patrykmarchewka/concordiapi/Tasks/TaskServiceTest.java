@@ -352,7 +352,6 @@ public class TaskServiceTest {
 
     /// getAllTasksWithRoleCheck
 
-    //Owner = all, member = just allowed, banned = throw Nopriv, invalid user, invalid team
     @Test
     void shouldGetAllTasksWithRoleCheck(){
         Set<TaskMemberDTO> set = taskService.getAllTasksWithRoleCheck(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
