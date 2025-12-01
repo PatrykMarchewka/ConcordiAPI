@@ -14,21 +14,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface TeamRepository  extends JpaRepository<Team,Long> {
-    Optional<Team> findTeamById(long id);
-
     @Query("""
     SELECT t FROM Team t
     WHERE t.id = :id
 """)
     Optional<TeamIdentity> findTeamByID(@Param("id") long id);
-
-    @Query("""
-    SELECT t FROM Team t
-    LEFT JOIN FETCH t.userRoles ur
-    LEFT JOIN FETCH ur.user
-    WHERE t.id = :id
-""")
-    Optional<Team> findTeamWithUserRolesAndUsersByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
@@ -43,7 +33,7 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
     LEFT JOIN FETCH t.teamTasks
     WHERE t.id = :id
 """)
-    Optional<TeamWithTasks> findTeamWithTeamTasksByID(@Param("id") long id);
+    Optional<TeamWithTasks> findTeamWithTasksByID(@Param("id") long id);
 
     @Query("""
     SELECT t FROM Team t
@@ -60,10 +50,6 @@ public interface TeamRepository  extends JpaRepository<Team,Long> {
     WHERE t.id = :id
 """)
     Optional<TeamWithUserRolesAndTasks> findTeamWithUserRolesAndTasksByID(@Param("id") long id);
-
-    @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
-    @Query("SELECT t FROM Team t WHERE t.id = :id")
-    Optional<Team> findTeamEntityFullByID(@Param("id") long id);
 
     @EntityGraph(attributePaths = {"userRoles","userRoles.user","teamTasks","invitations"})
     @Query("SELECT t FROM Team t WHERE t.id = :id")

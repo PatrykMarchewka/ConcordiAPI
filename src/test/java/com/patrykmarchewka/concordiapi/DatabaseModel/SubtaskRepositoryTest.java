@@ -1,52 +1,119 @@
 package com.patrykmarchewka.concordiapi.DatabaseModel;
 
+import com.patrykmarchewka.concordiapi.HydrationContracts.Subtask.SubtaskIdentity;
 import com.patrykmarchewka.concordiapi.TaskStatus;
-import org.junit.jupiter.api.AfterEach;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class SubtaskRepositoryTest implements SubtaskTestHelper, TaskTestHelper, TeamTestHelper{
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class SubtaskRepositoryTest {
 
     private final SubtaskRepository subtaskRepository;
-    private final TaskRepository taskRepository;
-    private final TeamRepository teamRepository;
+    private final TestDataLoader testDataLoader;
 
-    public SubtaskRepositoryTest(SubtaskRepository subtaskRepository, TaskRepository taskRepository, TeamRepository teamRepository) {
+    @Autowired
+    public SubtaskRepositoryTest(SubtaskRepository subtaskRepository, TestDataLoader testDataLoader) {
         this.subtaskRepository = subtaskRepository;
-        this.taskRepository = taskRepository;
-        this.teamRepository = teamRepository;
+        this.testDataLoader = testDataLoader;
     }
 
-    @AfterEach
+    @BeforeAll
+    void initialize(){
+        testDataLoader.loadDataForTests();
+    }
+
+    @AfterAll
     void cleanUp(){
-        subtaskRepository.deleteAll();
-        subtaskRepository.flush();
-        taskRepository.deleteAll();
-        taskRepository.flush();
-        teamRepository.deleteAll();
-        teamRepository.flush();
+        testDataLoader.clearDB();
+    }
+
+
+    /// findSubtaskByIDAndTaskID
+
+    @Test
+    void shouldFindSubtaskByIDAndTaskID(){
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(testDataLoader.subtaskRead.getID(), testDataLoader.taskMultiUserRead.getID());
+
+        assertTrue(subtask.isPresent());
+        assertEquals(testDataLoader.subtaskRead.getID(), subtask.get().getID());
+        assertEquals(testDataLoader.subtaskRead.getName(), subtask.get().getName());
+        assertEquals(testDataLoader.subtaskRead.getDescription(), subtask.get().getDescription());
+        assertEquals(testDataLoader.subtaskRead.getTask(), subtask.get().getTask());
+        assertEquals(testDataLoader.subtaskRead.getTaskStatus(), subtask.get().getTaskStatus());
     }
 
     @Test
-    void shouldSaveAndRetrieveSubtaskCorrectly(){
-        Team team = createTeam(teamRepository);
-        Task task = createTask(team,taskRepository);
-        long id = createSubtask(task,subtaskRepository).getID();
+    void shouldReturnEmptySubtaskForNonExistentIDAndTaskID(){
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(999L, testDataLoader.teamRead.getID());
 
-        Subtask found = subtaskRepository.findSubtaskEntityByIDAndTaskID(id, task.getID()).orElse(null);
+        assertFalse(subtask.isPresent());
+    }
 
-        assertNotNull(found);
-        assertEquals(id,found.getID());
-        assertEquals("TESTSub",found.getName());
-        assertEquals("Test subtask", found.getDescription());
-        assertEquals(task,found.getTask());
-        assertEquals(TaskStatus.NEW, found.getTaskStatus());
+    @Test
+    void shouldReturnEmptySubtaskForIDAndNonExistentTaskID(){
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(testDataLoader.subtaskRead.getID(), 999L);
+
+        assertFalse(subtask.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptySubtaskForInvalidIDAndTaskID(){
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(-1, testDataLoader.teamRead.getID());
+
+        assertFalse(subtask.isPresent());
+    }
+
+    @Test
+    void shouldReturnEmptySubtaskForIDAndInvalidTaskID(){
+        Optional<SubtaskIdentity> subtask = subtaskRepository.findSubtaskByIDAndTaskID(testDataLoader.subtaskRead.getID(), -1);
+
+        assertFalse(subtask.isPresent());
+    }
+
+
+    /// Schema tests
+
+    @Test
+    void shouldThrowForNullName(){
+        Subtask subtask = new Subtask();
+        subtask.setName(null);
+        subtask.setDescription("description");
+        subtask.setTask(testDataLoader.taskMultiUserWrite);
+        subtask.setTaskStatus(TaskStatus.NEW);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
+    }
+
+    @Test
+    void shouldThrowFroNullTask(){
+        Subtask subtask = new Subtask();
+        subtask.setName("name");
+        subtask.setDescription("description");
+        subtask.setTask(null);
+        subtask.setTaskStatus(TaskStatus.NEW);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
+    }
+
+    @Test
+    void shouldThrowForNullTaskStatus(){
+        Subtask subtask = new Subtask();
+        subtask.setName("name");
+        subtask.setDescription("description");
+        subtask.setTask(testDataLoader.taskMultiUserWrite);
+        subtask.setTaskStatus(null);
+
+        assertThrows(DataIntegrityViolationException.class, () -> subtaskRepository.save(subtask));
     }
 }

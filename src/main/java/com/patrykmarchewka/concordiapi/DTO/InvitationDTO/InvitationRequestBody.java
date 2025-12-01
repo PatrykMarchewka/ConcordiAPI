@@ -1,4 +1,5 @@
 package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
+import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.UserRole;
 import jakarta.validation.constraints.Future;
@@ -11,20 +12,20 @@ import java.time.OffsetDateTime;
 
 
 public class InvitationRequestBody {
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
+    @NotNull(groups = {OnCreate.class, OnPut.class}, message = "{notnull.generic}")
     @Min(value = 1, message = "{min.generic}")
     @Max(value = 32767, message = "{max.generic}")
-    private Short uses = 1;
+    private Short uses;
 
-    @NotNull(groups = OnPut.class, message = "{notnull.generic}")
-    private UserRole role = UserRole.MEMBER;
+    @NotNull(groups = {OnCreate.class, OnPut.class}, message = "{notnull.generic}")
+    private UserRole role;
 
     @Future(message = "{future.generic}")
     private OffsetDateTime dueDate;
 
-    public InvitationRequestBody(@Nullable Short uses, @Nullable UserRole role, @Nullable OffsetDateTime dueDate){
-        this.uses = (uses != null) ? uses : 1;
-        this.role = (role != null) ? role : UserRole.MEMBER;
+    public InvitationRequestBody(Short uses, UserRole role, @Nullable OffsetDateTime dueDate){
+        this.uses = uses;
+        this.role = role;
         this.dueDate = dueDate;
     }
 

@@ -49,28 +49,4 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     WHERE t.assignedTeam.id = :teamID AND ut.assignedUser.id = :userID
 """)
     Set<TaskFull> findAllTaskFullByAssignedTeamIDAndAssignedUserID(@Param("teamID") long teamID, @Param("userID") long userID);
-
-
-    /// Legacy
-    Optional<Task> findByIdAndAssignedTeam(long id, Team assignedTeam);
-    Set<Task> getByAssignedTeam(Team assignedTeam);
-
-    @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.userTasks ut
-    LEFT JOIN FETCH ut.assignedUser
-    WHERE t.id = :id AND t.assignedTeam = :team
-""")
-    Optional<Task> findTaskWithUserTasksByIDAndAssignedTeam(@Param("id") long id, @Param("team") Team assignedTeam);
-
-    @Query("""
-    SELECT t FROM Task t
-    LEFT JOIN FETCH t.subtasks
-    WHERE t.id = :id AND t.assignedTeam = :team
-""")
-    Optional<Task> findTaskWithSubtasksByIDAndAssignedTeam(@Param("id") long id, @Param("team") Team assignedTeam);
-
-    @EntityGraph(attributePaths = {"userTasks", "userTasks.assignedUser", "subtasks", "assignedTeam"})
-    @Query("SELECT t FROM Task t WHERE t.id = :id AND t.assignedTeam = :team")
-    Optional<Task> findTaskFullByID(@Param("id") long id, @Param("team") Team assignedTeam);
 }

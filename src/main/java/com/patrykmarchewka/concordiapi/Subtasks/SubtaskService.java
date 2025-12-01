@@ -12,6 +12,7 @@ import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,7 @@ public class SubtaskService {
      * @throws NotFoundException Thrown when subtask with provided ID and task ID doesn't exist
      */
     public SubtaskIdentity getSubtaskByID(final long taskID, final long subtaskID){
-        return subtaskRepository.findSubtaskIdentityByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
+        return subtaskRepository.findSubtaskByIDAndTaskID(subtaskID, taskID).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -53,7 +54,7 @@ public class SubtaskService {
      * @return Created subtask
      */
     @Transactional
-    public Subtask createSubtask(SubtaskRequestBody body, long teamID, long taskID){
+    public Subtask createSubtask(@NonNull final SubtaskRequestBody body, final long teamID, final long taskID){
         Subtask subtask = new Subtask();
         Supplier<Task> task = () -> (Task) taskService.getTaskWithSubtasksByIDAndTeamID(taskID,teamID);
         subtaskUpdatersService.createUpdate(subtask, body, task);
@@ -68,7 +69,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public SubtaskIdentity putUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+    public SubtaskIdentity putUpdate(final long taskID, final long subtaskID, @NonNull final SubtaskRequestBody body){
         Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.putUpdate(subtask, body);
         return saveSubtask(subtask);
@@ -82,7 +83,7 @@ public class SubtaskService {
      * @return Subtask after changes
      */
     @Transactional
-    public SubtaskIdentity patchUpdate(long taskID, long subtaskID, SubtaskRequestBody body){
+    public SubtaskIdentity patchUpdate(final long taskID, final long subtaskID, @NonNull final SubtaskRequestBody body){
         Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskUpdatersService.patchUpdate(subtask, body);
         return saveSubtask(subtask);
@@ -93,7 +94,7 @@ public class SubtaskService {
      * @param subtask Subtask to save
      * @return Subtask after saved changes
      */
-    public Subtask saveSubtask(Subtask subtask){
+    public Subtask saveSubtask(@NonNull final Subtask subtask){
         return subtaskRepository.save(subtask);
     }
 
@@ -104,7 +105,7 @@ public class SubtaskService {
      * @param subtaskID ID of Subtask to delete
      */
     @Transactional
-    public void deleteSubtask(long taskID, long subtaskID){
+    public void deleteSubtask(final long taskID, final long subtaskID){
         Subtask subtask = (Subtask) getSubtaskByID(taskID, subtaskID);
         subtaskRepository.delete(subtask);
     }
@@ -114,7 +115,7 @@ public class SubtaskService {
      * @param task Task to check in
      * @return Set of SubtaskDTO in provided task
      */
-    public Set<SubtaskMemberDTO> getSubtasksDTO(final TaskWithSubtasks task){
+    public Set<SubtaskMemberDTO> getSubtasksDTO(@NonNull final TaskWithSubtasks task){
         final Set<SubtaskMemberDTO> subtasks = new HashSet<>();
         for (final Subtask sub : task.getSubtasks()){
             subtasks.add(new SubtaskMemberDTO(sub));

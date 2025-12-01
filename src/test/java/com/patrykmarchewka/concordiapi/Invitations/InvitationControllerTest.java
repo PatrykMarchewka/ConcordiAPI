@@ -2,7 +2,6 @@ package com.patrykmarchewka.concordiapi.Invitations;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationManagerDTO;
-import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.OffsetDateTimeConverter;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
@@ -17,10 +16,13 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,15 +31,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class InvitationControllerTest {
 
-    @Autowired
-    private RestClient.Builder builder;
-    @Autowired
-    private TestDataLoader testDataLoader;
-
-    private RestClient restClient;
-
     @LocalServerPort
     private int port;
+
+    private final RestClient.Builder builder;
+    private final TestDataLoader testDataLoader;
+    private RestClient restClient;
+
+    @Autowired
+    public InvitationControllerTest(final RestClient.Builder builder, final TestDataLoader testDataLoader){
+        this.builder = builder;
+        this.testDataLoader = testDataLoader;
+    }
 
 
     @BeforeAll
@@ -50,20 +55,77 @@ public class InvitationControllerTest {
     void cleanUp(){
         testDataLoader.clearDB();
     }
-    
+
+
+    /// getInvitations
+
+    /// 200
     @Test
-    void shouldGetInvitationsForTeam(){
+    void shouldGetInvitations(){
         var response = restClient.get().uri("/api/teams/{teamID}/invitations", testDataLoader.teamRead.getID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<Set<InvitationManagerDTO>>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("List of all invitations for this team", response.getBody().getMessage());
         assertEquals(3, response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationRead)));
-        assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationExpired)));
-        assertTrue(response.getBody().getData().stream().anyMatch(invitationManagerDTO -> invitationManagerDTO.equalsInvitation(testDataLoader.invitationNoUses)));
+        assertEquals(Set.of(new InvitationManagerDTO(testDataLoader.invitationRead), new InvitationManagerDTO(testDataLoader.invitationNoUses), new InvitationManagerDTO(testDataLoader.invitationExpired)), response.getBody().getData());
     }
 
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationGetInvitations(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamRead.getID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesGetInvitations(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamRead.getID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtBanned)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDGetInvitations(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations", -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtRead)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+
+    }
+
+    /// createInvitation
+
+    /// 201
     @Test
     void shouldCreateInvitation(){
         //To stop test from automatically failing in the future due to expired date, users can provide date as short as "2025-10-04T23:59Z"
@@ -82,47 +144,137 @@ public class InvitationControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Created new invitation", response.getBody().getMessage());
-        assertEquals(new TeamMemberDTO(testDataLoader.teamWrite), response.getBody().getData().getTeam());
         assertEquals((short)100, response.getBody().getData().getUses());
         assertEquals(UserRole.MEMBER, response.getBody().getData().getRole());
     }
 
     @Test
-    void shouldCreateInvitationString() {
-        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(10);
-
+    void shouldCreateInvitationForShortDateString(){
+        //To stop test from automatically failing in the future due to expired date, users can provide date as short as "2025-10-04T23:59Z"
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(10).withOffsetSameInstant(ZoneOffset.UTC);
+        String dueDateString = dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX"));
         String json = String.format("""
                 {
                 "uses": 100,
                 "role": "MEMBER",
                 "dueDate": "%s"
                 }
-                """, dueDate);
-        var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().body(String.class);
-        /*
-        Example Response:
-        {"message":"Created new invitation",
-        "data":{"UUID":"b4d3e5c9-ee3f-4526-8e39-fa2ff48d25a0",
-        "team":{"id":2,"name":"teamWrite","teammateCount":4,"tasks":[],"owners":[{"id":2,"name":"WRITE","lastName":"WRITE"}]},
-        "role":"MEMBER",
-        "uses":100,
-        "dueTime":"2025-11-24 18:25:29+00:00"},
-        "timestamp":"2025-11-14 19:25:29+01:00"}
-         */
+                """, dueDateString);
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .retrieve()
+                .toEntity(String.class);
 
-        String expectedMessage = "\"message\":\"Created new invitation\"";
-        String expectedRole = "\"role\":\"MEMBER\"";
-        String expectedUses = "\"uses\":100";
-        String expectedDueDate = "\"dueTime\":\"" + OffsetDateTimeConverter.formatDate(dueDate.withOffsetSameInstant(ZoneOffset.UTC)) + "\"";
-
-        assertTrue(response.contains(expectedMessage));
-        assertTrue(response.contains(expectedRole));
-        assertTrue(response.contains(expectedUses));
-        assertTrue(response.contains(expectedDueDate));
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(String.format("\"dueTime\":\"%s\"", OffsetDateTimeConverter.formatDate(dueDate))));
     }
 
+    /// 400
     @Test
-    void shouldCheckInvitation(){
+    void shouldThrowForInvalidRequestBodyCreateInvitation(){
+        String json = String.format("""
+                {
+                "role": "MEMBER"
+                }
+                """);
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be null", errors.get("uses"));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationCreateInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "MEMBER"
+                }
+                """);
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                .status(res.getStatusCode())
+                .headers(res.getHeaders())
+                .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesCreateInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "MEMBER"
+                }
+                """);
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDCreateInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "MEMBER"
+                }
+                """);
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", -1)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// getInvitation
+
+    /// 200
+    @Test
+    void shouldGetInvitation(){
         var response = restClient.get().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamRead.getID(), testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -131,6 +283,74 @@ public class InvitationControllerTest {
         assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
     }
 
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationGetInvitation(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamRead.getID(), testDataLoader.invitationRead.getUUID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesGetInvitation(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamRead.getID(), testDataLoader.invitationRead.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDGetInvitation(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations/{invID}", -1, testDataLoader.invitationRead.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtRead)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    @Test
+    void shouldThrowForInvalidInvitationUUIDGetInvitation(){
+        var response = restClient.get()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamRead.getID(), -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtRead)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// putInvitation
+
+    /// 200
     @Test
     void shouldPutInvitation(){
         //To stop test from automatically failing in the future due to expired date, users can provide date as short as "2025-10-04T23:59Z"
@@ -144,20 +364,50 @@ public class InvitationControllerTest {
                 }
                 """, dueDate);
         var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.invitationWrite = testDataLoader.refreshInvitation(testDataLoader.invitationWrite);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Invitation fully changed", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationWrite));
+        assertEquals(testDataLoader.invitationWrite.getUUID(), response.getBody().getData().getUUID());
         assertEquals(99, response.getBody().getData().getUses());
+        assertEquals(UserRole.OWNER, response.getBody().getData().getRole());
     }
 
+    /// 400
     @Test
-    void shouldPutInvitationString(){
+    void shouldThrowForInvalidRequestBodyPutInvitation(){
         OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+        String json = String.format("""
+                {
+                "uses": 99,
+                "dueDate": "%s"
+                }
+                """, dueDate);
 
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be null", errors.get("role"));
+
+    }
+
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationPutInvitation(){
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
         String json = String.format("""
                 {
                 "uses": 99,
@@ -165,31 +415,104 @@ public class InvitationControllerTest {
                 "dueDate": "%s"
                 }
                 """, dueDate);
-        var response = restClient.put().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().body(String.class);
 
-        /*
-        Example response:
-        {"message":"Invitation fully changed",
-        "data":{"UUID":"87e84bdc-913d-4793-bb1f-9aa9c08a644c",
-        "team":{"id":2,"name":"teamWrite","teammateCount":4,"tasks":[],"owners":[{"id":2,"name":"WRITE","lastName":"WRITE"}]},
-        "role":"OWNER",
-        "uses":99,
-        "dueTime":"2025-11-15 18:34:12+00:00"},
-        "timestamp":"2025-11-14 19:34:12+01:00"}
-         */
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
 
-        String expectedMessage = "\"message\":\"Invitation fully changed\"";
-        String expectedRole = "\"role\":\"OWNER\"";
-        String expectedUses = "\"uses\":99";
-        String expectedDueTime = "\"dueTime\":\"" + OffsetDateTimeConverter.formatDate(dueDate.withOffsetSameInstant(ZoneOffset.UTC)) + "\"";
-
-        assertTrue(response.contains(expectedMessage));
-        assertTrue(response.contains(expectedRole));
-        assertTrue(response.contains(expectedUses));
-        assertTrue(response.contains(expectedDueTime));
-
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
     }
 
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesPutInvitation(){
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+        String json = String.format("""
+                {
+                "uses": 99,
+                "role": "OWNER",
+                "dueDate": "%s"
+                }
+                """, dueDate);
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDPutInvitation(){
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+        String json = String.format("""
+                {
+                "uses": 99,
+                "role": "OWNER",
+                "dueDate": "%s"
+                }
+                """, dueDate);
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", -1, testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    @Test
+    void shouldThrowForInvalidInvitationUUIDPutInvitation(){
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+        String json = String.format("""
+                {
+                "uses": 99,
+                "role": "OWNER",
+                "dueDate": "%s"
+                }
+                """, dueDate);
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// patchInvitation
+
+    /// 200
     @Test
     void shouldPatchInvitation(){
         String json = """
@@ -205,6 +528,131 @@ public class InvitationControllerTest {
         assertEquals(UserRole.MANAGER, response.getBody().getData().getRole());
     }
 
+    /// 400
+    @Test
+    void shouldThrowForInvalidRequestBodyPatchInvitation(){
+        String json = """
+                {
+                "uses": -1
+                }
+                """;
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Value must be 1 or greater", errors.get("uses"));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationPatchInvitation(){
+        String json = String.format("""
+                {
+                "uses": 99
+                }
+                """);
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesPatchInvitation(){
+        String json = String.format("""
+                {
+                "uses": 99
+                }
+                """);
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDPatchInvitation(){
+        String json = String.format("""
+                {
+                "uses": 99
+                }
+                """);
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", -1, testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    @Test
+    void shouldThrowForInvalidInvitationUUIDPatchInvitation(){
+        String json = String.format("""
+                {
+                "uses": 99
+                }
+                """);
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// deleteInvitation
+
+    /// 200
     @Test
     void shouldDeleteInvitation(){
         var response = restClient.delete().uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamDelete.getID(), testDataLoader.invitationDelete.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtDelete).retrieve().toEntity(APIResponse.class);
@@ -215,4 +663,67 @@ public class InvitationControllerTest {
         assertThrows(NotFoundException.class,() -> testDataLoader.refreshInvitation(testDataLoader.invitationDelete));
     }
 
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationDeleteInvitation(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .exchange((req, res) -> ResponseEntity
+                .status(res.getStatusCode())
+                .headers(res.getHeaders())
+                .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 403
+    @Test
+    void shouldThrowForNoPrivilegesDeleteInvitation(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidTeamIDDeleteInvitation(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}/invitations/{invID}", -1, testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    @Test
+    void shouldThrowForInvalidInvitationUUIDDeleteInvitation(){
+        var response = restClient.delete()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), -1)
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
 }

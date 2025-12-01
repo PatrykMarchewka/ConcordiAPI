@@ -17,10 +17,12 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,15 +30,18 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LoginControllerTest {
 
-    @Autowired
-    private RestClient.Builder builder;
-    @Autowired
-    private TestDataLoader testDataLoader;
-
-    private RestClient restClient;
     @LocalServerPort
     private int port;
 
+    private final RestClient.Builder builder;
+    private final TestDataLoader testDataLoader;
+    private RestClient restClient;
+
+    @Autowired
+    public LoginControllerTest(final RestClient.Builder builder, final TestDataLoader testDataLoader){
+        this.builder = builder;
+        this.testDataLoader = testDataLoader;
+    }
 
     @BeforeAll
     void restInitialize(){
@@ -49,8 +54,13 @@ public class LoginControllerTest {
         testDataLoader.clearDB();
     }
 
+
+
+    /// healthCheck
+
+    ///  200
     @Test
-    void shouldCheckHealthStatus(){
+    void shouldHealthCheck(){
         var response = restClient.get().uri("/health").retrieve().toEntity(APIResponse.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -59,8 +69,12 @@ public class LoginControllerTest {
         assertNull(response.getBody().getData());
     }
 
+
+    /// login
+
+    /// 200
     @Test
-    void shouldLoginUserCorrectly(){
+    void shouldLogin(){
         String json = """
                 {
                    "login": "READ",
@@ -79,8 +93,34 @@ public class LoginControllerTest {
         }
     }
 
+    ///400
     @Test
-    void shouldThrowForNonExistingUser(){
+    void shouldThrowForInvalidRequestBodyLogin(){
+        String json = """
+                {
+                    "login": "MEMBER"
+                }
+                """;
+
+        var response = restClient.post()
+                .uri("/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be empty", errors.get("password"));
+    }
+
+    ///401
+    @Test
+    void shouldThrowForNonExistingUserLogin(){
         String json = """
                 {
                    "login": "fake",
@@ -96,8 +136,12 @@ public class LoginControllerTest {
         assertNull(response.getBody().getData());
     }
 
+
+    /// create
+
+    /// 201
     @Test
-    void shouldCreateNewUser(){
+    void shouldCreate(){
         String json = """
                 {
                    "login": "new",
@@ -116,8 +160,65 @@ public class LoginControllerTest {
         assertEquals("Doe", response.getBody().getData().getLastName());
     }
 
+    /// 400
     @Test
-    void shouldGetMeDTO(){
+    void shouldThrowForInvalidRequestBodyCreate(){
+        String json = """
+                {
+                    "login": "wrong",
+                    "password": "wrong",
+                    "name": "wrong"
+                }
+                """;
+
+        var response = restClient.post()
+                .uri("/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Field cannot be empty", errors.get("lastName"));
+    }
+
+    /// 409
+    @Test
+    void shouldThrowForExistingLoginCreate(){
+        String json = """
+                {
+                  "login": "MEMBER",
+                  "password": "MEMBER",
+                  "name": "MEMBER",
+                  "lastName": "MEMBER"
+                }
+                """;
+
+        var response  = restClient.post()
+                .uri("/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Conflict occurred", response.getBody().getMessage());
+        assertEquals("Login currently in use", response.getBody().getData());
+    }
+
+    /// getMyData
+
+    /// 200
+    @Test
+    void shouldGetMyData(){
         var response = restClient.get().uri("/me").header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMeDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -127,8 +228,25 @@ public class LoginControllerTest {
         assertEquals(1, response.getBody().getData().getTeams().size());
     }
 
+    /// 401
     @Test
-    void shouldPatchMe(){
+    void shouldThrowForNoAuthenticationGetMyData(){
+        var response = restClient.get()
+                .uri("/me")
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// patchUser
+
+    /// 200
+    @Test
+    void shouldPatchUser(){
         String json = """
                 {
                 "name":"patched"
@@ -143,6 +261,83 @@ public class LoginControllerTest {
         assertEquals(new UserMemberDTO(refreshedUser), response.getBody().getData());
     }
 
+    /// 400
+    @Test
+    void shouldThrowForInvalidRequestBodyPatchUser(){
+        String json = """
+                {
+                    "login": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut facilisis blandit est. Nam vel ultricies erat. Sed odio eros, auctor nec ante ac, commodo gravida eros. Fusce nisi elit, commodo ut orci quis, rhoncus ultricies nisi. Sed fringilla tortor magna..."
+                }
+                """;
+        var response = restClient.patch()
+                .uri("/me")
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Value must be between 1 and 255 characters", errors.get("login"));
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationPatchUser(){
+        String json = """
+                {
+                "name":"MEMBER"
+                }
+                """;
+        var response = restClient.patch()
+                .uri("/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 409
+    @Test
+    void shouldThrowForExistingLoginPatchUser(){
+        String json = """
+                {
+                  "login": "MEMBER",
+                  "password": "MEMBER",
+                  "name": "MEMBER",
+                  "lastName": "MEMBER"
+                }
+                """;
+        var response = restClient.patch()
+                .uri("/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Conflict occurred", response.getBody().getMessage());
+        assertEquals("Login currently in use", response.getBody().getData());
+    }
+
+    /// refreshToken
+
+    /// 200
     @Test
     void shouldRefreshToken(){
         var response = restClient.post().uri("/me/refresh").header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(APIResponse.class);
@@ -158,8 +353,26 @@ public class LoginControllerTest {
         }
     }
 
+    /// 401
     @Test
-    void shouldCheckInvitation(){
+    void shouldThrowForNoAuthenticationRefreshToken(){
+        var response = restClient.post()
+                .uri("/me/refresh")
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+
+    /// getInfoAboutInvitation
+
+    /// 200
+    @Test
+    void shouldGetInfoAboutInvitation(){
         var response = restClient.get().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtRead).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationMemberDTO>>() {});
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -168,8 +381,42 @@ public class LoginControllerTest {
         assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
     }
 
+    /// 401
     @Test
-    void shouldUseInvitation(){
+    void shouldThrowForNoAuthenticationGetInfoAboutInvitation(){
+        var response = restClient.get()
+                .uri("/invitations/" + testDataLoader.invitationRead.getUUID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidInvitationUUIDGetInfoAboutInvitation(){
+        var response = restClient.get()
+                .uri("/invitations/" + "WRONG-UUID")
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// joinTeam
+
+    /// 200
+    @Test
+    void shouldJoinTeam(){
         var oldTeamDTO = new TeamMemberDTO(testDataLoader.teamRead);
         var response = restClient.post().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
 
@@ -181,5 +428,53 @@ public class LoginControllerTest {
         assertEquals(oldTeamDTO.getOwners().size(), response.getBody().getData().getOwners().size());
         assertEquals(oldTeamDTO.getTeammateCount() + 1, response.getBody().getData().getTeammateCount());
         assertEquals(oldTeamDTO.getTasks().size(), response.getBody().getData().getTasks().size());
+    }
+
+    /// 401
+    @Test
+    void shouldThrowForNoAuthenticationJoinTeam(){
+        var response = restClient.post()
+                .uri("/invitations/" + testDataLoader.invitationRead.getUUID())
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(String.class)));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals("{\"error\": \"You are not authenticated\"}", response.getBody());
+    }
+
+    /// 404
+    @Test
+    void shouldThrowForInvalidInvitationUUIDJoinTeam(){
+        var response = restClient.post()
+                .uri("/invitations/" + "WRONG-UUID")
+                .header("Authorization", "Bearer " + testDataLoader.jwtMember)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Provided resource was not found on the server", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    /// 409
+    @Test
+    void shouldThrowForAlreadyInTeamJoinTeam(){
+        var response = restClient.post()
+                .uri("/invitations/" + testDataLoader.invitationWrite.getUUID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Conflict occurred", response.getBody().getMessage());
+        assertEquals("User is already part of that team", response.getBody().getData());
     }
 }

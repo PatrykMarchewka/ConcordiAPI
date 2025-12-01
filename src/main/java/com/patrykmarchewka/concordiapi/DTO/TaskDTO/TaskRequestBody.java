@@ -31,7 +31,7 @@ public class TaskRequestBody {
         this.name = name;
         this.description = description;
         this.users = users;
-        this.taskStatus = (taskStatus != null) ? taskStatus : TaskStatus.NEW;
+        this.taskStatus = taskStatus;
     }
 
     public TaskRequestBody(){}

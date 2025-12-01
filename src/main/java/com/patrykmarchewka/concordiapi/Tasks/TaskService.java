@@ -26,6 +26,7 @@ import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.UserRole;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.temporal.ChronoUnit;
@@ -87,7 +88,7 @@ public class TaskService {
      */
     @Transactional(readOnly = true)
     public Set<TaskFull> getTasksWithoutUsers(final long teamID, final long userID){
-        return getAllowedTasks(userID, teamID).get().stream().filter(taskFull -> taskFull.getUsers().isEmpty()).collect(Collectors.toUnmodifiableSet());
+        return getAllowedTasks(userID, teamID).get().stream().filter(taskFull -> taskFull.getUserTasks().isEmpty()).collect(Collectors.toUnmodifiableSet());
     }
     /**
      * Unused, returns tasks with given task status in a team
@@ -96,7 +97,7 @@ public class TaskService {
      * @return Set of tasks allowed to see that have given TaskStatus
      */
     @Transactional(readOnly = true)
-    public Set<TaskFull> getTasksByStatus(final TaskStatus status, final long teamID, final long userID){
+    public Set<TaskFull> getTasksByStatus(@NonNull final TaskStatus status, final long teamID, final long userID){
         return getAllowedTasks(userID, teamID).get().stream().filter(task -> task.getTaskStatus().equals(status)).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -105,11 +106,11 @@ public class TaskService {
      * @param days Minimum number of days to search for
      * @param teamID ID of Team in which to search for
      * @return Set of tasks that weren't updated in days
-     * @throws IllegalArgumentException thrown when number is set to zero or less
+     * @throws BadRequestException thrown when number is set to zero or less
      */
-    public Set<TaskFull> getTasksNoUpdatesIn(final int days, final long teamID, final long userID){
+    private Set<TaskFull> getTasksNoUpdatesIn(final int days, final long teamID, final long userID){
         if(days <= 0){
-            throw new IllegalArgumentException("Number of days cannot be zero or negative!");
+            throw new BadRequestException("Number of days cannot be zero or negative!");
         }
         return getAllowedTasks(userID, teamID).get().stream().filter(taskFull -> ChronoUnit.DAYS.between(taskFull.getUpdateDate(), OffsetDateTimeConverter.nowConverted()) >= days).collect(Collectors.toUnmodifiableSet());
     }
@@ -121,8 +122,10 @@ public class TaskService {
      * @return Created task
      */
     @Transactional
-    public Task createTask(TaskRequestBody body, TeamWithUserRolesAndTasks team){
-        validateUsersForTasksByID(body.getUsers(),team);
+    public Task createTask(@NonNull final TaskRequestBody body, @NonNull final TeamWithUserRolesAndTasks team){
+        if (body.getUsers() != null){
+            validateUsersForTasksByID(body.getUsers(),team);
+        }
         Task task = new Task();
         taskUpdatersService.createUpdate(task, body, () -> (Team) team);
         return saveTask(task);
@@ -137,7 +140,7 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public TaskFull putTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID) {
+    public TaskFull putTask(@NonNull final TaskRequestBody body, final long userID, @NonNull final TeamWithUserRoles team, final long taskID) {
         Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
         verifyTaskEditPrivilege(userID, team.getID(), taskID);
         validateUsersForTasksByID(body.getUsers(),team);
@@ -154,10 +157,12 @@ public class TaskService {
      * @return Edited task
      */
     @Transactional
-    public TaskFull patchTask(TaskRequestBody body, long userID, TeamWithUserRoles team, long taskID){
+    public TaskFull patchTask(@NonNull final TaskRequestBody body, final long userID, @NonNull final TeamWithUserRoles team, final long taskID){
         Task task = (Task) getTaskFullByIDAndTeamID(taskID, team.getID());
         verifyTaskEditPrivilege(userID, team.getID(), task.getID());
-        validateUsersForTasksByID(body.getUsers(),team);
+        if (body.getUsers() != null){
+            validateUsersForTasksByID(body.getUsers(),team);
+        }
         taskUpdatersService.patchUpdate(task, body);
         return saveTask(task);
     }
@@ -168,7 +173,7 @@ public class TaskService {
      * @return Saved task
      */
     @Transactional
-    public Task saveTask(Task task){
+    public Task saveTask(@NonNull final Task task){
         task.setUpdateDate(OffsetDateTimeConverter.nowConverted());
         return taskRepository.save(task);
     }
@@ -179,7 +184,7 @@ public class TaskService {
      * @param teamID ID of Team in which task is
      */
     @Transactional
-    public void deleteTask(long taskID, long teamID){
+    public void deleteTask(final long taskID, final long teamID){
         Task task = (Task) getTaskByIDAndTeamID(taskID, teamID);
         taskRepository.delete(task);
     }
@@ -195,7 +200,7 @@ public class TaskService {
     }
 
     /**
-     * Returns TaskMemberDTO of all tasks in the team
+     * Unused, returns TaskMemberDTO of all tasks in the team
      * @param teamID ID of Team in which to search for
      * @return Set of TaskMemberDTO with all tasks in a team
      */
@@ -246,12 +251,16 @@ public class TaskService {
      * @param team Team in which user and task is
      * @param taskID ID of Task to attach user to
      * @param userID ID of User to add to task
+     * @throws BadRequestException Thrown when trying to add user to task that is already part of that task
      */
     @Transactional
-    public void addUserToTask(TeamWithUserRoles team, long taskID, long userID){
+    public void addUserToTask(@NonNull final TeamWithUserRoles team, final long taskID, final long userID){
         validateUsersForTasksByID(Set.of((int)userID), team);
         Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, team.getID());
         User user = (User) userService.getUserWithUserTasks(userID);
+        if (task.hasUser(user.getID())){
+            throw new BadRequestException(String.format("User with ID - %d was already attached to the task", user.getID()));
+        }
         task.addUserTask(user);
         saveTask(task);
     }
@@ -263,9 +272,9 @@ public class TaskService {
      * @param userID ID of User to remove from Task
      */
     @Transactional
-    public void removeUserFromTask(long taskID, long teamID, long userID){
+    public void removeUserFromTask(final long taskID, final long teamID, final long userID){
         Task task = (Task) getTaskWithUserTasksByIDAndTeamID(taskID, teamID);
-        UserTask userTask = userTaskRepository.findByAssignedUserIDAndAssignedTaskID(userID, taskID).orElseThrow(NotFoundException::new);
+        UserTask userTask = userTaskRepository.findUserTaskByAssignedUserIDAndAssignedTaskID(userID, taskID).orElseThrow(NotFoundException::new);
         task.removeUserTask(userTask);
         saveTask(task);
     }
@@ -276,7 +285,7 @@ public class TaskService {
      * @param team    Team in which to search
      * @throws BadRequestException Thrown when one or more users are not part of the team
      */
-    public void validateUsersForTasksByID(Set<Integer> userIDs, TeamWithUserRoles team){
+    private void validateUsersForTasksByID(@NonNull final Set<Integer> userIDs, @NonNull final TeamWithUserRoles team){
         for (int id : userIDs){
             if (!team.checkUser(id)){
                 throw new BadRequestException("Cannot add user to this task that is not part of the team: UserID - " + id);
@@ -286,6 +295,18 @@ public class TaskService {
 
     public TaskIdentity getTaskByIDAndTeamID(final long id, final long teamID){
         return taskRepository.findTaskByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskWithSubtasks getTaskWithSubtasksByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
+    }
+
+    public TaskFull getTaskFullByIDAndTeamID(final long id, final long teamID){
+        return taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
     }
 
     /**
@@ -307,18 +328,6 @@ public class TaskService {
             throw new NotFoundException(String.format("Couldnt find any tasks for team with ID of %d and user ID of %d ", teamID, userID));
         }
         return result;
-    }
-
-    public TaskWithUserTasks getTaskWithUserTasksByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskWithUserTasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
-    public TaskWithSubtasks getTaskWithSubtasksByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskWithSubtasksByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
-    }
-
-    public TaskFull getTaskFullByIDAndTeamID(final long id, final long teamID){
-        return taskRepository.findTaskFullByIDAndAssignedTeamID(id, teamID).orElseThrow(NotFoundException::new);
     }
 
     /**

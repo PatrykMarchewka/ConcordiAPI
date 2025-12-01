@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -101,6 +100,34 @@ public class UserController {
     }
 
     /**
+     * Changes the UserRole of a specified User in a team
+     * @param teamID Team ID in which both users are part of
+     * @param ID ID of user you want to change role of
+     * @param newRole New role that you want to give
+     * @param authentication Authentication from logged user
+     * @return Message if role was successfully changed
+     * @throws NoPrivilegesException Thrown when User changing role is not Owner or Admin or when new role is higher than the one of User changing role
+     */
+    //param, ?newRole=ADMIN
+    @Operation(summary = "Change user role", description = "Change the role of selected user")
+    @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
+    @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
+    @ApiResponse(responseCode = "404", ref = "404")
+    @PatchMapping("/users/{ID}")
+    public ResponseEntity<APIResponse<String>> changeUserRole(@PathVariable long teamID, @PathVariable long ID, @RequestParam UserRole newRole, Authentication authentication){
+        context = context.withUser(authentication).withRole(teamID);
+        if (!context.getUserRole().isOwnerOrAdmin()){
+            throw new NoPrivilegesException();
+        }
+        teamUserRoleService.forceCheckRoles(context.getUserRole(), newRole);
+
+        teamUserRoleService.setRole(ID, teamID, newRole);
+        return ResponseEntity.ok(new APIResponse<>("Role changed",null));
+    }
+
+    /**
      * Removes given user from Team
      * @param teamID Team ID from which you want to kick the user
      * @param ID ID of the user you want to kick
@@ -114,7 +141,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @DeleteMapping("/users/{ID}")
-    public ResponseEntity<APIResponse<String>> deleteUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> removeUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(ID);
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
@@ -141,7 +168,7 @@ public class UserController {
     public ResponseEntity<APIResponse<String>> leaveTeam(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole();
 
-        if (context.getUserRole().isOwner() && teamUserRoleService.canOwnerLeave(teamID)){
+        if (context.getUserRole().isOwner() && !teamUserRoleService.canOwnerLeave(teamID)){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new APIResponse<>("Can't leave team as the only owner, disband team instead or add new owners",null));
         }
         else{
@@ -149,32 +176,4 @@ public class UserController {
             return ResponseEntity.ok(new APIResponse<>("Left the team",null));
         }
     }
-
-    /**
-     * Changes the UserRole of a specified User in a team
-     * @param teamID Team ID in which both users are part of
-     * @param ID ID of user you want to change role of
-     * @param newRole New role that you want to give
-     * @param authentication Authentication from logged user
-     * @return Message if role was successfully changed
-     * @throws NoPrivilegesException Thrown when User changing role is not Owner or Admin or when new role is higher than the one of User changing role
-     */
-    @Operation(summary = "Change user role", description = "Change the role of selected user")
-    @ApiResponse(responseCode = "200", ref = "200")
-    @ApiResponse(responseCode = "401", ref = "401")
-    @ApiResponse(responseCode = "403", ref = "403")
-    @ApiResponse(responseCode = "404", ref = "404")
-    @PatchMapping("/users/{ID}/role")
-    public ResponseEntity<APIResponse<String>> patchUser(@PathVariable long teamID, @PathVariable long ID, @RequestBody UserRole newRole, Authentication authentication){
-        context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), newRole);
-
-        teamUserRoleService.setRole(ID, teamID, newRole);
-        return ResponseEntity.ok(new APIResponse<>("Role changed",null));
-    }
-
-
 }

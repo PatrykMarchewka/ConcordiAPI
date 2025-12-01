@@ -54,25 +54,26 @@ public class TaskController {
      * Returns all tasks, optionally filtered to inactive ones
      * @param teamID ID of the team to check
      * @param authentication User credentials to authenticate
-     * @param inactivedays Optional parameter to filter, number of days for task to be considered inactive
+     * @param inactiveDays Optional parameter to filter, number of days for task to be considered inactive
      * @return TaskMemberDTO of all tasks avaible or all inactive tasks
      * @throws NoPrivilegesException Thrown when user is not Owner,Admin,Manager or Member in the team
      */
-    //param, ?inactivedays=5
+    //param, ?inactiveDays=5
     @Operation(summary = "Get all tasks or filter by inactive using parameter",description = "Get all tasks if Owner/Admin/Manager or just tasks assigned to me if Member, can be filtered to inactive only")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks")
-    public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactivedays){
+    public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactiveDays){
         context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAllowedBasic()){
             throw new NoPrivilegesException();
         }
 
-        if (inactivedays != null){
-            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasksDTO(inactivedays, teamID, context.getUser().getID())));
+        if (inactiveDays != null){
+            return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasksDTO(inactiveDays, teamID, context.getUser().getID())));
         }
 
         return ResponseEntity.ok(new APIResponse<>("All tasks available", taskService.getAllTasksWithRoleCheck(context.getUser().getID(), teamID)));
@@ -133,6 +134,7 @@ public class TaskController {
     @Operation(summary = "Get information about task",description = "Get information about specific task by its ID")
     @ApiResponse(responseCode = "200", ref = "200")
     @ApiResponse(responseCode = "401", ref = "401")
+    @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
@@ -219,6 +221,7 @@ public class TaskController {
      */
     @Operation(summary = "Attach user to task",description = "Assigns the task to given user")
     @ApiResponse(responseCode = "200", ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")

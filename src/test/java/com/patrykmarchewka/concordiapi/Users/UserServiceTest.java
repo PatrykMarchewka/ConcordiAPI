@@ -1,29 +1,32 @@
 package com.patrykmarchewka.concordiapi.Users;
 
-import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
+import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserIdentity;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithCredentials;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithUserTasks;
 import com.patrykmarchewka.concordiapi.Passwords;
-import com.patrykmarchewka.concordiapi.Teams.TeamRequestBodyHelper;
-import com.patrykmarchewka.concordiapi.Teams.TeamService;
+import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
-import org.hibernate.LazyInitializationException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestConstructor;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,225 +34,364 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-public class UserServiceTest implements UserRequestBodyHelper, UserRequestLoginHelper, TeamRequestBodyHelper {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class UserServiceTest {
 
     private final UserService userService;
-    private final TeamService teamService;
+    private final TestDataLoader testDataLoader;
 
-    private User user;
-
-    public UserServiceTest(UserService userService, TeamService teamService) {
+    @Autowired
+    public UserServiceTest(UserService userService, TestDataLoader testDataLoader) {
         this.userService = userService;
-        this.teamService = teamService;
+        this.testDataLoader = testDataLoader;
     }
 
-    @BeforeEach
+    @BeforeAll
     void initialize(){
-        UserRequestBody body = createUserRequestBody("JaneD");
-        user = userService.createUser(body);
+        testDataLoader.loadDataForTests();
     }
 
-    @AfterEach
+    @AfterAll
     void cleanUp(){
-        teamService.deleteAll();
-        userService.deleteAll();
+        testDataLoader.clearDB();
+    }
+
+
+    /// checkIfUserExistsByLogin
+
+    @Test
+    void shouldReturnTrueIfUserExistsByLogin(){
+        assertTrue(userService.checkIfUserExistsByLogin(testDataLoader.userMember.getLogin()));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = {"TEST"})
+    void shouldReturnFalseIfUserExistsForNonExistentLogin(String login){
+        assertFalse(userService.checkIfUserExistsByLogin(login));
     }
 
     @Test
-    void shouldSaveAndRetrieveUserCorrectlyBasic(){
-        User found = userService.getUserEntityByID(user.getID());
+    void shouldReturnFalseIfUserExistsForCaseSensitivity(){
+        assertFalse(userService.checkIfUserExistsByLogin(testDataLoader.userMember.getLogin().toLowerCase()));
+    }
 
-        assertNotNull(found);
-        assertEquals(user.getID(), found.getID());
-        assertEquals("Jane", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertEquals("JaneD", found.getLogin());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d",found.getPassword()));
-        assertThrows(LazyInitializationException.class, () -> found.getUserTasks().isEmpty());
-        assertThrows(LazyInitializationException.class, () -> found.getTeamRoles().isEmpty());
-        assertThrows(LazyInitializationException.class, () -> found.getTeams().isEmpty());
+    /// createUser
+
+    @Test
+    void shouldCreateUser(){
+        UserRequestBody body = new UserRequestBody("NEWLogin","NEWPassword","NEWName","NEWLastName");
+        User user = userService.createUser(body);
+
+        assertDoesNotThrow(user::getID);
+        assertEquals(body.getLogin(), user.getLogin());
+        assertTrue(Passwords.CheckPasswordBCrypt(body.getPassword(), user.getPassword()));
+        assertEquals(body.getName(), user.getName());
+        assertEquals(body.getLastName(), user.getLastName());
     }
 
     @Test
-    void shouldThrowForNonUniqueLogin(){
-        UserRequestBody body1 = createUserRequestBody("JaneD");
+    void shouldCreateUserDBCheck(){
+        UserRequestBody body = new UserRequestBody("DBNEWLogin","DBNEWPassword","DBNEWName","DBNEWLastName");
+        User user = userService.createUser(body);
 
-        assertThrows(ConflictException.class, () -> userService.createUser(body1));
+        UserFull actual = userService.getUserFull(user.getID());
+
+        assertEquals(user.getID(), actual.getID());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
+        assertEquals(user.getName(), actual.getName());
+        assertEquals(user.getLastName(), actual.getLastName());
     }
 
     @Test
-    void shouldThrowForNonExistingUserID(){
-        assertThrows(NotFoundException.class, () -> userService.getUserByID(0L));
+    void shouldThrowForNonUniqueLoginCreateUser(){
+        UserRequestBody body = new UserRequestBody("MEMBER", "MEMBER", "MEMBER", "MEMBER");
+        assertThrows(ConflictException.class, () -> userService.createUser(body));
     }
 
-    @Test
-    void shouldSaveAndRetrieveUserByLoginAndPassword(){
-        UserRequestLogin loginBody = createUserRequestLogin(user.getLogin(), "d");
-
-        UserWithCredentials found = userService.getUserWithCredentialsByLoginAndPassword(loginBody);
-
-        assertNotNull(found);
-        assertEquals(user.getID(), found.getID());
-        assertEquals("Jane", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertEquals("JaneD", found.getLogin());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d",found.getPassword()));
-    }
-
-    @Test
-    void shouldThrowForIncorrectLoginAndPassword(){
-        UserRequestLogin loginBody = createUserRequestLogin("JaneD", "doe");
-
-        assertThrows(WrongCredentialsException.class, () -> userService.getUserWithCredentialsByLoginAndPassword(loginBody));
-    }
-
-    @Test
-    void shouldReturnTrueForExistingUser(){
-        boolean found = userService.checkIfUserExistsByLogin("JaneD");
-
-        assertTrue(found);
-    }
+    /// putUser
 
     @Test
     void shouldPutUser(){
-        UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
+        UserRequestBody body = new UserRequestBody("PUTLogin","PUTPassword","PUTName","PUTLastName");
+        UserWithCredentials user = userService.putUser(testDataLoader.userWriteOwner, body);
 
-        User found = userService.getUserEntityByID(user.getID());
-        userService.putUser(found,newBody);
-        User newFound = userService.getUserEntityByID(user.getID());
-
-
-        assertNotNull(newFound);
-        assertEquals(user.getID(), newFound.getID());
-        assertEquals("NotJane", newFound.getName());
-        assertEquals("NotDoe", newFound.getLastName());
-        assertEquals("NotJaneD", newFound.getLogin());
-        assertNotEquals("Notd", newFound.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("Notd",newFound.getPassword()));
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
+        assertEquals(body.getLogin(), user.getLogin());
+        assertTrue(Passwords.CheckPasswordBCrypt(body.getPassword(), user.getPassword()));
+        assertEquals(body.getName(), user.getName());
+        assertEquals(body.getLastName(), user.getLastName());
     }
+
+    @Test
+    void shouldPutUserDBCheck(){
+        UserRequestBody body = new UserRequestBody("DBPUTLogin","DBPUTPassword","DBPUTName","DBPUTLastName");
+        UserWithCredentials user = userService.putUser(testDataLoader.userWriteOwner, body);
+
+        UserWithCredentials actual = userService.getUserWithCredentialsByLogin(user.getLogin());
+
+        assertEquals(user.getID(), actual.getID());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
+        assertEquals(user.getName(), actual.getName());
+        assertEquals(user.getLastName(), actual.getLastName());
+    }
+
+    @Test
+    void shouldThrowForNonUniqueLoginPutUser(){
+        UserRequestBody body = new UserRequestBody("MEMBER", "MEMBER", "MEMBER", "MEMBER");
+        assertThrows(ConflictException.class, () -> userService.putUser(testDataLoader.userWriteOwner, body));
+    }
+
+    /// patchUser
 
     @Test
     void shouldPatchUser(){
-        UserRequestBody newBody = createUserRequestBodyPATCH("NotJane");
+        UserRequestBody body = new UserRequestBody(null, null, "PATCHName", null);
+        UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
-        User found = userService.getUserEntityByID(user.getID());
-        userService.patchUser(found, newBody);
-        User newFound = userService.getUserEntityByID(user.getID());
-
-        assertNotNull(newFound);
-        assertEquals(user.getID(), newFound.getID());
-        assertEquals("NotJane", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertEquals("JaneD", found.getLogin());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d",found.getPassword()));
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userWriteOwner.getLogin(), user.getLogin());
+        assertEquals(testDataLoader.userWriteOwner.getPassword(), user.getPassword());
+        assertEquals(body.getName(), user.getName());
+        assertEquals(testDataLoader.userWriteOwner.getLastName(), user.getLastName());
     }
 
     @Test
-    void shouldPatchUserFull(){
-        UserRequestBody newBody = createUserRequestBody("NotJane", "NotDoe", "NotJaneD", "Notd");
+    void shouldPatchUserDBCheck(){
+        UserRequestBody body = new UserRequestBody(null, null, "DBPATCHName", null);
+        UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
 
-        User found = userService.getUserEntityByID(user.getID());
-        userService.patchUser(found,newBody);
-        User newFound = userService.getUserEntityByID(user.getID());
+        UserWithCredentials actual = userService.getUserWithCredentialsByLogin(user.getLogin());
 
-        assertNotNull(newFound);
-        assertEquals(user.getID(), newFound.getID());
-        assertEquals("NotJane", newFound.getName());
-        assertEquals("NotDoe", newFound.getLastName());
-        assertEquals("NotJaneD", newFound.getLogin());
-        assertNotEquals("Notd", newFound.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("Notd",newFound.getPassword()));
+        assertEquals(user.getID(), actual.getID());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
+        assertEquals(user.getName(), actual.getName());
+        assertEquals(user.getLastName(), actual.getLastName());
     }
+
+    @Test
+    void shouldPatchUserFully(){
+        UserRequestBody body = new UserRequestBody("PATCHLogin", "PATCHPassword", "PATCHName", "PATCHLastName");
+        UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
+
+        assertEquals(testDataLoader.userWriteOwner.getID(), user.getID());
+        assertEquals(body.getLogin(), user.getLogin());
+        assertTrue(Passwords.CheckPasswordBCrypt(body.getPassword(), user.getPassword()));
+        assertEquals(body.getName(), user.getName());
+        assertEquals(body.getLastName(), user.getLastName());
+    }
+
+    @Test
+    void shouldPatchUserFullyDBCheck(){
+        UserRequestBody body = new UserRequestBody("DBPATCHLogin", "DBPATCHPassword", "DBPATCHName", "DBPATCHLastName");
+        UserWithCredentials user = userService.patchUser(testDataLoader.userWriteOwner, body);
+
+        UserWithCredentials actual = userService.getUserWithCredentialsByLogin(user.getLogin());
+
+        assertEquals(user.getID(), actual.getID());
+        assertEquals(user.getLogin(), actual.getLogin());
+        assertEquals(user.getPassword(), actual.getPassword());
+        assertEquals(user.getName(), actual.getName());
+        assertEquals(user.getLastName(), actual.getLastName());
+    }
+
+    @Test
+    void shouldThrowForNonUniqueLoginPatchUser(){
+        UserRequestBody body = new UserRequestBody("MEMBER", "MEMBER", "MEMBER", "MEMBER");
+        assertThrows(ConflictException.class, () -> userService.patchUser(testDataLoader.userWriteOwner, body));
+    }
+
+    /// deleteUser
 
     @Test
     void shouldDeleteUser(){
-        User found = userService.getUserEntityByID(user.getID());
-        userService.deleteUser(found);
+        userService.deleteUser(testDataLoader.userDeleteOwner);
 
-        assertThrows(NotFoundException.class, () -> userService.getUserEntityByID(user.getID()));
+        assertThrows(NotFoundException.class, () -> userService.getUserByID(testDataLoader.userDeleteOwner.getID()));
+    }
+
+    /// saveUser
+
+    @Test
+    void shouldSaveUser(){
+        testDataLoader.userWriteOwner.setName("newName");
+        userService.saveUser(testDataLoader.userWriteOwner);
+
+        assertEquals("newName", testDataLoader.refreshUser(testDataLoader.userWriteOwner).getName());
+    }
+
+    /// userMemberDTOSetProcess
+
+    @Test
+    void shouldReturnSingleUserMemberDTOSetProcess(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(Set.of(testDataLoader.userMember));
+
+        assertEquals(1, set.size());
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userMember)));
     }
 
     @Test
-    void shouldReturnSetOfUserMemberDTO(){
-        UserRequestBody otherBody = createUserRequestBody("John", "Doe", "JohnD", "dd");
-        User user1 = userService.createUser(otherBody);
-        Set<User> setUsers = Set.of(user,user1);
+    void shouldReturnMultipleUserMemberDTOSetProcess(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(Set.of(testDataLoader.userMember, testDataLoader.userReadOwner));
 
-        Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(setUsers);
-        Set<String> expectedNames = Set.of("John","Jane");
-        String expectedLastNames = "Doe";
-
-        assertNotNull(set);
-        assertFalse(set.isEmpty());
         assertEquals(2, set.size());
-        assertEquals(expectedNames, set.stream().map(UserMemberDTO::getName).collect(Collectors.toUnmodifiableSet()));
-        assertTrue(set.stream().map(UserMemberDTO::getLastName).allMatch(name -> name.equals(expectedLastNames)));
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userMember)));
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userReadOwner)));
     }
 
     @Test
-    void shouldReturnUserDTOWithParam(){
-        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
-        Team team = teamService.createTeam(teamRequestBody, user);
+    void shouldReturnNoneUserMemberDTOSetProcess(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(Set.of());
 
-        Set<UserMemberDTO> found = userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.OWNER, team.getID());
-
-        assertEquals(1, found.size());
-        assertTrue(found.contains(new UserMemberDTO(user)));
+        assertTrue(set.isEmpty());
     }
+
+    /// userMemberDTOSetParam
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
+    void shouldReturnSingleUserMemberDTOSetParam(UserRole role){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(role, UserRole.ADMIN, testDataLoader.teamRead.getID());
+
+        assertEquals(1, set.size());
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userAdmin)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
+    void shouldReturnMultipleUserMemberDTOSetParam(UserRole role){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(role, UserRole.OWNER, testDataLoader.teamRead.getID());
+
+        assertEquals(2, set.size());
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userReadOwner)));
+        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userSecondOwner)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
+    void shouldThrowForNoPrivilegesUserMemberDTOSetParam(UserRole role){
+        assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetParam(role, UserRole.MEMBER, testDataLoader.teamRead.getID()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidTeamIDUserMemberDTOSetParam(long ID){
+        assertThrows(NotFoundException.class, () -> userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.ADMIN, ID));
+    }
+
+    /// userMemberDTOSetNoParam
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
+    void shouldReturnMultipleUserMemberDTOSetNoParam(UserRole role){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetNoParam(role, testDataLoader.teamRead);
+
+        Set<UserMemberDTO> expected = testDataLoader.teamRead.getUserRoles().stream().map(teamUserRole -> new UserMemberDTO(teamUserRole.getUser())).collect(Collectors.toUnmodifiableSet());
+        assertEquals(expected, set);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
+    void shouldThrowForNoPrivilegesUserMemberDTOSetNoParam(UserRole role){
+        assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetNoParam(role, testDataLoader.teamRead));
+    }
+
+    /// getUserByID
 
     @Test
-    void shouldReturnEmptySetUserDTOWithParam(){
-        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
-        Team team = teamService.createTeam(teamRequestBody, user);
+    void shouldGetUserByID(){
+        UserIdentity user = userService.getUserByID(testDataLoader.userReadOwner.getID());
 
-        assertThrows(NotFoundException.class, () -> userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.MEMBER, team.getID()));
+        assertEquals(testDataLoader.userReadOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), user.getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), user.getLastName());
     }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidGetUserByID(long ID){
+        assertThrows(NotFoundException.class, () -> userService.getUserByID(ID));
+    }
+
+    /// getUserWithCredentialsByLogin
 
     @Test
-    void shouldReturnUserDTOWithoutParam(){
-        TeamRequestBody teamRequestBody = createTeamRequestBody("Team");
-        Team team = teamService.createTeam(teamRequestBody, user);
+    void shouldGetUserWithCredentialsByLogin(){
+        UserWithCredentials user = userService.getUserWithCredentialsByLogin(testDataLoader.userReadOwner.getLogin());
 
-        Set<UserMemberDTO> found = userService.userMemberDTOSetNoParam(UserRole.OWNER, team);
-
-        assertEquals(1, found.size());
-        assertTrue(found.contains(new UserMemberDTO(user)));
+        assertEquals(testDataLoader.userReadOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), user.getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), user.getLastName());
+        assertEquals(testDataLoader.userReadOwner.getLogin(), user.getLogin());
+        assertEquals(testDataLoader.userReadOwner.getPassword(), user.getPassword());
     }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = {"TEST"})
+    void shouldThrowForInvalidUserWithCredentialsByLogin(String login){
+        assertThrows(NotFoundException.class, () -> userService.getUserWithCredentialsByLogin(login));
+    }
+
+    /// getUserWithCredentialsByLoginAndPassword
 
     @Test
-    void shouldReturnUserWithTeams(){
-        UserWithTeamRoles found = userService.getUserWithTeamRolesAndTeams(user.getID());
+    void shouldGetUserWithCredentialsByLoginAndPassword(){
+        UserRequestLogin body = new UserRequestLogin("MEMBER", "MEMBER");
+        UserWithCredentials user = userService.getUserWithCredentialsByLoginAndPassword(body);
 
-        assertTrue(found.getTeams().isEmpty());
-        assertTrue(found.getTeamRoles().isEmpty());
+        assertEquals(testDataLoader.userMember.getID(), user.getID());
+        assertEquals(testDataLoader.userMember.getName(), user.getName());
+        assertEquals(testDataLoader.userMember.getLastName(), user.getLastName());
+        assertEquals(testDataLoader.userMember.getLogin(), user.getLogin());
+        assertEquals(testDataLoader.userMember.getPassword(), user.getPassword());
     }
+
+    @ParameterizedTest
+    @EmptySource
+    @ValueSource(strings = {"TEST"})
+    void shouldThrowForInvalidUserWithCredentialsByLoginAndPassword(String test){
+        assertThrows(WrongCredentialsException.class, () -> userService.getUserWithCredentialsByLoginAndPassword(new UserRequestLogin(test, test)));
+    }
+
+    /// getUserWithTeamRolesAndTeams
 
     @Test
-    void shouldReturnUserWithUserTasks(){
-        UserWithUserTasks found = userService.getUserWithUserTasks(user.getID());
+    void shouldGetUserWithTeamRolesAndTeams(){
+        UserWithTeamRoles user = userService.getUserWithTeamRolesAndTeams(testDataLoader.userReadOwner.getID());
 
-        assertTrue(found.getUserTasks().isEmpty());
+        assertEquals(testDataLoader.userReadOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), user.getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), user.getLastName());
+        assertEquals(testDataLoader.userReadOwner.getTeamRoles(), user.getTeamRoles());
     }
+
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidGetUserWithTeamRolesAndTeams(long ID){
+        assertThrows(NotFoundException.class, () -> userService.getUserWithTeamRolesAndTeams(ID));
+    }
+
+    /// getUserWithUserTasks
 
     @Test
-    void shouldSaveAndRetrieveUserCorrectlyFull(){
-        UserFull found = userService.getUserFull(user.getID());
+    void shouldGetUserWithUserTasks(){
+        UserWithUserTasks user = userService.getUserWithUserTasks(testDataLoader.userReadOwner.getID());
 
-        assertEquals(user.getID(), found.getID());
-        assertEquals("Jane", found.getName());
-        assertEquals("Doe", found.getLastName());
-        assertEquals("JaneD", found.getLogin());
-        assertNotEquals("d", found.getPassword());
-        assertTrue(Passwords.CheckPasswordBCrypt("d",found.getPassword()));
-        assertTrue(found.getTeams().isEmpty());
-        assertTrue(found.getTeamRoles().isEmpty());
-        assertTrue(found.getUserTasks().isEmpty());
+        assertEquals(testDataLoader.userReadOwner.getID(), user.getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), user.getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), user.getLastName());
+        assertEquals(testDataLoader.userReadOwner.getUserTasks(), user.getUserTasks());
     }
 
-
+    @ParameterizedTest
+    @ValueSource(longs = {999L, -1})
+    void shouldThrowForInvalidGetUserWithUserTasks(long ID){
+        assertThrows(NotFoundException.class, () -> userService.getUserWithUserTasks(ID));
+    }
 }

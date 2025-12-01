@@ -29,7 +29,6 @@ public class Task implements TaskFull {
     private Long id;
     @Column(nullable = false)
     private String name;
-    @Column(nullable = false)
     private String description;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,7 +48,7 @@ public class Task implements TaskFull {
     private Set<UserTask> userTasks = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "team_id")
+    @JoinColumn(name = "team_id", nullable = false)
     private Team assignedTeam;
 
     @Override

@@ -14,7 +14,7 @@ public interface TeamUserRoleRepository extends JpaRepository<TeamUserRole,Long>
         LEFT JOIN FETCH t.user user
         WHERE team.id = :teamID AND user.id = :userID
 """)
-    Optional<TeamUserRole> findByUserAndTeam(@Param("userID") long userID, @Param("teamID") long teamID);
+    Optional<TeamUserRole> findTeamUserRoleByUserIDAndTeamID(@Param("userID") long userID, @Param("teamID") long teamID);
 
     @Query("""
         SELECT DISTINCT t from TeamUserRole t
@@ -22,5 +22,5 @@ public interface TeamUserRoleRepository extends JpaRepository<TeamUserRole,Long>
         JOIN FETCH t.user user
         WHERE team.id = :id AND t.userRole = :userRole
 """)
-    Set<TeamUserRole> findAllByTeamAndUserRole(@Param("id") long teamID, @Param("userRole") UserRole role);
+    Set<TeamUserRole> findAllTeamUserRolesByTeamIDAndUserRole(@Param("id") long teamID, @Param("userRole") UserRole role);
 }
