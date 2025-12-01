@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<APIResponse<String>> handleConflict(ConflictException ex){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new APIResponse<>("Conclift occured",ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new APIResponse<>("Conflict occurred",ex.getMessage()));
     }
 
     @ExceptionHandler(NotFoundException.class)
