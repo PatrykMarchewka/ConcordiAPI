@@ -2,11 +2,10 @@ package com.patrykmarchewka.concordiapi.Subtasks;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
-import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskRequestBody;
-import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
+import com.patrykmarchewka.concordiapi.DTO.ValidateOnCreate;
+import com.patrykmarchewka.concordiapi.DTO.ValidateOnPut;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -80,7 +80,7 @@ public class SubtaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PostMapping("/subtasks")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @ValidateGroup(OnCreate.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @ValidateOnCreate SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
 
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
@@ -132,7 +132,7 @@ public class SubtaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/subtasks/{ID}")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateOnPut SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
@@ -157,7 +157,7 @@ public class SubtaskController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/subtasks/{ID}")
-    public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateGroup SubtaskRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
         if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
