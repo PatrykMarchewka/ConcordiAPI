@@ -122,6 +122,7 @@ public class LoginController {
      */
     @Operation(summary = "Edit information about me", description = "Edit information about currently logged in user")
     @ApiResponse(responseCode = "200",ref = "200")
+    @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "409", ref = "409")
     @SecurityRequirement(name = "BearerAuth")

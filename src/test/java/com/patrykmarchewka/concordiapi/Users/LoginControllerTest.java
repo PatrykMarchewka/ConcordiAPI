@@ -261,6 +261,32 @@ public class LoginControllerTest {
         assertEquals(new UserMemberDTO(refreshedUser), response.getBody().getData());
     }
 
+    /// 400
+    @Test
+    void shouldThrowForInvalidRequestBodyPatchUser(){
+        String json = """
+                {
+                    "login": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut facilisis blandit est. Nam vel ultricies erat. Sed odio eros, auctor nec ante ac, commodo gravida eros. Fusce nisi elit, commodo ut orci quis, rhoncus ultricies nisi. Sed fringilla tortor magna..."
+                }
+                """;
+        var response = restClient.patch()
+                .uri("/me")
+                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Validation failed", response.getBody().getMessage());
+        LinkedHashMap<String, String> errors = (LinkedHashMap<String, String>) response.getBody().getData();
+        assertEquals("Value must be between 1 and 255 characters", errors.get("login"));
+    }
+
     /// 401
     @Test
     void shouldThrowForNoAuthenticationPatchUser(){
