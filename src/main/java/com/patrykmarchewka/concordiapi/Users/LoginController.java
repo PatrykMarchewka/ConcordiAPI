@@ -3,13 +3,12 @@ package com.patrykmarchewka.concordiapi.Users;
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
 import com.patrykmarchewka.concordiapi.DTO.InvitationDTO.InvitationMemberDTO;
-import com.patrykmarchewka.concordiapi.DTO.OnCreate;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMeDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
-import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
+import com.patrykmarchewka.concordiapi.DTO.ValidateOnCreate;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
@@ -25,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,7 +74,7 @@ public class LoginController {
     @ApiResponse(responseCode = "401", ref = "401")
     @ApiResponse(responseCode = "500", ref = "500")
     @PostMapping("/login")
-    public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateGroup(OnCreate.class) UserRequestLogin body){
+    public ResponseEntity<APIResponse<String>> login(@RequestBody @ValidateOnCreate UserRequestLogin body){
         String token;
         long userID = userService.getUserWithCredentialsByLoginAndPassword(body).getID();
         try {
@@ -96,7 +95,7 @@ public class LoginController {
     @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "409", ref = "409")
     @PostMapping("/signup")
-    public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @ValidateGroup(OnCreate.class) UserRequestBody body){
+    public ResponseEntity<APIResponse<UserMemberDTO>> create(@RequestBody @ValidateOnCreate UserRequestBody body){
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("User created",new UserMemberDTO(userService.createUser(body))));
     }
 
@@ -127,8 +126,7 @@ public class LoginController {
     @ApiResponse(responseCode = "409", ref = "409")
     @SecurityRequirement(name = "BearerAuth")
     @PatchMapping("/me")
-    @Transactional
-    public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody @ValidateGroup UserRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<UserMemberDTO>> patchUser(@RequestBody @Validated UserRequestBody body, Authentication authentication){
         context = context.withUserFull(authentication);
         return ResponseEntity.ok(new APIResponse<>("Data changed!",new UserMemberDTO(userService.patchUser(context.getUser(), body))));
     }

@@ -3,12 +3,11 @@ package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.ControllerContext;
-import com.patrykmarchewka.concordiapi.DTO.OnCreate;
-import com.patrykmarchewka.concordiapi.DTO.OnPut;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamDTO;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamRequestBody;
-import com.patrykmarchewka.concordiapi.DTO.ValidateGroup;
+import com.patrykmarchewka.concordiapi.DTO.ValidateOnCreate;
+import com.patrykmarchewka.concordiapi.DTO.ValidateOnPut;
 import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -69,7 +68,7 @@ public class TeamController {
     @ApiResponse(responseCode = "400", ref = "400")
     @ApiResponse(responseCode = "401", ref = "401")
     @PostMapping("/teams")
-    public ResponseEntity<APIResponse<String>> createTeam(@RequestBody @ValidateGroup(OnCreate.class) TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<String>> createTeam(@RequestBody @ValidateOnCreate TeamRequestBody body, Authentication authentication){
         context = context.withUserWithTeams(authentication);
         long teamID = teamService.createTeam(body, context.getUser()).getID();
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Team created with ID of " + teamID, null));
@@ -106,7 +105,7 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PutMapping("/teams/{ID}")
-    public ResponseEntity<APIResponse<TeamAdminDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateGroup(OnPut.class) TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamAdminDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateOnPut TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
 
         if(!context.getUserRole().isOwnerOrAdmin()){
@@ -130,7 +129,7 @@ public class TeamController {
     @ApiResponse(responseCode = "403", ref = "403")
     @ApiResponse(responseCode = "404", ref = "404")
     @PatchMapping("/teams/{ID}")
-    public ResponseEntity<APIResponse<TeamAdminDTO>> patchTeam(@PathVariable long ID, @RequestBody @ValidateGroup TeamRequestBody body, Authentication authentication){
+    public ResponseEntity<APIResponse<TeamAdminDTO>> patchTeam(@PathVariable long ID, @RequestBody @Validated TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
 
         if(!context.getUserRole().isOwnerOrAdmin()){
@@ -160,8 +159,4 @@ public class TeamController {
         teamService.deleteTeam(context.getTeam());
         return ResponseEntity.ok(new APIResponse<>("The team has been disbanded",null));
     }
-
-
-
-
 }
