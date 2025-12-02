@@ -39,4 +39,8 @@ public final class OffsetDateTimeConverter implements AttributeConverter<OffsetD
     public static String formatDate(final OffsetDateTime offsetDateTime){
         return offsetDateTime != null ? offsetDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssxxx")) : null;
     }
+
+    public static OffsetDateTime parseDate(final String dateString){
+        return OffsetDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssxxx"));
+    }
 }
