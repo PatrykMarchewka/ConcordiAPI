@@ -2,6 +2,8 @@ package com.patrykmarchewka.concordiapi.Tasks;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
@@ -20,6 +22,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,7 +67,8 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All tasks available", response.getBody().getMessage());
-        assertEquals(4, response.getBody().getData().size());
+        assertEquals(testDataLoader.teamRead.getTeamTasks().size(), response.getBody().getData().size());
+        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().map(Task::getID).collect(Collectors.toUnmodifiableSet()), response.getBody().getData().stream().map(TaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -340,7 +344,12 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task details", response.getBody().getMessage());
-        assertEquals(new TaskMemberDTO(testDataLoader.taskNoUsersRead), response.getBody().getData());
+        assertEquals(testDataLoader.taskNoUsersRead.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.taskNoUsersRead.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.taskNoUsersRead.getDescription(), response.getBody().getData().getDescription());
+        assertEquals(testDataLoader.taskNoUsersRead.getTaskStatus(), response.getBody().getData().getTaskStatus());
+        assertEquals(testDataLoader.taskNoUsersRead.getSubtasks().size(), response.getBody().getData().getSubtasks().size());
+        assertEquals(testDataLoader.taskNoUsersRead.getUserTasks().size(), response.getBody().getData().getUsers().size());
     }
 
     /// 401
@@ -425,7 +434,13 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Task fully changed", response.getBody().getMessage());
-        assertEquals(new TaskMemberDTO(testDataLoader.refreshTask(testDataLoader.taskMultiUserWrite)), response.getBody().getData());
+        assertEquals(testDataLoader.taskMultiUserWrite.getID(), response.getBody().getData().getID());
+        assertEquals("newest task", response.getBody().getData().getName());
+        assertEquals("newest description", response.getBody().getData().getDescription());
+        assertEquals(TaskStatus.INPROGRESS, response.getBody().getData().getTaskStatus());
+        assertEquals(testDataLoader.taskMultiUserWrite.getSubtasks().size(), response.getBody().getData().getSubtasks().size());
+        assertEquals(2, response.getBody().getData().getUsers().size());
+        assertEquals(Set.of(testDataLoader.userWriteOwner.getID(), testDataLoader.userManager.getID()), response.getBody().getData().getUsers().stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// 400
@@ -784,7 +799,7 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User added to task", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
+        assertTrue(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.getID() == testDataLoader.userAdmin.getID()));
     }
 
     /// 400
@@ -896,7 +911,7 @@ public class TaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User removed from task", response.getBody().getMessage());
-        assertFalse(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userWriteOwner)));
+        assertFalse(response.getBody().getData().getUsers().stream().anyMatch(userMemberDTO -> userMemberDTO.getID() == testDataLoader.userWriteOwner.getID()));
     }
 
     /// 401
