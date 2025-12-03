@@ -4,7 +4,9 @@ package com.patrykmarchewka.concordiapi.Subtasks;
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.SubtaskDTO.SubtaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Subtask;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
+import com.patrykmarchewka.concordiapi.TaskStatus;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +23,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,7 +67,8 @@ public class SubtaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtasks attached to this task", response.getBody().getMessage());
-        assertEquals(new TaskMemberDTO(testDataLoader.taskMultiUserRead).getSubtasks(), response.getBody().getData());
+        assertEquals(testDataLoader.taskMultiUserRead.getSubtasks().size(), response.getBody().getData().size());
+        assertEquals(testDataLoader.taskMultiUserRead.getSubtasks().stream().map(Subtask::getID).collect(Collectors.toUnmodifiableSet()), response.getBody().getData().stream().map(SubtaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// 401
@@ -147,7 +151,9 @@ public class SubtaskControllerTest {
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(new TaskMemberDTO(testDataLoader.refreshTask(testDataLoader.taskMultiUserWrite)).getSubtasks().contains(response.getBody().getData()));
+        assertEquals("name", response.getBody().getData().getName());
+        assertEquals("description", response.getBody().getData().getDescription());
+        assertEquals(TaskStatus.HALTED, response.getBody().getData().getTaskStatus());
     }
 
     /// 400
@@ -290,7 +296,10 @@ public class SubtaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask details", response.getBody().getMessage());
-        assertEquals(new SubtaskMemberDTO(testDataLoader.subtaskRead), response.getBody().getData());
+        assertEquals(testDataLoader.subtaskRead.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.subtaskRead.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.subtaskRead.getDescription(), response.getBody().getData().getDescription());
+        assertEquals(testDataLoader.subtaskRead.getTaskStatus(), response.getBody().getData().getTaskStatus());
     }
 
     /// 401
@@ -392,7 +401,10 @@ public class SubtaskControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Subtask fully changed", response.getBody().getMessage());
-        assertEquals(new SubtaskMemberDTO(testDataLoader.refreshSubtask(testDataLoader.subtaskWrite)), response.getBody().getData());
+        assertEquals(testDataLoader.subtaskWrite.getID(), response.getBody().getData().getID());
+        assertEquals("newerSubtask", response.getBody().getData().getName());
+        assertEquals("newerDescription", response.getBody().getData().getDescription());
+        assertEquals(TaskStatus.NEW, response.getBody().getData().getTaskStatus());
     }
 
     /// 400

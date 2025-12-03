@@ -1,7 +1,6 @@
 package com.patrykmarchewka.concordiapi.Users;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
-import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import com.patrykmarchewka.concordiapi.UserRole;
@@ -18,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,11 +63,8 @@ public class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("All users in the team", response.getBody().getMessage());
-        assertEquals(new TeamMemberDTO(testDataLoader.teamRead).getTeammateCount(), response.getBody().getData().size());
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userReadOwner)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userAdmin)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userManager)));
-        assertTrue(response.getBody().getData().stream().anyMatch(userMemberDTO -> userMemberDTO.equalsUser(testDataLoader.userMember)));
+        assertEquals(testDataLoader.teamRead.getUserRoles().size(), response.getBody().getData().size());
+        assertEquals(Set.of(testDataLoader.userReadOwner.getID(), testDataLoader.userSecondOwner.getID(), testDataLoader.userAdmin.getID(), testDataLoader.userManager.getID(), testDataLoader.userMember.getID(), testDataLoader.userBanned.getID()), response.getBody().getData().stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -82,7 +79,7 @@ public class UserControllerTest {
         assertNotNull(response.getBody());
         assertEquals("All users in the team with that role", response.getBody().getMessage());
         assertEquals(2, response.getBody().getData().size());
-        assertEquals(Set.of(new UserMemberDTO(testDataLoader.userReadOwner), new UserMemberDTO(testDataLoader.userSecondOwner)), response.getBody().getData());
+        assertEquals(Set.of(testDataLoader.userReadOwner.getID(), testDataLoader.userSecondOwner.getID()), response.getBody().getData().stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
 
@@ -144,7 +141,9 @@ public class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User with the provided ID", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsUser(testDataLoader.userAdmin));
+        assertEquals(testDataLoader.userAdmin.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.userAdmin.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.userAdmin.getLastName(), response.getBody().getData().getLastName());
     }
 
     @Test
@@ -158,7 +157,9 @@ public class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("User with the provided ID", response.getBody().getMessage());
-        assertEquals(new UserMemberDTO(testDataLoader.userReadOwner), response.getBody().getData());
+        assertEquals(testDataLoader.userReadOwner.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), response.getBody().getData().getLastName());
     }
 
     /// 401
