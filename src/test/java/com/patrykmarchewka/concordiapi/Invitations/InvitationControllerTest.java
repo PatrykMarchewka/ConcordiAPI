@@ -24,6 +24,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,7 +69,7 @@ public class InvitationControllerTest {
         assertNotNull(response.getBody());
         assertEquals("List of all invitations for this team", response.getBody().getMessage());
         assertEquals(3, response.getBody().getData().size());
-        assertEquals(Set.of(new InvitationManagerDTO(testDataLoader.invitationRead), new InvitationManagerDTO(testDataLoader.invitationNoUses), new InvitationManagerDTO(testDataLoader.invitationExpired)), response.getBody().getData());
+        assertEquals(Set.of(testDataLoader.invitationRead.getUUID(), testDataLoader.invitationNoUses.getUUID(), testDataLoader.invitationExpired.getUUID()), response.getBody().getData().stream().map(InvitationManagerDTO::getUUID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// 401
@@ -129,7 +130,7 @@ public class InvitationControllerTest {
     @Test
     void shouldCreateInvitation(){
         //To stop test from automatically failing in the future due to expired date, users can provide date as short as "2025-10-04T23:59Z"
-        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(10);
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(10).withOffsetSameInstant(ZoneOffset.UTC);
 
         String json = String.format("""
                 {
@@ -139,13 +140,13 @@ public class InvitationControllerTest {
                 }
                 """, dueDate);
         var response = restClient.post().uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID()).contentType(MediaType.APPLICATION_JSON).body(json).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<InvitationManagerDTO>>() {});
-        testDataLoader.teamWrite = testDataLoader.refreshTeam(testDataLoader.teamWrite);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Created new invitation", response.getBody().getMessage());
         assertEquals((short)100, response.getBody().getData().getUses());
         assertEquals(UserRole.MEMBER, response.getBody().getData().getRole());
+        assertEquals(OffsetDateTimeConverter.formatDate(dueDate), response.getBody().getData().getDueTimeString());
     }
 
     @Test
@@ -280,7 +281,11 @@ public class InvitationControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Information about this invitation", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
+        assertEquals(testDataLoader.invitationRead.getUUID(), response.getBody().getData().getUUID());
+        assertEquals(testDataLoader.invitationRead.getInvitingTeam().getID(), response.getBody().getData().getTeam().getID());
+        assertEquals(testDataLoader.invitationRead.getUses(), response.getBody().getData().getUses());
+        assertEquals(testDataLoader.invitationRead.getRole(), response.getBody().getData().getRole());
+        assertEquals(OffsetDateTimeConverter.formatDate(testDataLoader.invitationRead.getDueTime()), response.getBody().getData().getDueTimeString());
     }
 
     /// 401
@@ -354,7 +359,7 @@ public class InvitationControllerTest {
     @Test
     void shouldPutInvitation(){
         //To stop test from automatically failing in the future due to expired date, users can provide date as short as "2025-10-04T23:59Z"
-        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1);
+        OffsetDateTime dueDate = OffsetDateTimeConverter.nowConverted().plusDays(1).withOffsetSameInstant(ZoneOffset.UTC);
 
         String json = String.format("""
                 {
@@ -372,6 +377,7 @@ public class InvitationControllerTest {
         assertEquals(testDataLoader.invitationWrite.getUUID(), response.getBody().getData().getUUID());
         assertEquals(99, response.getBody().getData().getUses());
         assertEquals(UserRole.OWNER, response.getBody().getData().getRole());
+        assertEquals(OffsetDateTimeConverter.formatDate(dueDate), response.getBody().getData().getDueTimeString());
     }
 
     /// 400
