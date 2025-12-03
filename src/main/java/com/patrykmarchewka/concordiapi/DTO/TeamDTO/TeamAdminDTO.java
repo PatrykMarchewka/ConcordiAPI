@@ -1,5 +1,7 @@
 package com.patrykmarchewka.concordiapi.DTO.TeamDTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
@@ -13,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@JsonPropertyOrder({"ID", "Name", "Tasks", "Users"})
 public class TeamAdminDTO implements TeamDTO {
 
     private long id;
@@ -36,19 +39,22 @@ public class TeamAdminDTO implements TeamDTO {
     public TeamAdminDTO(){}
 
     @Override
+    @JsonProperty("ID")
     public long getID() {return id;}
     @Override
     public void setID(long id){this.id = id;}
 
     @Override
+    @JsonProperty("Name")
     public String getName(){return name;}
     @Override
     public void setName(String name){this.name = name;}
 
+    @JsonProperty("Tasks")
     public Set<TaskMemberDTO> getTasks(){return tasks;}
-    @Override
     public void setTasks(Set<TaskMemberDTO> tasks){this.tasks = tasks;}
 
+    @JsonProperty("Users")
     public Map<UserRole, Set<UserMemberDTO>> getUsersByRole(){ return this.usersByRole; }
     public void setUsersByRole(Map<UserRole, Set<UserMemberDTO>> usersByRole) { this.usersByRole = usersByRole; }
 
@@ -56,15 +62,14 @@ public class TeamAdminDTO implements TeamDTO {
     public boolean equals(Object o){
         if (this == o) return true;
         if (!(o instanceof TeamAdminDTO teamAdminDTO)) return false;
-        return Objects.equals(id, teamAdminDTO.getID()) &&
-                Objects.equals(name, teamAdminDTO.getName()) &&
-                Objects.equals(tasks, teamAdminDTO.getTasks()) &&
-                Objects.equals(usersByRole, teamAdminDTO.getUsersByRole());
-
+        return id == teamAdminDTO.id &&
+                Objects.equals(name, teamAdminDTO.name) &&
+                Objects.equals(tasks, teamAdminDTO.tasks) &&
+                Objects.equals(usersByRole, teamAdminDTO.usersByRole);
     }
 
     @Override
     public int hashCode(){
-        return Objects.hash(id, name);
+        return Objects.hash(id, name, tasks, usersByRole);
     }
 }

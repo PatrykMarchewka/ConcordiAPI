@@ -170,7 +170,7 @@ public class InvitationControllerTest {
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().contains(String.format("\"dueTime\":\"%s\"", OffsetDateTimeConverter.formatDate(dueDate))));
+        assertTrue(response.getBody().contains(String.format("\"Due time\":\"%s\"", OffsetDateTimeConverter.formatDate(dueDate))));
     }
 
     /// 400
