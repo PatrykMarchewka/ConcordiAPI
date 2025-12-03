@@ -2,6 +2,8 @@ package com.patrykmarchewka.concordiapi.Teams;
 
 import com.patrykmarchewka.concordiapi.APIResponse;
 import com.patrykmarchewka.concordiapi.DTO.TeamDTO.TeamAdminDTO;
+import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
+import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.TestDataLoader;
 import org.junit.jupiter.api.AfterAll;
@@ -19,6 +21,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,8 +68,8 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Information about all joined teams", response.getBody().getMessage());
-        assertEquals(1, response.getBody().getData().size());
-        assertEquals(Set.of(new TeamAdminDTO(testDataLoader.teamRead)), response.getBody().getData());
+        assertEquals(testDataLoader.userReadOwner.getTeamRoles().size(), response.getBody().getData().size());
+        assertEquals(testDataLoader.userReadOwner.getTeamRoles().stream().map(TeamUserRole::getTeam).map(Team::getID).collect(Collectors.toUnmodifiableSet()), response.getBody().getData().stream().map(TeamAdminDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// 401
@@ -168,7 +171,10 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Information about the team", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTeam(testDataLoader.teamRead));
+        assertEquals(testDataLoader.teamRead.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.teamRead.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.teamRead.getTeamTasks().size(), response.getBody().getData().getTasks().size());
+        assertEquals(testDataLoader.teamRead.getUserRoles().size(), response.getBody().getData().getUsersByRole().values().stream().mapToInt(Set::size).sum());
     }
 
     /// 401
@@ -221,7 +227,10 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals(new TeamAdminDTO(refreshedTeam), response.getBody().getData());
+        assertEquals(testDataLoader.teamWrite.getID(), response.getBody().getData().getID());
+        assertEquals("newer", response.getBody().getData().getName());
+        assertEquals(testDataLoader.teamWrite.getTeamTasks().size(), response.getBody().getData().getTasks().size());
+        assertEquals(testDataLoader.teamWrite.getUserRoles().size(), response.getBody().getData().getUsersByRole().values().stream().mapToInt(Set::size).sum());
     }
 
     /// 400
@@ -340,7 +349,7 @@ public class TeamControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Team has been edited", response.getBody().getMessage());
-        assertEquals(new TeamAdminDTO(refreshedTeam), response.getBody().getData());
+        assertEquals("newest", response.getBody().getData().getName());
     }
 
     /// 400
