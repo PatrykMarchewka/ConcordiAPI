@@ -9,7 +9,7 @@ public interface TeamDTO extends TeamIdentity {
     void setName(String name);
 
     default boolean equalsTeam(TeamIdentity team){
-        return Objects.equals(this.getID(), team.getID()) &&
-                Objects.equals(this.getName(), team.getName());
+        return getID() == team.getID() &&
+                Objects.equals(getName(), team.getName());
     }
 }
