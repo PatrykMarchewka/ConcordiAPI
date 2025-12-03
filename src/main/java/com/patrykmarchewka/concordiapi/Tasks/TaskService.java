@@ -223,14 +223,6 @@ public class TaskService {
         return getTasksNoUpdatesIn(days, teamID, userID).stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet());
     }
 
-    public Set<TaskMemberDTO> getTaskMemberDTOFromIDs(final Set<Long> taskIDs, final long teamID){
-        final Set<TaskMemberDTO> dtoSet = new HashSet<>();
-        for (final long id : taskIDs){
-            dtoSet.add(new TaskMemberDTO(getTaskFullByIDAndTeamID(id, teamID)));
-        }
-        return dtoSet;
-    }
-
     /**
      * Checks whether user can modify task
      * @param userID ID of User asking for permission
