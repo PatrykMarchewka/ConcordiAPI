@@ -1,6 +1,5 @@
 package com.patrykmarchewka.concordiapi.DTO.InvitationDTO;
 
-import com.patrykmarchewka.concordiapi.DatabaseModel.Invitation;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationIdentity;
 import com.patrykmarchewka.concordiapi.UserRole;
 
@@ -13,7 +12,10 @@ public interface InvitationDTO extends InvitationIdentity {
     void setRole(UserRole role);
     void setDueTime(OffsetDateTime dueTime);
 
-    default boolean equalsInvitation(Invitation invitation){
-        return Objects.equals(getUUID(), invitation.getUUID());
+    default boolean equalsInvitation(InvitationIdentity invitation){
+        return Objects.equals(getUUID(), invitation.getUUID()) &&
+                getUses() == invitation.getUses() &&
+                getRole() == invitation.getRole() &&
+                Objects.equals(getDueTime(), invitation.getDueTime());
     }
 }
