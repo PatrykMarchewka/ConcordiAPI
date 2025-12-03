@@ -69,7 +69,7 @@ public class InvitationManagerDTO implements InvitationDTO{
         if (!(o instanceof InvitationManagerDTO invitationManagerDTO)) return false;
         return Objects.equals(UUID, invitationManagerDTO.UUID) &&
                 Objects.equals(team, invitationManagerDTO.team) &&
-                Objects.equals(role, invitationManagerDTO.role) &&
+                role == invitationManagerDTO.role &&
                 uses == invitationManagerDTO.uses &&
                 Objects.equals(dueTime, invitationManagerDTO.dueTime);
     }
