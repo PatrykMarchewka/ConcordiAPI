@@ -301,7 +301,7 @@ public class UserControllerTest {
     void shouldThrowForTooHighNewRoleChangeUserRole(){
         var response = restClient.patch()
                 .uri("/api/teams/{teamID}/users/{ID}?newRole={role}", testDataLoader.teamWrite.getID(), testDataLoader.userManager.getID(), UserRole.OWNER)
-                .header("Authorization", "Bearer " + testDataLoader.jwtAdmin)
+                .header("Authorization", "Bearer " + testDataLoader.jwtManager)
                 .exchange((req, res) -> ResponseEntity
                         .status(res.getStatusCode())
                         .headers(res.getHeaders())
@@ -368,8 +368,8 @@ public class UserControllerTest {
     @Test
     void shouldRemoveUserMyself(){
         var response = restClient.delete()
-                .uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.userWriteOwner.getID())
-                .header("Authorization", "Bearer " + testDataLoader.jwtWrite)
+                .uri("/api/teams/{teamID}/users/{ID}", testDataLoader.teamWrite.getID(), testDataLoader.userSecondOwner.getID())
+                .header("Authorization", "Bearer " + testDataLoader.jwtOwner)
                 .retrieve()
                 .toEntity(APIResponse.class);
 
