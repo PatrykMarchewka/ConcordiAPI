@@ -1,5 +1,7 @@
 package com.patrykmarchewka.concordiapi.DTO.TeamDTO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.patrykmarchewka.concordiapi.DTO.TaskDTO.TaskMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Team.TeamWithUserRoles;
@@ -10,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@JsonPropertyOrder({"ID", "Name", "User count", "Tasks", "Owners"})
 public class TeamMemberDTO implements TeamDTO {
     private long id;
     private String name;
@@ -35,22 +38,26 @@ public class TeamMemberDTO implements TeamDTO {
     public TeamMemberDTO(){}
 
     @Override
+    @JsonProperty("ID")
     public long getID() {return id;}
     @Override
     public void setID(long id){this.id = id;}
 
     @Override
+    @JsonProperty("Name")
     public String getName(){return name;}
     @Override
     public void setName(String name){this.name = name;}
 
+    @JsonProperty("User count")
     public int getTeammateCount(){return teammateCount;}
     public void setTeammateCount(int teammateCount){this.teammateCount = teammateCount;}
 
+    @JsonProperty("Tasks")
     public Set<TaskMemberDTO> getTasks(){return tasks;}
-    @Override
     public void setTasks(Set<TaskMemberDTO> tasks){this.tasks = tasks;}
 
+    @JsonProperty("Owners")
     public Set<UserMemberDTO> getOwners(){return owners;}
     public void setOwners(Set<UserMemberDTO> owners){this.owners = owners;}
 
@@ -59,16 +66,16 @@ public class TeamMemberDTO implements TeamDTO {
     public boolean equals(Object o){
         if (this == o) return true;
         if (!(o instanceof TeamMemberDTO teamMemberDTO)) return false;
-        return Objects.equals(id, teamMemberDTO.getID()) &&
-                Objects.equals(name, teamMemberDTO.getName()) &&
-                Objects.equals(teammateCount, teamMemberDTO.getTeammateCount()) &&
-                Objects.equals(tasks, teamMemberDTO.getTasks()) &&
-                Objects.equals(owners, teamMemberDTO.getOwners());
+        return id == teamMemberDTO.id &&
+                Objects.equals(name, teamMemberDTO.name) &&
+                teammateCount == teamMemberDTO.teammateCount &&
+                Objects.equals(tasks, teamMemberDTO.tasks) &&
+                Objects.equals(owners, teamMemberDTO.owners);
 
     }
 
     @Override
     public int hashCode(){
-        return Objects.hash(id, name, teammateCount);
+        return Objects.hash(id, name, teammateCount, tasks, owners);
     }
 }
