@@ -17,9 +17,12 @@ public interface TaskDTO extends TaskIdentity {
     void setAssignedTeam(Team assignedTeam);
 
     default boolean equalsTask(TaskIdentity task){
-        return Objects.equals(getID(), task.getID()) &&
+        return getID() == task.getID() &&
                 Objects.equals(getName(), task.getName()) &&
                 Objects.equals(getDescription(), task.getDescription()) &&
-                Objects.equals(getTaskStatus(), task.getTaskStatus());
+                getTaskStatus() == task.getTaskStatus() &&
+                Objects.equals(getCreationDate(), task.getCreationDate()) &&
+                Objects.equals(getUpdateDate(), task.getUpdateDate()) &&
+                Objects.equals(getAssignedTeam(), task.getAssignedTeam());
     }
 }
