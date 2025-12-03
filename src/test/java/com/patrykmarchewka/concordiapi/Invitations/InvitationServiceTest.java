@@ -235,11 +235,6 @@ public class InvitationServiceTest {
         Set<InvitationManagerDTO> set = invitationService.getInvitationsDTO(testDataLoader.teamRead.getID());
 
         assertEquals(testDataLoader.teamRead.getInvitations().size(), set.size());
-        Set<InvitationManagerDTO> actual = testDataLoader.teamRead.getInvitations().stream().map(InvitationManagerDTO::new).collect(Collectors.toUnmodifiableSet());
-
-        for (InvitationManagerDTO dto : actual){
-            System.err.println(dto.getUUID() + " : " + set.contains(dto));
-        }
         assertTrue(set.containsAll(testDataLoader.teamRead.getInvitations().stream().map(InvitationManagerDTO::new).collect(Collectors.toUnmodifiableSet())));
     }
 
