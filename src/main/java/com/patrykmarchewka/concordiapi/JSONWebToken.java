@@ -1,6 +1,7 @@
 package com.patrykmarchewka.concordiapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -125,7 +126,7 @@ public class JSONWebToken {
      * @return Payload or Null if jwt is not valid
      * @throws JsonProcessingException Thrown when can't read value from payload
      */
-    public static Map<String,Object> ExtractJWTTokenPayload(String jwt) throws JsonProcessingException {
+    public static Map<String,String> ExtractJWTTokenPayload(String jwt) throws JsonProcessingException {
         String[] parts = jwt.split("\\.");
         if (parts.length != 3){
             return null;
@@ -133,7 +134,7 @@ public class JSONWebToken {
 
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(payload,Map.class);
+        return mapper.readValue(payload, new TypeReference<>() {});
     }
 
 

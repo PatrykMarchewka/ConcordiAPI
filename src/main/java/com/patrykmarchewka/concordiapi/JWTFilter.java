@@ -51,18 +51,18 @@ public class JWTFilter extends OncePerRequestFilter {
             if (!verified) {
                 throw new JWTAuthenticationException("Token has not been verified");
             }
-            Map<String, Object> payload;
+            Map<String, String> payload;
             try {
                 payload = JSONWebToken.ExtractJWTTokenPayload(token);
             } catch (JsonProcessingException e) {
                 throw new JWTException(e.getMessage(), e.getCause());
             }
-            long exp = Long.parseLong(payload.get("exp").toString());
+            long exp = Long.parseLong(payload.get("exp"));
             long now = System.currentTimeMillis() / 1000;
             if (now > exp) {
                 throw new JWTAuthenticationException("Token expired");
             } else {
-                long ID = Long.parseLong(payload.get("uID").toString());
+                long ID = Long.parseLong(payload.get("uID"));
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
                     User user = (User) userService.getUserByID(ID);
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, List.of());
