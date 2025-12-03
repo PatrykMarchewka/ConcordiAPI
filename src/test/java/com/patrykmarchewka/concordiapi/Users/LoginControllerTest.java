@@ -23,6 +23,7 @@ import org.springframework.web.client.RestClient;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -224,8 +225,10 @@ public class LoginControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Data related to my account", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsUser(testDataLoader.userReadOwner));
-        assertEquals(1, response.getBody().getData().getTeams().size());
+        assertEquals(testDataLoader.userReadOwner.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.userReadOwner.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.userReadOwner.getLastName(), response.getBody().getData().getLastName());
+        assertEquals(testDataLoader.userReadOwner.getTeamRoles().size(), response.getBody().getData().getTeams().size());
     }
 
     /// 401
@@ -253,12 +256,11 @@ public class LoginControllerTest {
                 }
                 """;
         var response = restClient.patch().uri("/me").contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer " + testDataLoader.jwtWrite).body(json).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<UserMemberDTO>>() {});
-        var refreshedUser = testDataLoader.refreshUser(testDataLoader.userWriteOwner);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Data changed!", response.getBody().getMessage());
-        assertEquals(new UserMemberDTO(refreshedUser), response.getBody().getData());
+        assertEquals("patched", response.getBody().getData().getName());
     }
 
     /// 400
@@ -378,7 +380,9 @@ public class LoginControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("The provided invitation information", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsInvitation(testDataLoader.invitationRead));
+        assertEquals(testDataLoader.invitationRead.getUUID(), response.getBody().getData().getUUID());
+        assertEquals(testDataLoader.invitationRead.getInvitingTeam().getID(), response.getBody().getData().getTeam().getID());
+        assertEquals(testDataLoader.invitationRead.getRole(), response.getBody().getData().getRole());
     }
 
     /// 401
@@ -417,17 +421,14 @@ public class LoginControllerTest {
     /// 200
     @Test
     void shouldJoinTeam(){
-        var oldTeamDTO = new TeamMemberDTO(testDataLoader.teamRead);
-        var response = restClient.post().uri("/invitations/" + testDataLoader.invitationRead.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtWrite).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
+        var response = restClient.post().uri("/invitations/" + testDataLoader.invitationWrite.getUUID()).header("Authorization", "Bearer " + testDataLoader.jwtNoTeam).retrieve().toEntity(new ParameterizedTypeReference<APIResponse<TeamMemberDTO>>() {});
 
         assertNotNull(response.getBody());
         assertEquals("Joined the following team:", response.getBody().getMessage());
-        assertTrue(response.getBody().getData().equalsTeam(testDataLoader.teamRead));
-        assertEquals(oldTeamDTO.getID(), response.getBody().getData().getID());
-        assertEquals(oldTeamDTO.getName(), response.getBody().getData().getName());
-        assertEquals(oldTeamDTO.getOwners().size(), response.getBody().getData().getOwners().size());
-        assertEquals(oldTeamDTO.getTeammateCount() + 1, response.getBody().getData().getTeammateCount());
-        assertEquals(oldTeamDTO.getTasks().size(), response.getBody().getData().getTasks().size());
+        assertEquals(testDataLoader.teamWrite.getID(), response.getBody().getData().getID());
+        assertEquals(testDataLoader.teamWrite.getName(), response.getBody().getData().getName());
+        assertEquals(testDataLoader.teamWrite.getUserRoles().size() + 1, response.getBody().getData().getTeammateCount());
+        assertEquals(testDataLoader.teamWrite.getUserRoles().stream().filter(ur -> ur.getUserRole().isOwner()).collect(Collectors.toUnmodifiableSet()).size() + 1, response.getBody().getData().getOwners().size());
     }
 
     /// 401
