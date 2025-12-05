@@ -171,11 +171,11 @@ public class TestDataLoader {
     }
 
     private void createInvitations(){
-        this.invitationRead = invitationService.createInvitation(UserRole.OWNER,new InvitationRequestBody((short) 101, UserRole.ADMIN, null), teamRead.getID());
-        this.invitationNoUses = invitationService.createInvitation(UserRole.OWNER,new InvitationRequestBody((short)0, UserRole.MANAGER, null), teamRead.getID());
-        this.invitationExpired = invitationService.createInvitation(UserRole.OWNER,new InvitationRequestBody((short)1, UserRole.MEMBER, OffsetDateTimeConverter.nowConverted().minusDays(1)), teamRead.getID());
-        this.invitationWrite = invitationService.createInvitation(UserRole.OWNER,new InvitationRequestBody((short)1, UserRole.OWNER, null), teamWrite.getID());
-        this.invitationDelete = invitationService.createInvitation(UserRole.OWNER,new InvitationRequestBody((short)1,UserRole.BANNED,null), teamDelete.getID());
+        this.invitationRead = invitationService.createInvitation(new InvitationRequestBody((short) 101, UserRole.ADMIN, null), teamRead.getID());
+        this.invitationNoUses = invitationService.createInvitation(new InvitationRequestBody((short)0, UserRole.MANAGER, null), teamRead.getID());
+        this.invitationExpired = invitationService.createInvitation(new InvitationRequestBody((short)1, UserRole.MEMBER, OffsetDateTimeConverter.nowConverted().minusDays(1)), teamRead.getID());
+        this.invitationWrite = invitationService.createInvitation(new InvitationRequestBody((short)1, UserRole.OWNER, null), teamWrite.getID());
+        this.invitationDelete = invitationService.createInvitation(new InvitationRequestBody((short)1,UserRole.BANNED,null), teamDelete.getID());
     }
 
     private void setJWTs(){

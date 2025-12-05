@@ -13,8 +13,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationW
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserWithTeamRoles;
 import com.patrykmarchewka.concordiapi.Invitations.Updaters.InvitationUpdatersService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
-import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
-import com.patrykmarchewka.concordiapi.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -29,14 +27,12 @@ public class InvitationService {
     private final InvitationRepository invitationRepository;
     private final TeamService teamService;
     private final InvitationUpdatersService invitationUpdatersService;
-    private final TeamUserRoleService teamUserRoleService;
 
     @Autowired
-    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService, TeamUserRoleService teamUserRoleService){
+    public InvitationService(InvitationRepository invitationRepository, TeamService teamService, InvitationUpdatersService invitationUpdatersService){
         this.invitationRepository = invitationRepository;
         this.teamService = teamService;
         this.invitationUpdatersService = invitationUpdatersService;
-        this.teamUserRoleService = teamUserRoleService;
     }
     
 
@@ -46,8 +42,7 @@ public class InvitationService {
      * @return Created invitation
      */
     @Transactional
-    public Invitation createInvitation(@NonNull final UserRole userRole, @NonNull final InvitationRequestBody body, final long teamID){
-        teamUserRoleService.forceCheckRoles(userRole, body.getRole());
+    public Invitation createInvitation(@NonNull final InvitationRequestBody body, final long teamID){
         Invitation invitation = new Invitation();
         Supplier<Team> teamSupplier = () -> (Team)teamService.getTeamByID(teamID);
         invitationUpdatersService.createUpdate(invitation,body,teamSupplier);

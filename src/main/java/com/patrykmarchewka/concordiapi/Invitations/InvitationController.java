@@ -86,7 +86,8 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getUserRole(), body, teamID))));
+        context.resolveRoles(body.getRole());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID))));
     }
 
     /**
