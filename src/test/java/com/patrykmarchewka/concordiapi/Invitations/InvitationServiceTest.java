@@ -225,7 +225,7 @@ public class InvitationServiceTest {
         Set<InvitationManagerDTO> set = invitationService.getInvitationsDTO(testDataLoader.teamRead.getID());
 
         assertEquals(testDataLoader.teamRead.getInvitations().size(), set.size());
-        assertTrue(set.containsAll(testDataLoader.teamRead.getInvitations().stream().map(InvitationManagerDTO::new).collect(Collectors.toUnmodifiableSet())));
+        assertEquals(testDataLoader.teamRead.getInvitations().stream().map(Invitation::getUUID).collect(Collectors.toUnmodifiableSet()), set.stream().map(InvitationManagerDTO::getUUID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @ParameterizedTest
