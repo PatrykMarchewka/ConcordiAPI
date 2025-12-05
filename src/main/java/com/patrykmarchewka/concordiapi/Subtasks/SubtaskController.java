@@ -58,7 +58,8 @@ public class SubtaskController {
     @GetMapping("/subtasks")
     public ResponseEntity<APIResponse<Set<SubtaskMemberDTO>>> getSubtasks(@PathVariable long teamID, @PathVariable long taskID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskFull(teamID, taskID);
-        if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
+        context.resolveAdminGroup();
+        if (!context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.ok(new APIResponse<>("Subtasks attached to this task",subtaskService.getSubtasksDTO(context.getTask())));
@@ -82,8 +83,8 @@ public class SubtaskController {
     @PostMapping("/subtasks")
     public ResponseEntity<APIResponse<SubtaskMemberDTO>> createSubtask(@PathVariable long teamID, @PathVariable long taskID, @RequestBody @ValidateOnCreate SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
-
-        if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
+        context.resolveAdminGroup();
+        if (!context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
 
@@ -108,8 +109,8 @@ public class SubtaskController {
     @GetMapping("/subtasks/{ID}")
     public ResponseEntity<APIResponse<SubtaskMemberDTO>> getSubtaskByID(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
-
-        if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
+        context.resolveAdminGroup();
+        if (!context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.ok(new APIResponse<>("Subtask details", new SubtaskMemberDTO(subtaskService.getSubtaskByID(taskID,ID))));
@@ -134,7 +135,8 @@ public class SubtaskController {
     @PutMapping("/subtasks/{ID}")
     public ResponseEntity<APIResponse<SubtaskMemberDTO>> putSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @ValidateOnPut SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
-        if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
+        context.resolveAdminGroup();
+        if (!context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.ok(new APIResponse<>("Subtask fully changed", new SubtaskMemberDTO(subtaskService.putUpdate(taskID, ID,body))));
@@ -159,7 +161,8 @@ public class SubtaskController {
     @PatchMapping("/subtasks/{ID}")
     public ResponseEntity<APIResponse<SubtaskMemberDTO>> patchSubtask(@PathVariable long teamID, @PathVariable long taskID, @PathVariable long ID, @RequestBody @Validated SubtaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskWithUserTasks(teamID, taskID);
-        if (!context.getUserRole().isAdminGroup() && !context.getTask().hasUser(context.getUser().getID())){
+        context.resolveAdminGroup();
+        if (!context.getTask().hasUser(context.getUser().getID())){
             throw new NoPrivilegesException();
         }
         return ResponseEntity.ok(new APIResponse<>("Subtask updated", new SubtaskMemberDTO(subtaskService.patchUpdate(taskID, ID,body))));
@@ -182,9 +185,7 @@ public class SubtaskController {
     @DeleteMapping("/subtasks/{ID}")
     public ResponseEntity<APIResponse<String>> deleteSubtask(@PathVariable long teamID,@PathVariable long taskID, @PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveOwnerOrAdminGroup();
         subtaskService.deleteSubtask(taskID, ID);
         return ResponseEntity.ok(new APIResponse<>("Subtask has been deleted", null));
     }
