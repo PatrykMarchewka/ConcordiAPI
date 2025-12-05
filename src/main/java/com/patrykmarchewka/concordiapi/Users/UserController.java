@@ -94,7 +94,7 @@ public class UserController {
             throw new NoPrivilegesException();
         }
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
     }
@@ -121,7 +121,7 @@ public class UserController {
         if (!context.getUserRole().isOwnerOrAdmin()){
             throw new NoPrivilegesException();
         }
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), newRole);
+        context.resolveRoles(newRole);
 
         teamUserRoleService.setRole(ID, teamID, newRole);
         return ResponseEntity.ok(new APIResponse<>("Role changed",null));
@@ -147,7 +147,7 @@ public class UserController {
             throw new NoPrivilegesException();
         }
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         teamService.removeUser(teamID, ID);
         return ResponseEntity.ok(new APIResponse<>("User removed from team",null));
