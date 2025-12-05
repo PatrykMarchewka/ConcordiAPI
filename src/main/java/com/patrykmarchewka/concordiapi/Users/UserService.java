@@ -123,30 +123,22 @@ public class UserService {
 
     /**
      * Returns DTO of each user with the given UserRole
-     * @param myRole Role of User asking for information
      * @param param UserRole of users to get
      * @param teamID ID of Team in which to search for
      * @return UserMemberDTO of each user with provided role
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetParam(@NonNull final UserRole myRole, @NonNull final UserRole param, final long teamID){
-        if (!myRole.isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+    public Set<UserMemberDTO> userMemberDTOSetParam(@NonNull final UserRole param, final long teamID){
         return userMemberDTOSetProcess(teamUserRoleService.getAllByTeamAndUserRole(teamID, param).stream().map(TeamUserRole::getUser).collect(Collectors.toUnmodifiableSet()));
     }
 
     /**
      * Returns DTO of users in team
-     * @param myRole Role of User asking for information
      * @param team TeamWithUserRoles in which to search
      * @return UserMemberDTO of each user in the team
      * @throws NoPrivilegesException Thrown when User asking for information doesn't have sufficient privileges
      */
-    public Set<UserMemberDTO> userMemberDTOSetNoParam(@NonNull final UserRole myRole, @NonNull final TeamWithUserRoles team){
-        if (!myRole.isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+    public Set<UserMemberDTO> userMemberDTOSetNoParam(@NonNull final TeamWithUserRoles team){
         Set<UserIdentity> identities = new HashSet<>(team.getTeammates());
         return userMemberDTOSetProcess(identities);
     }

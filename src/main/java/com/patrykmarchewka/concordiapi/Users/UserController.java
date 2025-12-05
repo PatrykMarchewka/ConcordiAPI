@@ -60,16 +60,16 @@ public class UserController {
     @ApiResponse(responseCode = "404", ref = "404")
     @GetMapping("/users")
     public ResponseEntity<APIResponse<Set<UserMemberDTO>>> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
-        context = context.withUser(authentication).withTeam(teamID).withRole();
+        context = context.withUser(authentication).withTeamWithUserRoles(teamID).withRole();
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
 
         if (role != null){
-            return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",userService.userMemberDTOSetParam(context.getUserRole(),role, teamID)));
+            return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",userService.userMemberDTOSetParam(role, teamID)));
         }
         else{
-            return ResponseEntity.ok(new APIResponse<>("All users in the team",userService.userMemberDTOSetNoParam(context.getUserRole(), context.getTeam())));
+            return ResponseEntity.ok(new APIResponse<>("All users in the team",userService.userMemberDTOSetNoParam(context.getTeam())));
         }
     }
 

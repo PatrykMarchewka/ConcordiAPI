@@ -5,7 +5,6 @@ import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
-import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.Exceptions.WrongCredentialsException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.User.UserFull;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -252,52 +250,31 @@ public class UserServiceTest {
 
     /// userMemberDTOSetParam
 
-    @ParameterizedTest
-    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
-    void shouldReturnSingleUserMemberDTOSetParam(UserRole role){
-        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(role, UserRole.ADMIN, testDataLoader.teamRead.getID());
+    @Test
+    void shouldReturnSingleUserMemberDTOSetParam(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(UserRole.ADMIN, testDataLoader.teamRead.getID());
 
         assertEquals(1, set.size());
         assertTrue(set.contains(new UserMemberDTO(testDataLoader.userAdmin)));
     }
 
-    @ParameterizedTest
-    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
-    void shouldReturnMultipleUserMemberDTOSetParam(UserRole role){
-        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(role, UserRole.OWNER, testDataLoader.teamRead.getID());
+    @Test
+    void shouldReturnMultipleUserMemberDTOSetParam(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetParam(UserRole.OWNER, testDataLoader.teamRead.getID());
 
         assertEquals(2, set.size());
         assertTrue(set.contains(new UserMemberDTO(testDataLoader.userReadOwner)));
         assertTrue(set.contains(new UserMemberDTO(testDataLoader.userSecondOwner)));
     }
 
-    @ParameterizedTest
-    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
-    void shouldThrowForNoPrivilegesUserMemberDTOSetParam(UserRole role){
-        assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetParam(role, UserRole.MEMBER, testDataLoader.teamRead.getID()));
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {999L, -1})
-    void shouldThrowForInvalidTeamIDUserMemberDTOSetParam(long ID){
-        assertThrows(NotFoundException.class, () -> userService.userMemberDTOSetParam(UserRole.OWNER, UserRole.ADMIN, ID));
-    }
-
     /// userMemberDTOSetNoParam
 
-    @ParameterizedTest
-    @EnumSource(value = UserRole.class, names = {"OWNER", "ADMIN"})
-    void shouldReturnMultipleUserMemberDTOSetNoParam(UserRole role){
-        Set<UserMemberDTO> set = userService.userMemberDTOSetNoParam(role, testDataLoader.teamRead);
+    @Test
+    void shouldReturnMultipleUserMemberDTOSetNoParam(){
+        Set<UserMemberDTO> set = userService.userMemberDTOSetNoParam(testDataLoader.teamRead);
 
         Set<UserMemberDTO> expected = testDataLoader.teamRead.getUserRoles().stream().map(teamUserRole -> new UserMemberDTO(teamUserRole.getUser())).collect(Collectors.toUnmodifiableSet());
         assertEquals(expected, set);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = UserRole.class, mode = EnumSource.Mode.EXCLUDE, names = {"OWNER", "ADMIN", "MANAGER"})
-    void shouldThrowForNoPrivilegesUserMemberDTOSetNoParam(UserRole role){
-        assertThrows(NoPrivilegesException.class, () -> userService.userMemberDTOSetNoParam(role, testDataLoader.teamRead));
     }
 
     /// getUserByID
