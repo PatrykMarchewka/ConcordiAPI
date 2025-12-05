@@ -118,7 +118,7 @@ public class InvitationController {
      * @param body InvitationRequestBody with new values
      * @param authentication User credentials to authenticate
      * @return InvitationDTO after changes
-     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team or when user tries to generate invitation with higher user role
      */
     @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")
     @ApiResponse(responseCode = "200", ref = "200")
@@ -132,6 +132,7 @@ public class InvitationController {
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
         }
+        context.resolveRoles(body.getRole());
         return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(invID, body))));
     }
 
@@ -142,7 +143,7 @@ public class InvitationController {
      * @param body InvitationRequestBody with new values
      * @param authentication User credentials to authenticate
      * @return InvitationDTO after changes
-     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team or when user tries to generate invitation with higher user role
      */
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
     @ApiResponse(responseCode = "200", ref = "200")
@@ -155,6 +156,9 @@ public class InvitationController {
         context = context.withUser(authentication).withRole(teamID);
         if (!context.getUserRole().isAdminGroup()){
             throw new NoPrivilegesException();
+        }
+        if (body.getRole() != null) {
+            context.resolveRoles(body.getRole());
         }
         return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(invID, body))));
     }
