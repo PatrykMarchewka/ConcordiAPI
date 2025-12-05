@@ -60,9 +60,7 @@ public class InvitationController {
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team",invitationService.getInvitationsDTO(teamID)));
     }
 
@@ -83,9 +81,7 @@ public class InvitationController {
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @ValidateOnCreate InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         context.resolveRoles(body.getRole());
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID))));
     }
@@ -106,9 +102,7 @@ public class InvitationController {
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(invitationService.getInvitationWithTeamByUUID(invID))));
     }
 
@@ -130,9 +124,7 @@ public class InvitationController {
     @PutMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateOnPut InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         context.resolveRoles(body.getRole());
         return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(invID, body))));
     }
@@ -155,9 +147,7 @@ public class InvitationController {
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Validated InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         if (body.getRole() != null) {
             context.resolveRoles(body.getRole());
         }
@@ -180,9 +170,7 @@ public class InvitationController {
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<String>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         invitationService.deleteInvitation(invID);
         return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
     }
