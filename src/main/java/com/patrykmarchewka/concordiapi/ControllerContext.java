@@ -4,6 +4,7 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ImpossibleStateException;
+import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import com.patrykmarchewka.concordiapi.Teams.TeamUserRoleService;
 import com.patrykmarchewka.concordiapi.Teams.TeamService;
@@ -291,6 +292,51 @@ public class ControllerContext {
      */
     public void resolveRoles(UserRole first, UserRole second){
         teamUserRoleService.forceCheckRoles(first, second);
+    }
+
+    /**
+     * Requires {@link #withRole()} to be called before
+     * @throws ImpossibleStateException Thrown when called before {@link #withRole()}
+     * @throws NoPrivilegesException Thrown when user is not Owner or Admin in the team
+     */
+    public void resolveOwnerOrAdminGroup(){
+        if (this.userRole == null){
+            throw new ImpossibleStateException("Cannot resolve user role");
+        }
+
+        if (!this.userRole.isOwnerOrAdmin()){
+            throw new NoPrivilegesException();
+        }
+    }
+
+    /**
+     * Requires {@link #withRole()} to be called before
+     * @throws ImpossibleStateException Thrown when called before {@link #withRole()}
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     */
+    public void resolveAdminGroup(){
+        if (this.userRole == null){
+            throw new ImpossibleStateException("Cannot resolve user role");
+        }
+
+        if (!this.userRole.isAdminGroup()){
+            throw new NoPrivilegesException();
+        }
+    }
+
+    /**
+     * Requires {@link #withRole()} to be called before
+     * @throws ImpossibleStateException Thrown when called before {@link #withRole()}
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin,Manager or Member in the team
+     */
+    public void resolveBasicGroup(){
+        if (this.userRole == null){
+            throw new ImpossibleStateException("Cannot resolve user role");
+        }
+
+        if (!this.userRole.isAllowedBasic()){
+            throw new NoPrivilegesException();
+        }
     }
 
 
