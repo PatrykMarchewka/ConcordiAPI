@@ -39,13 +39,11 @@ public class TaskController {
 
 
     private final TaskService taskService;
-    private final TeamUserRoleService teamUserRoleService;
     private ControllerContext context;
 
     @Autowired
-    public TaskController(TaskService taskService, TeamUserRoleService teamUserRoleService, ControllerContext context){
+    public TaskController(TaskService taskService, ControllerContext context){
         this.taskService = taskService;
-        this.teamUserRoleService = teamUserRoleService;
         this.context = context;
     }
 
@@ -229,7 +227,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeamWithUserRoles(teamID).withRole().withOtherRole(userID);
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         taskService.addUserToTask(context.getTeam(), ID, userID);
         return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
@@ -254,7 +252,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withOtherRole(userID, teamID);
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         taskService.removeUserFromTask(ID, teamID, userID);
         return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
