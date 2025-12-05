@@ -357,7 +357,7 @@ public class TaskServiceTest {
         Set<TaskMemberDTO> set = taskService.getAllTasksWithRoleCheck(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
 
         assertEquals(testDataLoader.teamRead.getTeamTasks().size(), set.size());
-        assertTrue(set.containsAll(testDataLoader.teamRead.getTeamTasks().stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())));
+        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().map(Task::getID).collect(Collectors.toUnmodifiableSet()), set.stream().map(TaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -365,7 +365,7 @@ public class TaskServiceTest {
         Set<TaskMemberDTO> set = taskService.getAllTasksWithRoleCheck(testDataLoader.userMember.getID(), testDataLoader.teamRead.getID());
 
         assertEquals(1, set.size());
-        assertTrue(set.contains(new TaskMemberDTO(testDataLoader.taskMultiUserRead)));
+        assertEquals(testDataLoader.taskMultiUserRead.getID(), set.stream().findFirst().get().getID());
     }
 
     @Test
@@ -391,7 +391,8 @@ public class TaskServiceTest {
     void shouldGetAllTasksDTO(){
         Set<TaskMemberDTO> set = taskService.getAllTasksDTO(testDataLoader.teamRead.getID());
 
-        assertTrue(set.containsAll(testDataLoader.teamRead.getTeamTasks().stream().map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())));
+        assertEquals(testDataLoader.teamRead.getTeamTasks().size(), set.size());
+        assertEquals(testDataLoader.teamRead.getTeamTasks().stream().map(Task::getID).collect(Collectors.toUnmodifiableSet()), set.stream().map(TaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @ParameterizedTest
@@ -407,7 +408,7 @@ public class TaskServiceTest {
         Set<TaskMemberDTO> set = taskService.getAllTasksAssignedToMe(testDataLoader.teamRead.getID(), testDataLoader.userReadOwner.getID());
 
         assertEquals(testDataLoader.userReadOwner.getUserTasks().size(), set.size());
-        assertTrue(set.containsAll(testDataLoader.userReadOwner.getUserTasks().stream().map(UserTask::getAssignedTask).map(TaskMemberDTO::new).collect(Collectors.toUnmodifiableSet())));
+        assertEquals(Set.of(testDataLoader.taskMultiUserRead.getID(), testDataLoader.taskOwnerUserRead.getID()), set.stream().map(TaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @ParameterizedTest
