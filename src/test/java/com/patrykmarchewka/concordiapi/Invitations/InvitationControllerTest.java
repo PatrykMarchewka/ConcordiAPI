@@ -246,6 +246,31 @@ public class InvitationControllerTest {
         assertNull(response.getBody().getData());
     }
 
+    @Test
+    void shouldThrowForTooHighRoleCreateInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "OWNER"
+                }
+                """);
+
+        var response = restClient.post()
+                .uri("/api/teams/{teamID}/invitations", testDataLoader.teamWrite.getID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtAdmin)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
     /// 404
     @Test
     void shouldThrowForInvalidTeamIDCreateInvitation(){
@@ -463,6 +488,31 @@ public class InvitationControllerTest {
         assertNull(response.getBody().getData());
     }
 
+    @Test
+    void shouldThrowForTooHighRolePutInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "OWNER"
+                }
+                """);
+
+        var response = restClient.put()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtAdmin)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
     /// 404
     @Test
     void shouldThrowForInvalidTeamIDPutInvitation(){
@@ -596,6 +646,31 @@ public class InvitationControllerTest {
                 .header("Authorization", "Bearer " + testDataLoader.jwtMember)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(json)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .headers(res.getHeaders())
+                        .body(res.bodyTo(APIResponse.class)));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("You are not authorized to do that action", response.getBody().getMessage());
+        assertNull(response.getBody().getData());
+    }
+
+    @Test
+    void shouldThrowForTooHighRolePatchInvitation(){
+        String json = String.format("""
+                {
+                "uses": 100,
+                "role": "OWNER"
+                }
+                """);
+
+        var response = restClient.patch()
+                .uri("/api/teams/{teamID}/invitations/{invID}", testDataLoader.teamWrite.getID(), testDataLoader.invitationWrite.getUUID())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json)
+                .header("Authorization", "Bearer " + testDataLoader.jwtAdmin)
                 .exchange((req, res) -> ResponseEntity
                         .status(res.getStatusCode())
                         .headers(res.getHeaders())

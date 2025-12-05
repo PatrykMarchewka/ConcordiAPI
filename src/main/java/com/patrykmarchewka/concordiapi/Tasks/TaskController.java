@@ -39,13 +39,11 @@ public class TaskController {
 
 
     private final TaskService taskService;
-    private final TeamUserRoleService teamUserRoleService;
     private ControllerContext context;
 
     @Autowired
-    public TaskController(TaskService taskService, TeamUserRoleService teamUserRoleService, ControllerContext context){
+    public TaskController(TaskService taskService, ControllerContext context){
         this.taskService = taskService;
-        this.teamUserRoleService = teamUserRoleService;
         this.context = context;
     }
 
@@ -68,9 +66,7 @@ public class TaskController {
     @GetMapping("/tasks")
     public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasks(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) Integer inactiveDays){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
 
         if (inactiveDays != null){
             return ResponseEntity.ok(new APIResponse<>("All inactive tasks available",taskService.getInactiveTasksDTO(inactiveDays, teamID, context.getUser().getID())));
@@ -96,9 +92,7 @@ public class TaskController {
     @PostMapping("/tasks")
     public ResponseEntity<APIResponse<TaskMemberDTO>> createTask(@PathVariable long teamID, @RequestBody @ValidateOnCreate TaskRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withTeamWithUserRolesAndTasks(teamID).withRole();
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
         return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new task",new TaskMemberDTO(taskService.createTask(body, context.getTeam()))));
     }
 
@@ -117,9 +111,7 @@ public class TaskController {
     @GetMapping("/tasks/me")
     public ResponseEntity<APIResponse<Set<TaskMemberDTO>>> getAllTasksAssignedToMe(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
         return ResponseEntity.ok(new APIResponse<>("Tasks assigned to me", taskService.getAllTasksAssignedToMe(teamID, context.getUser().getID())));
 
     }
@@ -139,9 +131,7 @@ public class TaskController {
     @GetMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<TaskMemberDTO>> getTaskByID(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withTaskFull(teamID, ID);
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
         return ResponseEntity.ok(new APIResponse<>("Task details", new TaskMemberDTO(context.getTask())));
     }
 
@@ -203,9 +193,7 @@ public class TaskController {
     @DeleteMapping("/tasks/{ID}")
     public ResponseEntity<APIResponse<String>> deleteTask(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveOwnerOrAdminGroup();
         taskService.deleteTask(ID, teamID);
         return ResponseEntity.ok().body(new APIResponse<>("Task has been deleted",null));
     }
@@ -229,7 +217,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> addOneUserToTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withTeamWithUserRoles(teamID).withRole().withOtherRole(userID);
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         taskService.addUserToTask(context.getTeam(), ID, userID);
         return ResponseEntity.ok(new APIResponse<>("User added to task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));
@@ -254,7 +242,7 @@ public class TaskController {
     public ResponseEntity<APIResponse<TaskMemberDTO>> deleteOneUserFromTask(@PathVariable long teamID, @PathVariable long ID,@PathVariable long userID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withOtherRole(userID, teamID);
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         taskService.removeUserFromTask(ID, teamID, userID);
         return ResponseEntity.ok(new APIResponse<>("User removed from task",new TaskMemberDTO(taskService.getTaskFullByIDAndTeamID(ID, teamID))));

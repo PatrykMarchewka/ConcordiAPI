@@ -61,9 +61,7 @@ public class UserController {
     @GetMapping("/users")
     public ResponseEntity<APIResponse<Set<UserMemberDTO>>> getAllUsers(@PathVariable long teamID, Authentication authentication, @RequestParam(required = false) UserRole role){
         context = context.withUser(authentication).withTeamWithUserRoles(teamID).withRole();
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
 
         if (role != null){
             return ResponseEntity.ok(new APIResponse<>("All users in the team with that role",userService.userMemberDTOSetParam(role, teamID)));
@@ -90,11 +88,9 @@ public class UserController {
     @GetMapping("/users/{ID}")
     public ResponseEntity<APIResponse<UserMemberDTO>> getUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID).withOtherRole(ID, teamID);
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         return ResponseEntity.ok(new APIResponse<>("User with the provided ID",new UserMemberDTO(userService.getUserByID(ID))));
     }
@@ -118,10 +114,8 @@ public class UserController {
     @PatchMapping("/users/{ID}")
     public ResponseEntity<APIResponse<String>> changeUserRole(@PathVariable long teamID, @PathVariable long ID, @RequestParam UserRole newRole, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), newRole);
+        context.resolveOwnerOrAdminGroup();
+        context.resolveRoles(newRole);
 
         teamUserRoleService.setRole(ID, teamID, newRole);
         return ResponseEntity.ok(new APIResponse<>("Role changed",null));
@@ -143,11 +137,9 @@ public class UserController {
     @DeleteMapping("/users/{ID}")
     public ResponseEntity<APIResponse<String>> removeUser(@PathVariable long teamID,@PathVariable long ID, Authentication authentication){
         context = context.withUser(authentication).withTeam(teamID).withRole().withOtherRole(ID);
-        if (!context.getUserRole().isAllowedBasic()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveBasicGroup();
 
-        teamUserRoleService.forceCheckRoles(context.getUserRole(), context.getOtherRole());
+        context.resolveRoles();
 
         teamService.removeUser(teamID, ID);
         return ResponseEntity.ok(new APIResponse<>("User removed from team",null));

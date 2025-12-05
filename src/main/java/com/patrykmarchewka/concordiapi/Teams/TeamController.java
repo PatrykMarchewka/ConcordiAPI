@@ -107,10 +107,7 @@ public class TeamController {
     @PutMapping("/teams/{ID}")
     public ResponseEntity<APIResponse<TeamAdminDTO>> putTeam(@PathVariable long ID, @RequestBody @ValidateOnPut TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
-
-        if(!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveOwnerOrAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("Team has been edited", new TeamAdminDTO(teamService.putTeam(ID, body))));
     }
 
@@ -131,10 +128,7 @@ public class TeamController {
     @PatchMapping("/teams/{ID}")
     public ResponseEntity<APIResponse<TeamAdminDTO>> patchTeam(@PathVariable long ID, @RequestBody @Validated TeamRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(ID);
-
-        if(!context.getUserRole().isOwnerOrAdmin()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveOwnerOrAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("Team has been edited",new TeamAdminDTO(teamService.patchTeam(ID, body))));
     }
 

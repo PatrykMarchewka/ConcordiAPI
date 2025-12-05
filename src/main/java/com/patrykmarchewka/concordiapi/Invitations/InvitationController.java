@@ -60,9 +60,7 @@ public class InvitationController {
     @GetMapping("/invitations")
     public ResponseEntity<APIResponse<Set<InvitationManagerDTO>>> getInvitations(@PathVariable long teamID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("List of all invitations for this team",invitationService.getInvitationsDTO(teamID)));
     }
 
@@ -83,10 +81,9 @@ public class InvitationController {
     @PostMapping("/invitations")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> createInvitation(@PathVariable long teamID, @RequestBody @ValidateOnCreate InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(context.getUserRole(), body, teamID))));
+        context.resolveAdminGroup();
+        context.resolveRoles(body.getRole());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new APIResponse<>("Created new invitation",new InvitationManagerDTO(invitationService.createInvitation(body, teamID))));
     }
 
     /**
@@ -105,9 +102,7 @@ public class InvitationController {
     @GetMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> getInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         return ResponseEntity.ok(new APIResponse<>("Information about this invitation",new InvitationManagerDTO(invitationService.getInvitationWithTeamByUUID(invID))));
     }
 
@@ -118,7 +113,7 @@ public class InvitationController {
      * @param body InvitationRequestBody with new values
      * @param authentication User credentials to authenticate
      * @return InvitationDTO after changes
-     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team or when user tries to generate invitation with higher user role
      */
     @Operation(summary = "Edit invitation completely", description = "Edits every field on the invitation")
     @ApiResponse(responseCode = "200", ref = "200")
@@ -129,9 +124,8 @@ public class InvitationController {
     @PutMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> putInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @ValidateOnPut InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
+        context.resolveRoles(body.getRole());
         return ResponseEntity.ok(new APIResponse<>("Invitation fully changed",new InvitationManagerDTO(invitationService.putInvitation(invID, body))));
     }
 
@@ -142,7 +136,7 @@ public class InvitationController {
      * @param body InvitationRequestBody with new values
      * @param authentication User credentials to authenticate
      * @return InvitationDTO after changes
-     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team
+     * @throws NoPrivilegesException Thrown when user is not Owner,Admin or Manager in the team or when user tries to generate invitation with higher user role
      */
     @Operation(summary = "Edit invitation", description = "Edit existing invitation for the team")
     @ApiResponse(responseCode = "200", ref = "200")
@@ -153,8 +147,9 @@ public class InvitationController {
     @PatchMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<InvitationManagerDTO>> patchInvitation(@PathVariable long teamID, @PathVariable String invID, @RequestBody @Validated InvitationRequestBody body, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
+        context.resolveAdminGroup();
+        if (body.getRole() != null) {
+            context.resolveRoles(body.getRole());
         }
         return ResponseEntity.ok(new APIResponse<>("Invitation updated",new InvitationManagerDTO(invitationService.patchInvitation(invID, body))));
     }
@@ -175,9 +170,7 @@ public class InvitationController {
     @DeleteMapping("/invitations/{invID}")
     public ResponseEntity<APIResponse<String>> deleteInvitation(@PathVariable long teamID, @PathVariable String invID, Authentication authentication){
         context = context.withUser(authentication).withRole(teamID);
-        if (!context.getUserRole().isAdminGroup()){
-            throw new NoPrivilegesException();
-        }
+        context.resolveAdminGroup();
         invitationService.deleteInvitation(invID);
         return ResponseEntity.ok(new APIResponse<>("Invitation has been deleted",null));
     }

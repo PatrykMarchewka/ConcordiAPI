@@ -7,7 +7,6 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Team;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.BadRequestException;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
-import com.patrykmarchewka.concordiapi.Exceptions.NoPrivilegesException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationFull;
 import com.patrykmarchewka.concordiapi.HydrationContracts.Invitation.InvitationIdentity;
@@ -61,7 +60,7 @@ public class InvitationServiceTest {
     @Test
     void shouldCreateInvitation(){
         InvitationRequestBody body = new InvitationRequestBody((short) 1, UserRole.MEMBER, null);
-        Invitation invitation = invitationService.createInvitation(UserRole.OWNER, body, testDataLoader.teamWrite.getID());
+        Invitation invitation = invitationService.createInvitation(body, testDataLoader.teamWrite.getID());
 
         assertNotNull(invitation.getUUID());
         assertFalse(invitation.getUUID().isBlank());
@@ -70,20 +69,11 @@ public class InvitationServiceTest {
         assertNull(invitation.getDueTime());
     }
 
-    /**
-     * Cannot create invitation with higher role than caller (eg MEMBER cannot create invitation that would grant ADMIN role)
-     */
-    @Test
-    void shouldThrowForLowerRole(){
-        InvitationRequestBody body = new InvitationRequestBody((short) 1, UserRole.ADMIN, null);
-        assertThrows(NoPrivilegesException.class, () -> invitationService.createInvitation(UserRole.MEMBER, body, testDataLoader.teamWrite.getID()));
-    }
-
     @ParameterizedTest
     @ValueSource(longs = {999L, -1})
     void shouldThrowForInvalidTeamID(long ID){
         InvitationRequestBody body = new InvitationRequestBody((short) 1, UserRole.ADMIN, null);
-        assertThrows(NotFoundException.class, () -> invitationService.createInvitation(UserRole.OWNER, body, ID));
+        assertThrows(NotFoundException.class, () -> invitationService.createInvitation(body, ID));
     }
 
     /// putInvitation
