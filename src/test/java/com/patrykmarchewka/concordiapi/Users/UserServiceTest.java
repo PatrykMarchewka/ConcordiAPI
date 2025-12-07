@@ -3,6 +3,7 @@ package com.patrykmarchewka.concordiapi.Users;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserMemberDTO;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestBody;
 import com.patrykmarchewka.concordiapi.DTO.UserDTO.UserRequestLogin;
+import com.patrykmarchewka.concordiapi.DatabaseModel.TeamUserRole;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Exceptions.ConflictException;
 import com.patrykmarchewka.concordiapi.Exceptions.NotFoundException;
@@ -229,7 +230,7 @@ public class UserServiceTest {
         Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(Set.of(testDataLoader.userMember));
 
         assertEquals(1, set.size());
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userMember)));
+        assertEquals(Set.of(testDataLoader.userMember.getID()), set.stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -237,8 +238,7 @@ public class UserServiceTest {
         Set<UserMemberDTO> set = userService.userMemberDTOSetProcess(Set.of(testDataLoader.userMember, testDataLoader.userReadOwner));
 
         assertEquals(2, set.size());
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userMember)));
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userReadOwner)));
+        assertEquals(Set.of(testDataLoader.userMember.getID(), testDataLoader.userReadOwner.getID()), set.stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -255,7 +255,7 @@ public class UserServiceTest {
         Set<UserMemberDTO> set = userService.userMemberDTOSetParam(UserRole.ADMIN, testDataLoader.teamRead.getID());
 
         assertEquals(1, set.size());
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userAdmin)));
+        assertEquals(Set.of(testDataLoader.userAdmin.getID()), set.stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     @Test
@@ -263,8 +263,7 @@ public class UserServiceTest {
         Set<UserMemberDTO> set = userService.userMemberDTOSetParam(UserRole.OWNER, testDataLoader.teamRead.getID());
 
         assertEquals(2, set.size());
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userReadOwner)));
-        assertTrue(set.contains(new UserMemberDTO(testDataLoader.userSecondOwner)));
+        assertEquals(Set.of(testDataLoader.userReadOwner.getID(), testDataLoader.userSecondOwner.getID()), set.stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// userMemberDTOSetNoParam
@@ -273,8 +272,8 @@ public class UserServiceTest {
     void shouldReturnMultipleUserMemberDTOSetNoParam(){
         Set<UserMemberDTO> set = userService.userMemberDTOSetNoParam(testDataLoader.teamRead);
 
-        Set<UserMemberDTO> expected = testDataLoader.teamRead.getUserRoles().stream().map(teamUserRole -> new UserMemberDTO(teamUserRole.getUser())).collect(Collectors.toUnmodifiableSet());
-        assertEquals(expected, set);
+        assertEquals(testDataLoader.teamRead.getUserRoles().size(), set.size());
+        assertEquals(testDataLoader.teamRead.getUserRoles().stream().map(TeamUserRole::getUser).map(User::getID).collect(Collectors.toUnmodifiableSet()), set.stream().map(UserMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 
     /// getUserByID

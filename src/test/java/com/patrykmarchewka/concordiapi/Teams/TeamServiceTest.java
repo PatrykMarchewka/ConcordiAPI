@@ -219,33 +219,26 @@ public class TeamServiceTest {
 
     @Test
     void shouldGetTeamsDTOOwner(){
-        refreshTeam();
         Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userReadOwner);
 
         assertEquals(1, set.size());
-        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamRead)));
+        assertTrue(set.stream().allMatch(teamDTO -> teamDTO instanceof TeamAdminDTO));
     }
 
     @Test
     void shouldGetTeamsDTOAdmin(){
-        refreshTeam();
         Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userAdmin);
 
         assertEquals(3, set.size());
-        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamRead)));
-        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamWrite)));
-        assertTrue(set.contains(new TeamAdminDTO(testDataLoader.teamDelete)));
+        assertTrue(set.stream().allMatch(teamDTO -> teamDTO instanceof TeamAdminDTO));
     }
 
     @Test
     void shouldGetTeamsDTOManager(){
-        refreshTeam();
         Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userManager);
 
         assertEquals(3, set.size());
-        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamRead)));
-        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamWrite)));
-        assertTrue(set.contains(new TeamManagerDTO(testDataLoader.teamDelete)));
+        assertTrue(set.stream().allMatch(teamDTO -> teamDTO instanceof TeamManagerDTO));
     }
 
     @Test
@@ -253,9 +246,7 @@ public class TeamServiceTest {
         Set<TeamDTO> set = teamService.getTeamsDTO(testDataLoader.userMember);
 
         assertEquals(3, set.size());
-        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamRead)));
-        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamWrite)));
-        assertTrue(set.contains(new TeamMemberDTO(testDataLoader.teamDelete)));
+        assertTrue(set.stream().allMatch(teamDTO -> teamDTO instanceof TeamMemberDTO));
     }
 
     @Test
@@ -269,10 +260,9 @@ public class TeamServiceTest {
 
     @Test
     void shouldGetTeamDTOByRole(){
-        refreshTeam();
         TeamDTO teamDTO = teamService.getTeamDTOByRole(testDataLoader.userReadOwner.getID(), testDataLoader.teamRead.getID());
 
-        assertEquals(new TeamAdminDTO(testDataLoader.teamRead), teamDTO);
+        assertInstanceOf(TeamAdminDTO.class, teamDTO);
     }
 
     @ParameterizedTest

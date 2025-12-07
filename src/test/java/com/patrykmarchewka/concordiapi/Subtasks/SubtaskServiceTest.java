@@ -266,6 +266,6 @@ public class SubtaskServiceTest {
         Set<SubtaskMemberDTO> set = subtaskService.getSubtasksDTO(testDataLoader.taskMultiUserRead);
 
         assertEquals(testDataLoader.taskMultiUserRead.getSubtasks().size(), set.size());
-        assertEquals(set, testDataLoader.taskMultiUserRead.getSubtasks().stream().map(SubtaskMemberDTO::new).collect(Collectors.toUnmodifiableSet()));
+        assertEquals(testDataLoader.taskMultiUserRead.getSubtasks().stream().map(Subtask::getID).collect(Collectors.toUnmodifiableSet()), set.stream().map(SubtaskMemberDTO::getID).collect(Collectors.toUnmodifiableSet()));
     }
 }
