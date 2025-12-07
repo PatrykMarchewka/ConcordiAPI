@@ -34,6 +34,9 @@ public class JSONWebToken {
     private String SECRET_KEY;
     private static String secret_key;
 
+    @Value("${jwt.expiration-time}")
+    private int EXPIRATION_TIME;
+    private static int expiration_time;
 
     /**
      * Generates new secret key
@@ -41,6 +44,11 @@ public class JSONWebToken {
     @PostConstruct
     private void swapSecret(){
         secret_key = SECRET_KEY.isBlank() ? SecureSecretKeyGenerator() : SECRET_KEY;
+    }
+
+    @PostConstruct
+    private void setExpirationTime(){
+        expiration_time = EXPIRATION_TIME;
     }
 
     /**
@@ -113,7 +121,7 @@ public class JSONWebToken {
         String header = "{\"alg\":\"HS256\",\"type\":\"JWT\"}";
         String encodedHeader = Base64Encoding(header);
         long issuedAt = System.currentTimeMillis()/1000;
-        long expiry = issuedAt + 3600; //60 = 1 minute, 3600 = 1 hour,
+        long expiry = issuedAt + expiration_time;
         String payload = String.format("{\"uID\":\"%s\",\"iat\":\"%d\",\"exp\":\"%d\"}",uID,issuedAt,expiry);
         String encodedPayload = Base64Encoding(payload);
         String signature = JSONWebToken.HmacSHA256(encodedHeader + "." + encodedPayload,secret_key);

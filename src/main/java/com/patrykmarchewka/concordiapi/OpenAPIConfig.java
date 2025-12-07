@@ -12,7 +12,7 @@ public class OpenAPIConfig {
 
     @Bean
     public OpenAPI custom(){
-        return new OpenAPI().info(new Info().title("ConcordiAPI").version("v1.1.0").description("REST API for managing tasks,users and teams")).components(new Components()
+        return new OpenAPI().info(new Info().title("ConcordiAPI").version("v1.2.0").description("REST API for managing tasks,users and teams")).components(new Components()
                         .addResponses("200", new ApiResponse().description("Success"))
                         .addResponses("201", new ApiResponse().description("Item created"))
                         .addResponses("400", new ApiResponse().description("Bad request"))
