@@ -4,7 +4,6 @@ import com.patrykmarchewka.concordiapi.DatabaseModel.Task;
 import com.patrykmarchewka.concordiapi.DatabaseModel.User;
 import com.patrykmarchewka.concordiapi.Users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -14,7 +13,7 @@ public class TaskUserUpdaterHelper {
     protected final UserService userService;
 
     @Autowired
-    protected TaskUserUpdaterHelper(@Lazy UserService userService) {
+    protected TaskUserUpdaterHelper(final UserService userService) {
         this.userService = userService;
     }
 

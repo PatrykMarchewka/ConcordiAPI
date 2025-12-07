@@ -11,7 +11,6 @@ import com.patrykmarchewka.concordiapi.HydrationContracts.Task.TaskWithSubtasks;
 import com.patrykmarchewka.concordiapi.Subtasks.Updaters.SubtaskUpdatersService;
 import com.patrykmarchewka.concordiapi.Tasks.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,7 @@ public class SubtaskService {
     private final TaskService taskService;
 
     @Autowired
-    public SubtaskService(SubtaskRepository subtaskRepository, SubtaskUpdatersService subtaskUpdatersService, @Lazy TaskService taskService){
+    public SubtaskService(SubtaskRepository subtaskRepository, SubtaskUpdatersService subtaskUpdatersService, TaskService taskService){
         this.subtaskRepository = subtaskRepository;
         this.subtaskUpdatersService = subtaskUpdatersService;
         this.taskService = taskService;
